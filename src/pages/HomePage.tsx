@@ -431,4 +431,4 @@ export function HomePage() {
     </div>
   );
 }
-
+hello please read page change-homePage-BannerPhoto and make change.
