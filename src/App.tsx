@@ -13,18 +13,21 @@ import { AdminDashboardPage } from "@/pages/AdminDashboardPage";
 import { OrderTrackingPage } from "@/pages/OrderTrackingPage";
 import { CartPage } from "@/pages/CartPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
+import { SupportPage } from "@/pages/SupportPage";
+import { AiSupportPage } from "@/pages/AiSupportPage";
+import { VipServicePage } from "@/pages/VipServicePage";
+import { BalancePage } from "@/pages/BalancePage";
+import { PasskeyPage } from "@/pages/PasskeyPage";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore, mapSupabaseUser } from "@/stores/authStore";
 import { trackEvent } from "@/lib/analytics";
 
-// ─── Auth Initializer ──────────────────────────────────────────────────────────
 function AuthInitializer() {
   const { login, setLoading } = useAuthStore();
 
   useEffect(() => {
     let mounted = true;
 
-    // Safety #1: check existing session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (mounted && session?.user) {
         const { data: roleData } = await supabase
@@ -39,7 +42,6 @@ function AuthInitializer() {
       if (mounted) setLoading(false);
     });
 
-    // Safety #2: listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
       if (event === "SIGNED_IN" && session?.user) {
@@ -58,7 +60,6 @@ function AuthInitializer() {
       }
     });
 
-    // Track page view
     trackEvent("page_view", { page: window.location.pathname });
 
     return () => {
@@ -85,6 +86,13 @@ function App() {
           <Route path="/orders/:referenceId" element={<OrderTrackingPage />} />
           <Route path="/account" element={<AccountPage />} />
           <Route path="/login" element={<LoginPage />} />
+          {/* Support / Chat */}
+          <Route path="/support" element={<SupportPage />} />
+          <Route path="/support/ai" element={<AiSupportPage />} />
+          <Route path="/support/vip" element={<VipServicePage />} />
+          {/* Balance & Passkey */}
+          <Route path="/balance" element={<BalancePage />} />
+          <Route path="/passkeys" element={<PasskeyPage />} />
           {/* Secure admin only */}
           <Route path="/secure-dashboard-92x2011" element={<AdminDashboardPage />} />
           <Route path="/cart" element={<CartPage />} />

@@ -1,13 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Settings, Globe, HelpCircle, MessageSquare, MessageCircle, Gift, DollarSign, User,
-  ChevronRight, LogOut, LayoutDashboard, Package, Wallet, Tag, Users, Camera,
-  ShoppingBag
+  ChevronRight, LogOut, LayoutDashboard, Package, Wallet, Tag, Users, Camera, ShoppingBag, Key
 } from "lucide-react";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { DesktopHeader } from "@/components/layout/DesktopHeader";
 import { Header } from "@/components/layout/Header";
+import { AgeRangeModal } from "@/components/features/AgeRangeModal";
 import { useAuthStore } from "@/stores/authStore";
 import { useSettingsStore } from "@/stores/settingsStore";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -24,6 +24,8 @@ export function AccountPage() {
   const { currency, language } = useSettingsStore();
   const [activeTab, setActiveTab] = useState<AccountTab>("overview");
   const [desktopSection, setDesktopSection] = useState<DesktopSection>("settings");
+  const [showAgeRange, setShowAgeRange] = useState(false);
+  const [ageRange, setAgeRange] = useState("");
 
   const handleLogout = () => {
     logout();
@@ -31,30 +33,19 @@ export function AccountPage() {
     navigate("/");
   };
 
-  // ─── Not Logged In ────────────────────────────────────────────────────────
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-[#f8f8f8]">
-        <div className="hidden lg:block">
-          <DesktopHeader />
-        </div>
-        <div className="lg:hidden">
-          <Header showMenu />
-        </div>
-
+        <div className="hidden lg:block"><DesktopHeader /></div>
+        <div className="lg:hidden"><Header showMenu /></div>
         <div className="flex flex-col items-center justify-center min-h-[70vh] px-4">
           <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
             <User size={40} className="text-gray-400" />
           </div>
           <p className="text-gray-500 text-lg mb-6">{t("login")} to view your account</p>
-          <button onClick={() => navigate("/login")} className="btn-primary px-12">
-            {t("loginSignup")}
-          </button>
+          <button onClick={() => navigate("/login")} className="btn-primary px-12">{t("loginSignup")}</button>
         </div>
-
-        <div className="lg:hidden">
-          <BottomNav />
-        </div>
+        <div className="lg:hidden"><BottomNav /></div>
       </div>
     );
   }
@@ -63,11 +54,9 @@ export function AccountPage() {
   const DesktopAccountContent = () => (
     <div className="hidden lg:block min-h-screen bg-[#f5f5f5]">
       <DesktopHeader />
-
-      {/* Breadcrumb */}
       <div className="max-w-[1280px] mx-auto px-6 py-3">
         <div className="flex items-center gap-2 text-sm text-gray-500">
-          <button onClick={() => navigate("/")} className="hover:text-gray-700">🏠 {t("home")}</button>
+          <button onClick={() => navigate("/")} className="hover:text-gray-700">Home</button>
           <ChevronRight size={14} />
           <span className="text-gray-800 font-medium">{t("settings")}</span>
         </div>
@@ -75,10 +64,8 @@ export function AccountPage() {
 
       <div className="max-w-[1280px] mx-auto px-6 pb-12">
         <div className="flex gap-6">
-          {/* Left Sidebar */}
           <div className="w-72 flex-shrink-0">
             <div className="bg-white rounded-2xl shadow-sm p-5 mb-4">
-              {/* Avatar + Name */}
               <div className="flex items-center gap-3 mb-4">
                 <div className="relative">
                   <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xl font-bold">
@@ -95,13 +82,11 @@ export function AccountPage() {
                   </button>
                 </div>
               </div>
-
-              {/* Balance + Points */}
-              <div className="flex items-center gap-4 mb-1 py-3 border-y border-gray-100">
-                <div>
+              <div className="flex items-center gap-4 py-3 border-y border-gray-100">
+                <button onClick={() => navigate("/balance")} className="hover:opacity-80 transition-opacity">
                   <p className="text-lg font-bold text-gray-900">${user?.balance?.toFixed(2)}</p>
                   <p className="text-xs text-gray-500">{t("balance")}</p>
-                </div>
+                </button>
                 <div className="h-8 w-px bg-gray-200" />
                 <div>
                   <p className="text-lg font-bold text-gray-900 flex items-center gap-1">
@@ -112,7 +97,6 @@ export function AccountPage() {
               </div>
             </div>
 
-            {/* Sidebar Menu */}
             <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
               {[
                 { key: "buyHistory" as DesktopSection, icon: ShoppingBag, label: t("buyHistory") },
@@ -127,11 +111,7 @@ export function AccountPage() {
                   key={item.key}
                   onClick={() => setDesktopSection(item.key)}
                   className={`w-full flex items-center justify-between px-4 py-3.5 text-sm font-medium transition-colors border-b border-gray-50 last:border-0 ${
-                    desktopSection === item.key
-                      ? "bg-yellow-50 text-yellow-700 border-l-4 border-l-yellow-400"
-                      : item.highlight
-                      ? "text-yellow-500 hover:bg-yellow-50"
-                      : "text-gray-700 hover:bg-gray-50"
+                    desktopSection === item.key ? "bg-yellow-50 text-yellow-700 border-l-4 border-l-yellow-400" : item.highlight ? "text-yellow-500 hover:bg-yellow-50" : "text-gray-700 hover:bg-gray-50"
                   }`}
                 >
                   <span className="flex items-center gap-3">
@@ -147,58 +127,59 @@ export function AccountPage() {
             </div>
           </div>
 
-          {/* Right Panel */}
           <div className="flex-1">
             <div className="bg-white rounded-2xl shadow-sm p-8">
               {desktopSection === "settings" && (
                 <>
                   <h2 className="text-xl font-bold text-gray-900 mb-6">{t("accountInfo")}</h2>
-                  <div className="space-y-6">
-                    {/* Avatar */}
-                    <div className="flex items-center gap-6 pb-6 border-b border-gray-100">
-                      <span className="w-36 text-sm text-gray-500">{t("avatar")}</span>
+                  <div className="space-y-0">
+                    <div className="flex items-center gap-6 py-4 border-b border-gray-100">
+                      <span className="w-36 text-sm text-gray-500 flex-shrink-0">{t("avatar")}</span>
                       <div className="relative group cursor-pointer">
-                        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xl font-bold">
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-lg font-bold">
                           {user?.nickname?.[0]?.toUpperCase()}
                         </div>
                         <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Camera size={16} className="text-white" />
+                          <Camera size={14} className="text-white" />
                         </div>
                       </div>
+                      <ChevronRight size={16} className="text-gray-400 ml-auto" />
                     </div>
 
-                    {/* Info rows */}
                     {[
-                      { label: t("nickname"), value: user?.nickname, editable: true },
-                      { label: "Birthday", value: "07-17", extra: <button className="text-orange-500 text-sm hover:underline">Check my birthday benefit</button> },
-                      { label: "Age Range", value: "You need to set your age in accordance with NoxyStore's User Agreement.", action: "Set" },
+                      { label: t("nickname"), value: user?.nickname, action: "Modify" },
+                      { label: "Birthday", value: "07-17", extra: <span className="text-orange-500 text-sm">Check my birthday benefit</span>, action: ">" },
+                      { label: "Age Range", value: ageRange || "Not set", action: "Set", onAction: () => setShowAgeRange(true) },
                       { label: t("email"), value: user?.email?.replace(/(.{3}).*(@)/, "$1***$2") },
                       { label: t("password"), value: "already set" },
-                      { label: "Passkey", value: "Create a Passkey for faster, safer login with Face ID, Fingerprint, or PIN.", action: null, hasButton: true },
                     ].map((item) => (
-                      <div key={item.label} className="flex items-start gap-6 py-4 border-b border-gray-50 last:border-0">
-                        <span className="w-36 text-sm text-gray-500 flex-shrink-0 pt-0.5">{item.label}</span>
+                      <div key={item.label} className="flex items-center gap-6 py-4 border-b border-gray-100 last:border-0">
+                        <span className="w-36 text-sm text-gray-500 flex-shrink-0">{item.label}</span>
                         <div className="flex-1">
                           <p className="text-sm text-gray-800">{item.value}</p>
-                          {item.extra && <div className="mt-1">{item.extra}</div>}
-                          {item.hasButton && (
-                            <button className="mt-2 border border-gray-300 rounded-lg px-4 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50">
-                              Create a Passkey
-                            </button>
-                          )}
+                          {item.extra && <div className="mt-0.5">{item.extra}</div>}
                         </div>
-                        {item.editable && (
-                          <button className="text-sm text-gray-400 hover:text-gray-600 font-medium flex-shrink-0">
-                            Modify
-                          </button>
-                        )}
                         {item.action && (
-                          <button className="text-sm text-gray-400 hover:text-gray-600 font-medium flex-shrink-0">
+                          <button
+                            onClick={(item as any).onAction}
+                            className="text-sm text-gray-400 hover:text-gray-600 flex-shrink-0 flex items-center gap-1"
+                          >
                             {item.action}
+                            <ChevronRight size={14} />
                           </button>
                         )}
                       </div>
                     ))}
+
+                    {/* Passkey row */}
+                    <button
+                      onClick={() => navigate("/passkeys")}
+                      className="w-full flex items-center gap-6 py-4 hover:bg-gray-50 transition-colors"
+                    >
+                      <span className="w-36 text-sm text-gray-500 flex-shrink-0">Passkey</span>
+                      <span className="flex-1 text-sm text-gray-800 text-left">Manage your passkeys</span>
+                      <ChevronRight size={16} className="text-gray-400 flex-shrink-0" />
+                    </button>
                   </div>
                 </>
               )}
@@ -210,9 +191,7 @@ export function AccountPage() {
                     <div className="text-center py-16">
                       <Package size={48} className="text-gray-200 mx-auto mb-4" />
                       <p className="text-gray-500">{t("noOrdersYet")}</p>
-                      <button onClick={() => navigate("/")} className="btn-primary mt-4 px-8">
-                        {t("browseGames")}
-                      </button>
+                      <button onClick={() => navigate("/")} className="btn-primary mt-4 px-8">{t("browseGames")}</button>
                     </div>
                   ) : (
                     <div className="space-y-3">
@@ -237,14 +216,15 @@ export function AccountPage() {
 
               {(desktopSection === "coupon" || desktopSection === "helpCenter" || desktopSection === "feedback" || desktopSection === "invite" || desktopSection === "earn") && (
                 <div className="text-center py-16">
-                  <div className="text-5xl mb-4">🚀</div>
+                  <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <Package size={32} className="text-gray-300" />
+                  </div>
                   <p className="text-gray-500 font-medium">Coming Soon</p>
                   <p className="text-sm text-gray-400 mt-1">This feature is under development</p>
                 </div>
               )}
             </div>
 
-            {/* Logout + Admin */}
             <div className="flex gap-4 mt-4">
               {user?.role === "admin" && (
                 <button
@@ -275,16 +255,13 @@ export function AccountPage() {
       <div className="px-4 pt-5">
         <h1 className="text-2xl font-bold text-gray-900 mb-4">{t("myAccount")}</h1>
 
-        {/* Tabs */}
         <div className="grid grid-cols-4 mb-4">
           {(["overview", "orders", "profile", "activity"] as AccountTab[]).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`py-2.5 text-sm font-semibold capitalize transition-all border-b-2 ${
-                activeTab === tab
-                  ? "border-gray-900 text-gray-900"
-                  : "border-transparent text-gray-400 hover:text-gray-600"
+                activeTab === tab ? "border-gray-900 text-gray-900" : "border-transparent text-gray-400 hover:text-gray-600"
               }`}
             >
               {t(tab as any)}
@@ -294,10 +271,8 @@ export function AccountPage() {
 
         {activeTab === "overview" && (
           <div className="space-y-4">
-            {/* Profile Card */}
             <div className="bg-gradient-to-br from-blue-500 via-purple-600 to-pink-500 rounded-3xl p-5 text-white relative overflow-hidden">
-              <div className="absolute top-3 right-4 text-white/60 text-xs font-medium">Notifications</div>
-              <div className="flex items-center gap-3 mb-5 mt-4">
+              <div className="flex items-center gap-3 mb-5 mt-1">
                 <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center text-2xl font-bold border-2 border-white/30">
                   {user?.nickname?.[0]?.toUpperCase()}
                 </div>
@@ -311,26 +286,27 @@ export function AccountPage() {
               </div>
               <div className="grid grid-cols-3 gap-2 mb-4">
                 {[
-                  { label: t("balance"), value: `$${user?.balance?.toFixed(2)}` },
-                  { label: t("points"), value: user?.points ?? 0 },
-                  { label: t("coupons"), value: user?.coupons ?? 0 },
+                  { label: t("balance"), value: `$${user?.balance?.toFixed(2)}`, path: "/balance" },
+                  { label: t("points"), value: user?.points ?? 0, path: null },
+                  { label: t("coupons"), value: user?.coupons ?? 0, path: null },
                 ].map((item) => (
-                  <div key={item.label} className="bg-white/15 backdrop-blur-sm rounded-2xl p-3 text-center">
+                  <button
+                    key={item.label}
+                    onClick={() => (item as any).path && navigate((item as any).path)}
+                    className="bg-white/15 backdrop-blur-sm rounded-2xl p-3 text-center hover:bg-white/25 transition-colors"
+                  >
                     <p className="text-lg font-bold">{item.value}</p>
                     <p className="text-white/70 text-xs">{item.label}</p>
-                  </div>
+                  </button>
                 ))}
               </div>
-              <button className="w-full bg-white/20 hover:bg-white/30 rounded-2xl py-2.5 text-sm font-bold flex items-center justify-center gap-2">
-                <span>↗</span> Earn Points
-              </button>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               {[
                 { icon: Package, label: t("orders"), value: `${orders.length} orders`, path: null },
-                { icon: Wallet, label: t("balance"), value: `$${user?.balance?.toFixed(2)}`, path: null },
-                { icon: Tag, label: t("coupons"), value: `${user?.coupons ?? 0} available`, path: null },
+                { icon: Wallet, label: t("balance"), value: `$${user?.balance?.toFixed(2)}`, path: "/balance" },
+                { icon: Key, label: "Passkeys", value: "Manage passkeys", path: "/passkeys" },
                 { icon: Users, label: "Referrals", value: "Earn 10%", path: null },
               ].map((item) => (
                 <button
@@ -349,23 +325,27 @@ export function AccountPage() {
 
             <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
               {[
-                { icon: Settings, label: t("settings"), sub: null },
-                { icon: Globe, label: t("languageAndCurrency"), sub: `$ ${currency}  ${language.toUpperCase()}` },
-                { icon: HelpCircle, label: t("helpCenter"), sub: null },
-                { icon: MessageSquare, label: t("feedback"), sub: null },
-                { icon: MessageCircle, label: "Live Chat Support", sub: <span className="text-blue-500 text-xs">Get instant help</span> },
-                { icon: Gift, label: t("inviteForCoupons"), sub: <span className="text-orange-500 text-xs">Unlock rich coupon rewards</span> },
-                { icon: DollarSign, label: t("affiliateProgram"), sub: <span className="text-orange-500 text-xs">Earn up to 10% money</span> },
-                { icon: User, label: t("aboutUs"), sub: null },
+                { icon: Settings, label: t("settings"), path: null },
+                { icon: Globe, label: t("languageAndCurrency"), sub: `${language.toUpperCase()} / ${currency}`, path: null },
+                { icon: HelpCircle, label: t("helpCenter"), path: "/support" },
+                { icon: MessageCircle, label: "Live Chat Support", sub: "Get instant help", highlight: true, path: "/support" },
+                { icon: Gift, label: t("inviteForCoupons"), sub: "Unlock rich coupon rewards", highlight2: true, path: null },
+                { icon: DollarSign, label: t("affiliateProgram"), sub: "Earn up to 10% money", highlight2: true, path: null },
+                { icon: User, label: t("aboutUs"), path: null },
               ].map((item, idx) => (
                 <button
                   key={item.label}
-                  className={`w-full flex items-center gap-3.5 px-4 py-3.5 hover:bg-gray-50 text-left ${idx < 7 ? "border-b border-gray-100" : ""}`}
+                  onClick={() => (item as any).path && navigate((item as any).path)}
+                  className={`w-full flex items-center gap-3.5 px-4 py-3.5 hover:bg-gray-50 text-left ${idx < 6 ? "border-b border-gray-100" : ""}`}
                 >
                   <item.icon size={20} className="text-gray-500 flex-shrink-0" />
                   <div className="flex-1">
                     <p className="text-sm font-medium text-gray-800">{item.label}</p>
-                    {typeof item.sub === "string" ? <p className="text-xs text-gray-400">{item.sub}</p> : item.sub}
+                    {(item as any).sub && (
+                      <p className={`text-xs mt-0.5 ${(item as any).highlight ? "text-blue-500" : (item as any).highlight2 ? "text-orange-500" : "text-gray-400"}`}>
+                        {(item as any).sub}
+                      </p>
+                    )}
                   </div>
                   <ChevronRight size={16} className="text-gray-300 flex-shrink-0" />
                 </button>
@@ -396,7 +376,7 @@ export function AccountPage() {
           <div className="space-y-3">
             {orders.length === 0 ? (
               <div className="text-center py-16">
-                <div className="text-5xl mb-4">📦</div>
+                <Package size={48} className="text-gray-200 mx-auto mb-4" />
                 <p className="text-gray-500 font-medium">{t("noOrdersYet")}</p>
                 <button onClick={() => navigate("/")} className="btn-primary mt-6 px-8">{t("browseGames")}</button>
               </div>
@@ -424,35 +404,62 @@ export function AccountPage() {
         )}
 
         {activeTab === "profile" && (
-          <div className="bg-white rounded-2xl p-5 shadow-sm">
-            <div className="flex items-center gap-4 mb-5">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-purple-500 rounded-2xl flex items-center justify-center text-white text-2xl font-bold">
-                {user?.nickname?.[0]?.toUpperCase()}
+          <div className="space-y-3">
+            <div className="bg-white rounded-2xl p-5 shadow-sm">
+              <div className="flex items-center gap-4 mb-5">
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-purple-500 rounded-2xl flex items-center justify-center text-white text-2xl font-bold">
+                  {user?.nickname?.[0]?.toUpperCase()}
+                </div>
+                <div>
+                  <h2 className="font-bold text-gray-900">{user?.nickname}</h2>
+                  <p className="text-sm text-gray-500">{user?.email}</p>
+                </div>
               </div>
-              <div>
-                <h2 className="font-bold text-gray-900">{user?.nickname}</h2>
-                <p className="text-sm text-gray-500">{user?.email}</p>
-              </div>
-            </div>
-            <div className="space-y-3">
               {[
                 { label: t("nickname"), value: user?.nickname },
                 { label: t("email"), value: user?.email },
+                { label: "Age Range", value: ageRange || "Not set", action: () => setShowAgeRange(true) },
                 { label: "User ID", value: user?.id?.slice(-12) },
-                { label: "Member Since", value: "May 2025" },
               ].map((item) => (
-                <div key={item.label} className="flex justify-between py-2 border-b border-gray-100 last:border-0">
+                <div key={item.label} className="flex justify-between items-center py-3 border-b border-gray-100 last:border-0">
                   <span className="text-sm text-gray-500">{item.label}</span>
-                  <span className="text-sm font-semibold text-gray-800">{item.value}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-gray-800">{item.value}</span>
+                    {(item as any).action && (
+                      <button onClick={(item as any).action} className="text-xs text-blue-500 font-semibold">Set</button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
+
+            <button onClick={() => navigate("/passkeys")} className="w-full bg-white rounded-2xl p-4 shadow-sm flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Key size={20} className="text-gray-500" />
+                <div className="text-left">
+                  <p className="font-semibold text-gray-900 text-sm">Passkey</p>
+                  <p className="text-xs text-gray-400">Face ID, Fingerprint, or PIN</p>
+                </div>
+              </div>
+              <ChevronRight size={16} className="text-gray-400" />
+            </button>
+
+            <button onClick={() => navigate("/balance")} className="w-full bg-white rounded-2xl p-4 shadow-sm flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Wallet size={20} className="text-gray-500" />
+                <div className="text-left">
+                  <p className="font-semibold text-gray-900 text-sm">Balance</p>
+                  <p className="text-xs text-gray-400">${user?.balance?.toFixed(2)} available</p>
+                </div>
+              </div>
+              <ChevronRight size={16} className="text-gray-400" />
+            </button>
           </div>
         )}
 
         {activeTab === "activity" && (
           <div className="text-center py-16">
-            <div className="text-5xl mb-4">📊</div>
+            <Package size={48} className="text-gray-200 mx-auto mb-4" />
             <p className="text-gray-500 font-medium">Activity tracking coming soon</p>
           </div>
         )}
@@ -465,6 +472,12 @@ export function AccountPage() {
     <>
       <DesktopAccountContent />
       <MobileAccountContent />
+      {showAgeRange && (
+        <AgeRangeModal
+          onClose={() => setShowAgeRange(false)}
+          onSave={(range) => { setAgeRange(range); setShowAgeRange(false); }}
+        />
+      )}
     </>
   );
 }
