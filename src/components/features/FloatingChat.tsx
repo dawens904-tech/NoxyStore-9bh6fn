@@ -1,3 +1,4 @@
+
 /**
  * FloatingChat — opens the support page when clicked
  */
