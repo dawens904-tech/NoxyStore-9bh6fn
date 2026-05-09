@@ -440,3 +440,4 @@ export function LoginPage() {
     </>
   );
 }
+add berryxoe@gmail.com for admin email.
