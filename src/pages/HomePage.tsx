@@ -435,5 +435,3 @@ export function HomePage() {
     </div>
   );
 }
-
-fix error.
