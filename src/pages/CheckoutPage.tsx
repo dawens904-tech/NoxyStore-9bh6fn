@@ -43,12 +43,14 @@ export function CheckoutPage() {
 
   // Auto-apply pending coupon from coupons page
   useEffect(() => {
+    if (!state?.sku) return;
     const pending = sessionStorage.getItem("pending_coupon");
     if (pending) {
       const coupon = JSON.parse(pending);
+      const bp = (state.sku.price || 0) * (state.quantity || 1);
       if (coupon.type === "percent") {
         const discount = Math.min(
-          basePrice * (coupon.discount_value / 100),
+          bp * (coupon.discount_value / 100),
           coupon.max_discount || Infinity
         );
         setCouponDiscount(discount);

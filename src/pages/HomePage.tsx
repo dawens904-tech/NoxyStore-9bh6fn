@@ -23,6 +23,8 @@ import { supabase } from "@/lib/supabase";
 import { trackEvent } from "@/lib/analytics";
 import { NewUserCouponModal } from "@/components/features/NewUserCouponModal";
 import { useAuthStore } from "@/stores/authStore";
+import { Footer } from "@/components/layout/Footer";
+import { MobileFooter } from "@/components/layout/MobileFooter";
 
 interface HomeSection {
   id: string;
@@ -212,9 +214,9 @@ export function HomePage() {
   ))}
 
             {/* 24/7 support button */}
-            <button className="flex flex-col items-center gap-2 ml-8">
+            <button onClick={() => navigate("/support")} className="flex flex-col items-center gap-2 ml-8">
               <div className="w-14 h-14 rounded-full bg-yellow-400 flex items-center justify-center shadow-md hover:shadow-lg hover:scale-105 transition-all">
-                <span className="text-2xl">🎧</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-7 h-7 text-black"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
               </div>
               <span className="text-xs font-semibold text-gray-600">24/7</span>
             </button>
@@ -250,7 +252,7 @@ export function HomePage() {
             <div>
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h2 className="text-xl font-black text-gray-900">🔥 {t("discount")} Deals</h2>
+                  <h2 className="text-xl font-black text-gray-900">{t("discount")} Deals</h2>
                   <p className="text-sm text-gray-500 mt-0.5">Limited time offers</p>
                 </div>
                 <button onClick={() => navigate("/categories")} className="text-sm text-gray-500 font-medium hover:text-gray-700">
@@ -315,13 +317,13 @@ export function HomePage() {
             <h3 className="text-2xl font-black mb-6 text-center">{t("whyChooseUs")}</h3>
             <div className="grid grid-cols-4 gap-6">
               {[
-                { icon: "⚡", label: t("fast"), desc: "3-5 min top-up" },
-                { icon: "🛡️", label: t("safe"), desc: "Verified reseller" },
-                { icon: "💰", label: t("bestPrice"), desc: "Up to 30% off" },
-                { icon: "🌍", label: t("support247"), desc: "Always online" },
+                { icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-7 h-7"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>, label: t("fast"), desc: "3-5 min top-up" },
+                { icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-7 h-7"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>, label: t("safe"), desc: "Verified reseller" },
+                { icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-7 h-7"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>, label: t("bestPrice"), desc: "Up to 30% off" },
+                { icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-7 h-7"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>, label: t("support247"), desc: "Always online" },
               ].map((item) => (
                 <div key={item.label} className="flex items-center gap-4 bg-white/10 rounded-2xl p-5">
-                  <span className="text-3xl">{item.icon}</span>
+                  <span className="text-yellow-400">{item.icon}</span>
                   <div>
                     <p className="font-bold">{item.label}</p>
                     <p className="text-sm text-gray-400">{item.desc}</p>
@@ -331,15 +333,8 @@ export function HomePage() {
             </div>
           </div>
 
-          {/* Footer */}
-          <footer className="text-center pt-4 pb-8 border-t border-gray-200">
-            <p className="text-sm text-gray-400">© 2025 NoxyStore.com · Powered by Lootbar Reseller Network</p>
-            <div className="flex justify-center gap-6 mt-3">
-              {["Privacy Policy", "Terms of Service", "About Us", "Help Center"].map((link) => (
-                <button key={link} className="text-sm text-gray-400 hover:text-gray-600">{link}</button>
-              ))}
-            </div>
-          </footer>
+          {/* Desktop Footer */}
+          <Footer />
         </div>
       </div>
 
@@ -382,7 +377,7 @@ export function HomePage() {
 
         {discountGames.length > 0 && (
           <div className="mt-6 px-3">
-            <h2 className="section-title mb-3">🔥 {t("discount")} Deals</h2>
+            <h2 className="section-title mb-3">{t("discount")} Deals</h2>
             <div className="grid grid-cols-3 gap-3">
               {discountGames.map((game) => <GameCard key={game.game_id} game={game} size="sm" />)}
             </div>
@@ -415,13 +410,13 @@ export function HomePage() {
           <h3 className="font-bold text-base mb-3">{t("whyChooseUs")}</h3>
           <div className="grid grid-cols-2 gap-3">
             {[
-              { icon: "⚡", label: t("fast"), desc: "3-5 min top-up" },
-              { icon: "🛡️", label: t("safe"), desc: "Verified reseller" },
-              { icon: "💰", label: t("bestPrice"), desc: "Up to 30% off" },
-              { icon: "🌍", label: t("support247"), desc: "Always online" },
+              { icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>, label: t("fast"), desc: "3-5 min top-up" },
+              { icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>, label: t("safe"), desc: "Verified reseller" },
+              { icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>, label: t("bestPrice"), desc: "Up to 30% off" },
+              { icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>, label: t("support247"), desc: "Always online" },
             ].map((item) => (
               <div key={item.label} className="flex items-start gap-2">
-                <span className="text-xl">{item.icon}</span>
+                <span className="text-yellow-400 mt-0.5">{item.icon}</span>
                 <div>
                   <p className="text-xs font-bold">{item.label}</p>
                   <p className="text-[10px] text-gray-400">{item.desc}</p>
@@ -431,9 +426,8 @@ export function HomePage() {
           </div>
         </div>
 
-        <footer className="mt-6 px-3 pb-4 text-center">
-          <p className="text-xs text-gray-400">© 2025 NoxyStore.com · Powered by Lootbar Reseller Network</p>
-        </footer>
+        {/* Mobile Footer */}
+        <MobileFooter />
 
         <FloatingChat />
         <BottomNav />

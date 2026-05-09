@@ -22,6 +22,8 @@ import { FeedbackPage } from "@/pages/FeedbackPage";
 import { AboutPage } from "@/pages/AboutPage";
 import { CouponsPage } from "@/pages/CouponsPage";
 import { InvitePage } from "@/pages/InvitePage";
+import { AffiliatePage } from "@/pages/AffiliatePage";
+import { ShopPage } from "@/pages/ShopPage";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore, mapSupabaseUser } from "@/stores/authStore";
 import { trackEvent } from "@/lib/analytics";
@@ -94,20 +96,17 @@ function App() {
           <Route path="/orders/:referenceId" element={<OrderTrackingPage />} />
           <Route path="/account" element={<AccountPage />} />
           <Route path="/login" element={<LoginPage />} />
-          {/* Support / Chat */}
           <Route path="/support" element={<SupportPage />} />
           <Route path="/support/ai" element={<AiSupportPage />} />
           <Route path="/support/vip" element={<VipServicePage />} />
-          {/* Balance & Passkey */}
           <Route path="/balance" element={<BalancePage />} />
           <Route path="/passkeys" element={<PasskeyPage />} />
-          {/* Feedback & About */}
           <Route path="/feedback" element={<FeedbackPage />} />
           <Route path="/about" element={<AboutPage />} />
-          {/* Coupons & Invite */}
           <Route path="/coupons" element={<CouponsPage />} />
           <Route path="/invite" element={<InvitePage />} />
-          {/* Secure admin only */}
+          <Route path="/affiliate" element={<AffiliatePage />} />
+          <Route path="/shop/:storeName" element={<ShopPage />} />
           <Route path="/secure-dashboard-92x2011" element={<AdminDashboardPage />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path="*" element={<NotFoundPage />} />

@@ -380,7 +380,7 @@ export function AccountPage() {
                 { key: "helpCenter" as DesktopSection, icon: HelpCircle, label: t("helpCenter") },
                 { key: "feedback" as DesktopSection, icon: MessageSquare, label: "Feedback" },
                 { key: "invite" as DesktopSection, icon: Gift, label: t("inviteForCoupons"), dot: true, path: "/invite" },
-                { key: "earn" as DesktopSection, icon: DollarSign, label: t("affiliateProgram"), highlight: true, path: "/invite" },
+                { key: "earn" as DesktopSection, icon: DollarSign, label: t("affiliateProgram"), highlight: true, path: "/affiliate" },
               ].map((item) => (
                 <button
                   key={item.key}
@@ -468,13 +468,34 @@ export function AccountPage() {
                 </div>
               )}
 
-              {(desktopSection === "coupon" || desktopSection === "invite" || desktopSection === "earn") && (
-                <div className="text-center py-16">
-                  <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <Package size={32} className="text-gray-300" />
+              {(desktopSection === "coupon") && (
+                <div>
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-xl font-bold text-gray-900">{t("coupons")}</h2>
+                    <button onClick={() => navigate("/coupons")} className="bg-yellow-400 hover:bg-yellow-300 text-black font-bold text-sm px-4 py-2 rounded-xl transition-colors">Manage Coupons</button>
                   </div>
-                  <p className="text-gray-500 font-medium">Coming Soon</p>
-                  <p className="text-sm text-gray-400 mt-1">This feature is under development</p>
+                  <p className="text-gray-500 text-sm mb-4">View and use your coupons at checkout. You can also redeem codes on the coupons page.</p>
+                  <div className="grid grid-cols-2 gap-4">
+                    {[0,1].map((i) => (
+                      <div key={i} className="border border-orange-100 rounded-2xl overflow-hidden">
+                        <div className="bg-gradient-to-r from-orange-50 to-yellow-50 p-4 flex items-center gap-3">
+                          <div className="w-16 h-16 bg-orange-100 rounded-xl flex items-center justify-center">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-8 h-8 text-orange-500"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+                          </div>
+                          <div>
+                            <p className="text-orange-500 font-black text-xl">{i === 0 ? "10% OFF" : "6% OFF"}</p>
+                            <p className="text-gray-500 text-xs">Max: ${i === 0 ? "10.00" : "6.00"}</p>
+                          </div>
+                        </div>
+                        <div className="border-t border-dashed border-orange-100 mx-4" />
+                        <div className="px-4 py-3 flex items-center justify-between">
+                          <p className="text-gray-400 text-sm">Expires in 14 days</p>
+                          <button onClick={() => navigate("/coupons")} className="bg-yellow-400 hover:bg-yellow-300 text-black font-bold text-xs px-4 py-1.5 rounded-lg">Use</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <button onClick={() => navigate("/coupons")} className="w-full mt-4 py-3 text-sm font-semibold text-gray-500 bg-gray-50 rounded-xl hover:bg-gray-100 border border-gray-200">View All Coupons</button>
                 </div>
               )}
             </div>
@@ -588,7 +609,7 @@ export function AccountPage() {
                 { icon: MessageCircle, label: "Live Chat Support", sub: "Get instant help", highlight: true, path: "/support/vip" },
                 { icon: MessageSquare, label: "Feedback", sub: "Report issues or suggestions", path: "/feedback" },
                 { icon: Gift, label: t("inviteForCoupons"), sub: "Unlock rich coupon rewards", highlight2: true, path: "/invite" },
-                { icon: DollarSign, label: t("affiliateProgram"), sub: "Earn up to 10% money", highlight2: true, path: "/invite" },
+                { icon: DollarSign, label: t("affiliateProgram"), sub: "Earn up to 10% money", highlight2: true, path: "/affiliate" },
                 { icon: User, label: t("aboutUs"), path: "/about" },
               ].map((item, idx) => (
                 <button
