@@ -448,4 +448,4 @@ export function LoginPage() {
     </>
   );
 }
-after Google OAuth login, update the DesktopHeader to replace the 'Sign In' button with the user avatar/nickname dropdown (same as email login), by reading auth state from useAuthStore and conditionally rendering the user menu instead of the login button.
+
