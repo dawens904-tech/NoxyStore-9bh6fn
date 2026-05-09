@@ -9,7 +9,7 @@ declare global {
   }
 }
 
-export default function MobileFooter() {
+export function MobileFooter() {
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
 
   const toggleSection = (section: string) => {

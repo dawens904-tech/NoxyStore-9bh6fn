@@ -1,7 +1,7 @@
 
 import { Link, useLocation } from 'react-router-dom';
 import { Shield, Headphones, CreditCard } from 'lucide-react';
-import MobileFooter from './MobileFooter';
+import { MobileFooter } from './MobileFooter';
 import TrustpilotReviews from '@/components/features/TrustpilotReviews';
 
 export function Footer() {
