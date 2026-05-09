@@ -21,15 +21,12 @@ export function LoginPage() {
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [password, setPassword] = useState("");
-  const [otpSent, setOtpSent] = useState(false);
 
   const handleClose = () => navigate(-1);
 
-  // Initialize Supabase auth listener
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === "SIGNED_IN" && session?.user) {
-        // Check role
         const { data: roleData } = await supabase
           .from("user_roles")
           .select("role")
@@ -38,7 +35,6 @@ export function LoginPage() {
         const role = roleData?.role || "user";
         const authUser = mapSupabaseUser(session.user, role);
         login(authUser);
-        // Sync orders from DB
         useAuthStore.getState().syncOrdersFromDB(session.user.email!);
         toast.success(`Welcome back, ${authUser.nickname}!`);
         navigate("/");
@@ -47,7 +43,6 @@ export function LoginPage() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // ─── Send OTP ─────────────────────────────────────────────────────────────
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim()) { toast.error("Please enter your email"); return; }
@@ -58,12 +53,10 @@ export function LoginPage() {
     });
     setIsLoading(false);
     if (error) { toast.error(error.message); return; }
-    setOtpSent(true);
     setView("otp");
     toast.success("Verification code sent to your email!");
   };
 
-  // ─── Verify OTP + set password ─────────────────────────────────────────────
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!otp.trim()) { toast.error("Please enter the verification code"); return; }
@@ -74,10 +67,8 @@ export function LoginPage() {
     if (isRegister) {
       setView("setPassword");
     }
-    // if login, onAuthStateChange handles it
   };
 
-  // ─── Set password after OTP ────────────────────────────────────────────────
   const handleSetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password.length < 6) { toast.error("Password must be at least 6 characters"); return; }
@@ -89,7 +80,6 @@ export function LoginPage() {
     toast.success("Account created successfully!");
   };
 
-  // ─── Email + Password login (for existing users) ───────────────────────────
   const handlePasswordLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim() || !password.trim()) { toast.error("Please fill in all fields"); return; }
@@ -105,7 +95,6 @@ export function LoginPage() {
     }
   };
 
-  // ─── Shared email form step ────────────────────────────────────────────────
   const EmailStep = () => (
     <div className="space-y-4">
       <div>
@@ -269,7 +258,6 @@ export function LoginPage() {
     </p>
   );
 
-  // ─── Desktop ───────────────────────────────────────────────────────────────
   const DesktopLogin = () => (
     <div className="hidden lg:block min-h-screen bg-[#f5f5f5]">
       <DesktopHeader />
@@ -349,7 +337,6 @@ export function LoginPage() {
     </div>
   );
 
-  // ─── Mobile ────────────────────────────────────────────────────────────────
   const MobileLogin = () => (
     <div className="lg:hidden min-h-screen">
       {view === "main" && (
@@ -440,4 +427,3 @@ export function LoginPage() {
     </>
   );
 }
-add berryxoe@gmail.com for admin email.
