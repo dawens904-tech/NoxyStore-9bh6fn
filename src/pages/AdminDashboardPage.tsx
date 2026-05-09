@@ -1675,4 +1675,5 @@ export function AdminDashboardPage() {
       </div>
     </div>
   );
-}
+ }
+ update the mobile HeroBanner component to also fetch banners from the home_banners DB table (like DesktopHeroBanner), so both mobile and desktop show the same admin-managed banners with clickable links.In the admin Product Management section, add the ability to upload a custom photo for each game that overrides the Lootbar image. Store the uploaded photo URL in game_overrides table and display it on GameCard and GameDetailPage.
