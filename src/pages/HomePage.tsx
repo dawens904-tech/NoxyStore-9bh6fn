@@ -425,4 +425,3 @@ export function HomePage() {
     </div>
   );
 }
-HELLO AI all 100game is from lootbar api or mock?.
