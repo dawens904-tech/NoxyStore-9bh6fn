@@ -1,9 +1,7 @@
 import { Shield, Award, Clock, ChevronDown, ChevronUp, Plus, Minus } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import Footer from './Footer';
 import TrustpilotReviews from '@/components/features/TrustpilotReviews';
-import { t } from '@/constants/translations';
 
 declare global {
   interface Window {
@@ -13,7 +11,6 @@ declare global {
 
 export default function MobileFooter() {
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
-  const { language } = useLanguageStore();
 
   const toggleSection = (section: string) => {
     setExpandedSection(expandedSection === section ? null : section);
@@ -36,9 +33,9 @@ export default function MobileFooter() {
   ];
 
   const serviceLinks = [
-    { name: t('aboutUs', language), href: '/about' },
-    { name: t('terms', language), href: '/terms' },
-    { name: t('privacy', language), href: '/privacy' },
+    { name: 'About Us', href: '/about' },
+    { name: 'Terms of Service', href: '/terms' },
+    { name: 'Privacy Policy', href: '/privacy' },
     { name: 'FAQ', href: '/faq' },
   ];
 
