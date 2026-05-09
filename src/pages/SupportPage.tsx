@@ -1,3 +1,4 @@
+
 /**
  * Support Page — Home tab (FAQ + Send message) and Messages tab (AI support + VIP service)
  */
