@@ -42,7 +42,7 @@ export function HeroBanner() {
   return (
     <div className="relative mx-3 rounded-2xl overflow-hidden h-44 bg-gray-900">
       {items.map((banner, idx) => {
-        const src = imgErrors[banner.id] ? "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&h=300&fit=crop" : banner.image_url;
+        const src = imgErrors[banner.id] ? "https://uzxmmddivzqjhcnnrkns.supabase.co/storage/v1/object/public/logo/hero-banner-3.jpg" : banner.image_url;
         return (
           <div
             key={banner.id}
