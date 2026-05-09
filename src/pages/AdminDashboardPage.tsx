@@ -1633,7 +1633,7 @@ export function AdminDashboardPage() {
             </div>
           )}
 
-          {/* ── API STATUS ── */
+          {/* ── API STATUS ── */}
           {section === "api" && (
             <div className="space-y-6 max-w-3xl">
               <h1 className="text-2xl font-black text-white">API Status</h1>
