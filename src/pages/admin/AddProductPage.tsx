@@ -895,3 +895,4 @@ export default function AddProductPage() {
     </div>
   );
 }
+fix this connect with real tings
