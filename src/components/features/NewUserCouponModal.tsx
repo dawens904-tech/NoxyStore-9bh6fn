@@ -69,67 +69,67 @@ export function NewUserCouponModal({ isAuthenticated }: NewUserCouponModalProps)
   const { h, m, s } = formatTime(countdown);
 
   return (
-    <div className="fixed inset-0 z-[999] flex items-end sm:items-center justify-center">
+    <div className="fixed inset-0 z-[999] flex items-center justify-center">
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={dismiss} />
 
       {/* Modal */}
-      <div className="relative z-10 w-full max-w-sm mx-4 mb-4 sm:mb-0">
+      <div className="relative z-10 w-full max-w-xs mx-5">
         {/* Chest image floating at top-right */}
-        <div className="absolute -top-20 -right-2 w-44 h-36 pointer-events-none z-20">
+        <div className="absolute -top-16 -right-2 w-32 h-28 pointer-events-none z-20">
           <img src={couponChest} alt="Reward chest" className="w-full h-full object-contain drop-shadow-2xl" />
         </div>
 
         {/* Main card */}
-        <div className="bg-[#FEF3C7] rounded-3xl overflow-hidden shadow-2xl pt-4 pb-0">
+        <div className="bg-[#FEF3C7] rounded-3xl overflow-hidden shadow-2xl pt-3 pb-0">
           {/* Coupons */}
-          <div className="px-4 space-y-3 pb-4">
+          <div className="px-3 space-y-2 pb-3">
             {/* 10% Coupon */}
             <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-yellow-100">
-              <div className="flex items-center gap-3 p-4 pb-3">
-                <img src={coupon10off} alt="10% OFF" className="w-16 h-16 rounded-xl object-cover flex-shrink-0" />
-                <div className="flex-1">
-                  <p className="text-orange-500 font-black text-xl leading-none">10% OFF <span className="text-sm font-semibold">(Max: $10.00)</span></p>
-                  <p className="text-gray-500 text-xs mt-1">Valid for orders over $0.01</p>
-                  <p className="text-gray-900 font-bold text-sm mt-0.5">New User 10% OFF Coupon</p>
+              <div className="flex items-center gap-2.5 p-3 pb-2.5">
+                <img src={coupon10off} alt="10% OFF" className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-orange-500 font-black text-base leading-none">10% OFF <span className="text-xs font-semibold">(Max: $10)</span></p>
+                  <p className="text-gray-500 text-[11px] mt-0.5">Valid for orders over $0.01</p>
+                  <p className="text-gray-900 font-bold text-xs mt-0.5 truncate">New User 10% OFF Coupon</p>
                 </div>
               </div>
-              <div className="border-t border-dashed border-yellow-200 mx-4" />
-              <div className="px-4 py-2.5 flex items-center justify-between">
-                <p className="text-gray-400 text-sm">Expires in 14 days</p>
-                <div className="w-6 h-6 bg-[#FEF3C7] rounded-full border border-yellow-200" />
+              <div className="border-t border-dashed border-yellow-200 mx-3" />
+              <div className="px-3 py-2 flex items-center justify-between">
+                <p className="text-gray-400 text-xs">Expires in 14 days</p>
+                <div className="w-5 h-5 bg-[#FEF3C7] rounded-full border border-yellow-200" />
               </div>
             </div>
 
             {/* 6% Coupon */}
             <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-yellow-100">
-              <div className="flex items-center gap-3 p-4 pb-3">
-                <img src={coupon6off} alt="6% OFF" className="w-16 h-16 rounded-xl object-cover flex-shrink-0" />
-                <div className="flex-1">
-                  <p className="text-orange-500 font-black text-xl leading-none">6% OFF <span className="text-sm font-semibold">(Max: $6.00)</span></p>
-                  <p className="text-gray-500 text-xs mt-1">Valid for orders over $0.01</p>
-                  <p className="text-gray-900 font-bold text-sm mt-0.5">New User 6% OFF Coupon</p>
+              <div className="flex items-center gap-2.5 p-3 pb-2.5">
+                <img src={coupon6off} alt="6% OFF" className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-orange-500 font-black text-base leading-none">6% OFF <span className="text-xs font-semibold">(Max: $6)</span></p>
+                  <p className="text-gray-500 text-[11px] mt-0.5">Valid for orders over $0.01</p>
+                  <p className="text-gray-900 font-bold text-xs mt-0.5 truncate">New User 6% OFF Coupon</p>
                 </div>
               </div>
-              <div className="border-t border-dashed border-yellow-200 mx-4" />
-              <div className="px-4 py-2.5 flex items-center justify-between">
-                <p className="text-gray-400 text-sm">Expires in 14 days</p>
-                <div className="w-6 h-6 bg-[#FEF3C7] rounded-full border border-yellow-200" />
+              <div className="border-t border-dashed border-yellow-200 mx-3" />
+              <div className="px-3 py-2 flex items-center justify-between">
+                <p className="text-gray-400 text-xs">Expires in 14 days</p>
+                <div className="w-5 h-5 bg-[#FEF3C7] rounded-full border border-yellow-200" />
               </div>
             </div>
           </div>
 
           {/* Countdown */}
-          <div className="flex items-center justify-center gap-3 py-3 bg-white/60">
-            <span className="text-gray-600 text-sm font-medium">Countdown</span>
+          <div className="flex items-center justify-center gap-2 py-2.5 bg-white/60">
+            <span className="text-gray-600 text-xs font-medium">Countdown</span>
             {[
               { val: String(h).padStart(2, "0"), label: "h" },
               { val: String(m).padStart(2, "0"), label: "m" },
               { val: String(s).padStart(2, "0"), label: "s" },
             ].map((item, idx) => (
-              <div key={idx} className="flex items-center gap-1.5">
-                {idx > 0 && <span className="text-gray-700 font-bold text-lg">:</span>}
-                <div className="bg-gray-900 text-white font-black text-lg w-10 h-9 rounded-lg flex items-center justify-center tabular-nums">
+              <div key={idx} className="flex items-center gap-1">
+                {idx > 0 && <span className="text-gray-700 font-bold text-base">:</span>}
+                <div className="bg-gray-900 text-white font-black text-base w-9 h-8 rounded-lg flex items-center justify-center tabular-nums">
                   {item.val}
                 </div>
               </div>
@@ -137,15 +137,15 @@ export function NewUserCouponModal({ isAuthenticated }: NewUserCouponModalProps)
           </div>
 
           {/* Sign up text */}
-          <p className="text-center text-gray-600 text-sm py-2 font-medium">Sign up to get Coupon</p>
+          <p className="text-center text-gray-600 text-xs py-1.5 font-medium">Sign up to get Coupon</p>
 
           {/* Collect button */}
           <button
             onClick={handleCollect}
-            className="w-full bg-gray-900 hover:bg-gray-800 text-white font-black text-base py-5 transition-colors flex items-center justify-center gap-3"
+            className="w-full bg-gray-900 hover:bg-gray-800 text-white font-black text-sm py-4 transition-colors flex items-center justify-center gap-2"
           >
             COLLECT COUPON
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <path d="M5 12h14M12 5l7 7-7 7" />
             </svg>
           </button>
@@ -154,12 +154,12 @@ export function NewUserCouponModal({ isAuthenticated }: NewUserCouponModalProps)
         {/* Close button */}
         <button
           onClick={dismiss}
-          className="absolute -bottom-14 left-1/2 -translate-x-1/2 w-11 h-11 bg-white/20 border-2 border-white/40 rounded-full flex items-center justify-center text-white hover:bg-white/30 transition-colors"
+          className="absolute -bottom-12 left-1/2 -translate-x-1/2 w-10 h-10 bg-white/20 border-2 border-white/40 rounded-full flex items-center justify-center text-white hover:bg-white/30 transition-colors"
         >
-          <X size={20} />
+          <X size={18} />
         </button>
       </div>
     </div>
   );
 }
-make its more small in center in mobile.
+
