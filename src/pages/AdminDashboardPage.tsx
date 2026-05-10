@@ -58,7 +58,10 @@ export function AdminDashboardPage() {
   const [isSavingCoupon, setIsSavingCoupon] = useState(false);
   const [allGamesForProducts, setAllGamesForProducts] = useState<Array<{ game_id: string; game_name: string; game_image: string; category: string }>>([]);
   const [productSearchQuery, setProductSearchQuery] = useState("");
-  const [editingProduct, setEditingProduct] = useState<{ game_id: string; custom_price: string; category_override: string; is_featured: boolean; is_hidden: boolean } | null>(null);
+  const [editingProduct, setEditingProduct] = useState<{ game_id: string; custom_price: string; category_override: string; is_featured: boolean; is_hidden: boolean; custom_image_url: string } | null>(null);
+  const [productImageFile, setProductImageFile] = useState<File | null>(null);
+  const [productImagePreview, setProductImagePreview] = useState("");
+  const [isUploadingProductImg, setIsUploadingProductImg] = useState(false);
   const [chatSessions, setChatSessions] = useState<Array<{ id: string; user_email: string; status: string; updated_at: string }>>([]);
   const [activeChatSession, setActiveChatSession] = useState<string | null>(null);
   const [chatMessages, setChatMessages] = useState<Array<{ id: string; sender: string; content: string; image_url?: string; created_at: string }>>([]);
@@ -85,6 +88,7 @@ export function AdminDashboardPage() {
   const loadMarkup = async () => { const { data } = await supabase.from("markup_settings").select("markup_percent").eq("id", 1).single(); if (data) { setMarkup(Number(data.markup_percent)); setMarkupInput(String(data.markup_percent)); } };
   const saveMarkup = async () => { const val = parseFloat(markupInput); if (isNaN(val) || val < 0 || val > 100) { toast.error("Markup must be 0–100%"); return; } setIsSavingMarkup(true); await supabase.from("markup_settings").upsert({ id: 1, markup_percent: val, updated_at: new Date().toISOString() }); setIsSavingMarkup(false); setMarkup(val); toast.success(`Markup set to ${val}%`); };
   const loadSections = async () => { const { data } = await supabase.from("home_sections").select("*").order("sort_order"); if (data) setHomeSections(data as HomeSection[]); };
+  const allRealGames = allGamesForProducts.length > 0 ? allGamesForProducts : MOCK_GAMES.map(g => ({ game_id: g.game_id, game_name: g.game_name, game_image: g.game_image || "", category: g.category || "Top Up" }));
   const saveSection = async (sec: HomeSection) => { await supabase.from("home_sections").upsert({ id: sec.id, section_name: sec.section_name, section_key: sec.section_key, sort_order: sec.sort_order, is_active: sec.is_active, game_ids: sec.game_ids, updated_at: new Date().toISOString() }); toast.success("Section saved!"); setEditingSection(null); loadSections(); };
   const createSection = async () => { if (!newSectionName.trim()) return; const key = newSectionName.toLowerCase().replace(/\s+/g, "_"); await supabase.from("home_sections").insert({ section_name: newSectionName, section_key: key, sort_order: homeSections.length + 1, is_active: true, game_ids: [] }); setNewSectionName(""); toast.success("Section created!"); loadSections(); };
   const deleteSection = async (id: string) => { await supabase.from("home_sections").delete().eq("id", id); toast.success("Section deleted"); loadSections(); };
@@ -121,8 +125,38 @@ export function AdminDashboardPage() {
   const createAdminCoupon = async () => { if (!newCouponCode.trim() || !newCouponValue) { toast.error("Fill all fields"); return; } setIsSavingCoupon(true); const { error } = await supabase.from("admin_redeem_codes").insert({ code: newCouponCode.trim().toUpperCase(), type: newCouponType, value: parseFloat(newCouponValue), max_uses: parseInt(newCouponMaxUses) || 100, is_active: true, created_by: user?.email }); setIsSavingCoupon(false); if (error) { toast.error("Failed: " + error.message); return; } toast.success("Coupon code created!"); setNewCouponCode(""); setNewCouponValue(""); setNewCouponMaxUses("100"); loadAdminCoupons(); };
   const toggleCouponActive = async (id: string, current: boolean) => { await supabase.from("admin_redeem_codes").update({ is_active: !current }).eq("id", id); loadAdminCoupons(); };
   const deleteCoupon = async (id: string) => { await supabase.from("admin_redeem_codes").delete().eq("id", id); toast.success("Coupon deleted"); loadAdminCoupons(); };
-  const loadGamesForProducts = async () => { const { data } = await supabase.from("games_cache").select("game_id, game_name, game_image, category").order("game_name"); if (data && data.length > 0) setAllGamesForProducts(data); else setAllGamesForProducts(MOCK_GAMES.map(g => ({ game_id: g.game_id, game_name: g.game_name, game_image: g.game_image || "", category: g.category || "Top Up" }))); };
-  const saveProductOverride = async (gameId: string, updates: any) => { await supabase.from("game_overrides").upsert({ game_id: gameId, ...updates, updated_at: new Date().toISOString() }); toast.success("Product updated!"); setEditingProduct(null); };
+  const loadGamesForProducts = async () => {
+    const { data } = await supabase.from("games_cache").select("game_id, game_name, game_image, category").order("game_name");
+    if (data && data.length > 0) {
+      setAllGamesForProducts(data);
+    } else {
+      try {
+        const games = await lootbarApi.getGames(1, 200);
+        setAllGamesForProducts(games.map(g => ({ game_id: g.game_id, game_name: g.game_name, game_image: g.game_image || "", category: g.category || "Top Up" })));
+      } catch {
+        setAllGamesForProducts(MOCK_GAMES.map(g => ({ game_id: g.game_id, game_name: g.game_name, game_image: g.game_image || "", category: g.category || "Top Up" })));
+      }
+    }
+  };
+  const saveProductOverride = async (gameId: string, updates: Record<string, unknown>) => {
+    if (productImageFile) {
+      setIsUploadingProductImg(true);
+      const ext = productImageFile.name.split(".").pop();
+      const path = `game_${gameId}_${Date.now()}.${ext}`;
+      const { error: uploadErr } = await supabase.storage.from("store-assets").upload(path, productImageFile, { upsert: true, contentType: productImageFile.type });
+      if (uploadErr) { toast.error("Image upload failed: " + uploadErr.message); setIsUploadingProductImg(false); return; }
+      const { data: urlData } = supabase.storage.from("store-assets").getPublicUrl(path);
+      updates.custom_image_url = urlData.publicUrl;
+      await supabase.from("games_cache").update({ game_image: urlData.publicUrl }).eq("game_id", gameId);
+      setIsUploadingProductImg(false);
+    }
+    await supabase.from("game_overrides").upsert({ game_id: gameId, ...updates, updated_at: new Date().toISOString() });
+    toast.success("Product updated!");
+    setEditingProduct(null);
+    setProductImageFile(null);
+    setProductImagePreview("");
+    loadGamesForProducts();
+  };
   const loadChatSessions = async () => { const { data } = await supabase.from("chat_sessions").select("*").in("status", ["waiting", "live", "ai"]).order("updated_at", { ascending: false }); if (data) setChatSessions(data); };
   const loadChatMessages = async (sessionId: string) => { const { data } = await supabase.from("chat_messages").select("*").eq("session_id", sessionId).order("created_at", { ascending: true }); if (data) setChatMessages(data); };
   const joinChatSession = async (sessionId: string) => { setActiveChatSession(sessionId); await supabase.from("chat_sessions").update({ status: "live", admin_email: user?.email, admin_joined_at: new Date().toISOString() }).eq("id", sessionId); await loadChatMessages(sessionId); await supabase.from("chat_messages").insert({ session_id: sessionId, sender: "admin", content: "A support agent has joined the chat. How can I help you?" }); await loadChatMessages(sessionId); toast.success("Joined chat session"); };
@@ -311,12 +345,13 @@ export function AdminDashboardPage() {
                     <div className="border-t border-white/10 pt-4">
                       <p className="text-sm font-semibold text-gray-300 mb-3">Select games for this section:</p>
                       <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto">
-                        {MOCK_GAMES.map((game) => {
+                        {allRealGames.map((game) => {
                           const isIn = editingSection.game_ids.includes(game.game_id);
                           return (
                             <button key={game.game_id} onClick={() => { const newIds = isIn ? editingSection.game_ids.filter((id) => id !== game.game_id) : [...editingSection.game_ids, game.game_id]; setEditingSection({ ...editingSection, game_ids: newIds }); }} className={`flex items-center gap-2 p-2.5 rounded-xl border text-left text-sm transition-all ${isIn ? "border-yellow-400/50 bg-yellow-400/10 text-yellow-300" : "border-white/10 text-gray-400 hover:border-white/20"}`}>
                               <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 ${isIn ? "bg-yellow-400" : "bg-white/10"}`}>{isIn && <Check size={10} className="text-black" />}</div>
-                              <span className="truncate">{game.game_name}</span>
+                              <img src={game.game_image} alt="" className="w-5 h-5 rounded object-cover flex-shrink-0" onError={(e) => { (e.target as HTMLImageElement).style.display="none"; }} />
+                              <span className="truncate text-xs">{game.game_name}</span>
                             </button>
                           );
                         })}
@@ -589,11 +624,20 @@ export function AdminDashboardPage() {
                       <div className="px-5 py-4 flex items-center gap-4">
                         <img src={game.game_image} alt={game.game_name} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=48&h=48&fit=crop"; }} />
                         <div className="flex-1"><p className="text-sm font-bold text-white">{game.game_name}</p><p className="text-xs text-gray-500">ID: {game.game_id} · {game.category}</p></div>
-                        <button onClick={() => setEditingProduct(editingProduct?.game_id === game.game_id ? null : { game_id: game.game_id, custom_price: "", category_override: game.category || "Top Up", is_featured: false, is_hidden: false })} className="flex items-center gap-1.5 bg-white/10 hover:bg-white/15 text-white text-xs font-semibold px-3 py-2 rounded-xl transition-colors"><Edit2 size={12} /> Edit</button>
+                        <button onClick={() => setEditingProduct(editingProduct?.game_id === game.game_id ? null : { game_id: game.game_id, custom_price: "", category_override: game.category || "Top Up", is_featured: false, is_hidden: false, custom_image_url: game.game_image || "" })} className="flex items-center gap-1.5 bg-white/10 hover:bg-white/15 text-white text-xs font-semibold px-3 py-2 rounded-xl transition-colors"><Edit2 size={12} /> Edit</button>
                       </div>
                       {editingProduct?.game_id === game.game_id && (
                         <div className="px-5 pb-4 bg-white/3 border-t border-white/5">
-                          <div className="grid grid-cols-2 gap-3 mt-3">
+                          <div className="col-span-2 mt-3">
+                              <label className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2 block">Custom Photo (overrides Lootbar image)</label>
+                              <div className="flex items-center gap-3">
+                                <img src={productImagePreview || game.game_image} alt="" className="w-14 h-14 rounded-xl object-cover bg-gray-800" onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=56&h=56&fit=crop"; }} />
+                                <label className="flex items-center gap-2 cursor-pointer bg-white/10 hover:bg-white/15 text-white font-semibold px-3 py-2 rounded-xl text-xs">
+                                  <Upload size={12} /> {productImageFile ? productImageFile.name.slice(0,20) : "Upload Custom Photo"}
+                                  <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (!f) return; setProductImageFile(f); const r = new FileReader(); r.onload = (ev) => setProductImagePreview(ev.target?.result as string); r.readAsDataURL(f); }} />
+                                </label>
+                              </div>
+                            </div>
                             <div><label className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1 block">Custom Price ($ override)</label><input type="number" value={editingProduct.custom_price} onChange={(e) => setEditingProduct({ ...editingProduct, custom_price: e.target.value })} placeholder="Leave empty = use Lootbar price" className="w-full bg-[#0f0f0f] border border-white/20 text-white rounded-xl px-4 py-2.5 text-sm outline-none focus:border-yellow-400" /></div>
                             <div><label className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1 block">Category Override</label><select value={editingProduct.category_override} onChange={(e) => setEditingProduct({ ...editingProduct, category_override: e.target.value })} className="w-full bg-[#0f0f0f] border border-white/20 text-white rounded-xl px-4 py-2.5 text-sm outline-none focus:border-yellow-400">{CATEGORIES.filter(c => c !== "All").map(cat => <option key={cat} value={cat}>{cat}</option>)}</select></div>
                           </div>

@@ -53,7 +53,7 @@ export function Header({ showMenu, title, showBack }: HeaderProps) {
 
           <div className="flex items-center gap-2">
             <button
-              onClick={() => navigate("/categories")}
+              onClick={() => navigate("/search")}
               className="text-white p-1"
             >
               <Search size={20} />

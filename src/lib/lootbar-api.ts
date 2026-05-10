@@ -49,25 +49,24 @@ async function isBackendAvailable(): Promise<boolean> {
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 export const lootbarApi = {
-  async getGames(pageNum = 1, pageSize = 100): Promise<LootbarGame[]> {
+  async getGames(pageNum = 1, pageSize = 200): Promise<LootbarGame[]> {
     try {
       const available = await isBackendAvailable();
       if (!available) throw new Error("backend unavailable");
-      const res = await callProxy<{ status: string; data: { items: Array<{ game_id: string; game_name: string }> } }>(
+      const res = await callProxy<{ status: string; data: { items: Array<{ game_id: string; game_name: string; game_image?: string; category?: string; rating?: number; sold_count?: string; is_hot?: boolean; discount?: number }> } }>(
         "get_games", { page_num: pageNum, page_size: pageSize }
       );
       if (res.status !== "ok") throw new Error("API returned error");
       return res.data.items.map((g) => {
-        const mockMatch = MOCK_GAMES.find((m) => m.game_id === g.game_id);
         return {
           game_id: g.game_id,
           game_name: g.game_name,
-          game_image: mockMatch?.game_image ?? `https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&h=400&fit=crop&game=${g.game_id}`,
-          category: mockMatch?.category ?? "Top Up",
-          rating: mockMatch?.rating ?? 5.0,
-          sold_count: mockMatch?.sold_count ?? "10k+",
-          is_hot: mockMatch?.is_hot ?? false,
-          discount: mockMatch?.discount ?? 0,
+          game_image: g.game_image || `https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&h=400&fit=crop&sig=${g.game_id}`,
+          category: g.category || "Top Up",
+          rating: g.rating || 5.0,
+          sold_count: g.sold_count || "10k+ Sold",
+          is_hot: g.is_hot ?? false,
+          discount: g.discount ?? 0,
         };
       });
     } catch (e) {

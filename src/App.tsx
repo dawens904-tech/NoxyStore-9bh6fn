@@ -24,6 +24,7 @@ import { CouponsPage } from "@/pages/CouponsPage";
 import { InvitePage } from "@/pages/InvitePage";
 import { AffiliatePage } from "@/pages/AffiliatePage";
 import { ShopPage } from "@/pages/ShopPage";
+import { SearchPage } from "@/pages/SearchPage";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore, mapSupabaseUser } from "@/stores/authStore";
 import { trackEvent } from "@/lib/analytics";
@@ -108,6 +109,7 @@ function App() {
           <Route path="/affiliate" element={<AffiliatePage />} />
           <Route path="/shop/:storeName" element={<ShopPage />} />
           <Route path="/secure-dashboard-92x2011" element={<AdminDashboardPage />} />
+          <Route path="/search" element={<SearchPage />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
