@@ -24,6 +24,9 @@ import { InvitePage } from "@/pages/InvitePage";
 import { AffiliatePage } from "@/pages/AffiliatePage";
 import { ShopPage } from "@/pages/ShopPage";
 import { SearchPage } from "@/pages/SearchPage";
+import { PrivacyPage } from "@/pages/PrivacyPage";
+import { TermsPage } from "@/pages/TermsPage";
+import { CookiePage } from "@/pages/CookiePage";
 // Admin pages — each is its own dedicated page
 import { AdminDashboardPage } from "@/pages/admin/AdminDashboardPage";
 import { AdminOrdersPage } from "@/pages/admin/AdminOrdersPage";
@@ -124,6 +127,9 @@ function App() {
           <Route path="/shop/:storeName" element={<ShopPage />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/cart" element={<CartPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/terms" element={<TermsPage />} />
+          <Route path="/cookies" element={<CookiePage />} />
 
           {/* Admin routes — each section is its own page */}
           <Route path="/admin" element={<AdminDashboardPage />} />

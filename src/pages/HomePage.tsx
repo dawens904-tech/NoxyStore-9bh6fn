@@ -483,4 +483,3 @@ export function HomePage() {
     </div>
   );
 }
-create privacy page,terms page,cookie page in the multi language lan and make it more long long no short and create it in html.
