@@ -450,3 +450,4 @@ export function HomePage() {
   );
 }
 
+fix chak section gen 3 list 3items example premier an gen 3 row same 2em rive 3 and view more anba nn mitanl please looks this photo fetch:https://files.catbox.moe/ktnh5k.jpeg.
