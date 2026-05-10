@@ -239,4 +239,3 @@ export function AllGamesPage() {
     </div>
   );
 }
-add real edit photo product fix it.
