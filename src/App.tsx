@@ -9,7 +9,6 @@ import { VerifyPlayerPage } from "@/pages/VerifyPlayerPage";
 import { CheckoutPage } from "@/pages/CheckoutPage";
 import { AccountPage } from "@/pages/AccountPage";
 import { LoginPage } from "@/pages/LoginPage";
-import { AdminDashboardPage } from "@/pages/AdminDashboardPage";
 import { OrderTrackingPage } from "@/pages/OrderTrackingPage";
 import { CartPage } from "@/pages/CartPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
@@ -25,6 +24,20 @@ import { InvitePage } from "@/pages/InvitePage";
 import { AffiliatePage } from "@/pages/AffiliatePage";
 import { ShopPage } from "@/pages/ShopPage";
 import { SearchPage } from "@/pages/SearchPage";
+// Admin pages — each is its own dedicated page
+import { AdminDashboardPage } from "@/pages/admin/AdminDashboardPage";
+import { AdminOrdersPage } from "@/pages/admin/AdminOrdersPage";
+import { AdminLiveChatPage } from "@/pages/admin/AdminLiveChatPage";
+import { AdminMarkupPage } from "@/pages/admin/AdminMarkupPage";
+import { AdminCouponsPage } from "@/pages/admin/AdminCouponsPage";
+import { AdminBannersPage } from "@/pages/admin/AdminBannersPage";
+import { AdminProductsPage } from "@/pages/admin/AdminProductsPage";
+import { AdminAddProductPage } from "@/pages/admin/AdminAddProductPage";
+import { AdminHomeSectionsPage } from "@/pages/admin/AdminHomeSectionsPage";
+import { AdminRolesPage } from "@/pages/admin/AdminRolesPage";
+import { AdminCategoriesPage } from "@/pages/admin/AdminCategoriesPage";
+import { AdminAnalyticsPage } from "@/pages/admin/AdminAnalyticsPage";
+import { AdminApiStatusPage } from "@/pages/admin/AdminApiStatusPage";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore, mapSupabaseUser } from "@/stores/authStore";
 import { trackEvent } from "@/lib/analytics";
@@ -88,6 +101,7 @@ function App() {
       <AuthInitializer />
       <div className="min-h-screen bg-[#f5f5f5]">
         <Routes>
+          {/* Public routes */}
           <Route path="/" element={<HomePage />} />
           <Route path="/categories" element={<CategoriesPage />} />
           <Route path="/games" element={<AllGamesPage />} />
@@ -108,9 +122,27 @@ function App() {
           <Route path="/invite" element={<InvitePage />} />
           <Route path="/affiliate" element={<AffiliatePage />} />
           <Route path="/shop/:storeName" element={<ShopPage />} />
-          <Route path="/secure-dashboard-92x2011" element={<AdminDashboardPage />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/cart" element={<CartPage />} />
+
+          {/* Admin routes — each section is its own page */}
+          <Route path="/admin" element={<AdminDashboardPage />} />
+          <Route path="/admin/orders" element={<AdminOrdersPage />} />
+          <Route path="/admin/livechat" element={<AdminLiveChatPage />} />
+          <Route path="/admin/markup" element={<AdminMarkupPage />} />
+          <Route path="/admin/coupons" element={<AdminCouponsPage />} />
+          <Route path="/admin/banners" element={<AdminBannersPage />} />
+          <Route path="/admin/products" element={<AdminProductsPage />} />
+          <Route path="/admin/add-product" element={<AdminAddProductPage />} />
+          <Route path="/admin/sections" element={<AdminHomeSectionsPage />} />
+          <Route path="/admin/roles" element={<AdminRolesPage />} />
+          <Route path="/admin/categories" element={<AdminCategoriesPage />} />
+          <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
+          <Route path="/admin/api-status" element={<AdminApiStatusPage />} />
+
+          {/* Legacy admin route redirect compatibility */}
+          <Route path="/secure-dashboard-92x2011" element={<AdminDashboardPage />} />
+
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </div>
