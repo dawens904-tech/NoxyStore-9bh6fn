@@ -628,16 +628,17 @@ export function AdminDashboardPage() {
                       </div>
                       {editingProduct?.game_id === game.game_id && (
                         <div className="px-5 pb-4 bg-white/3 border-t border-white/5">
-                          <div className="col-span-2 mt-3">
-                              <label className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2 block">Custom Photo (overrides Lootbar image)</label>
-                              <div className="flex items-center gap-3">
-                                <img src={productImagePreview || game.game_image} alt="" className="w-14 h-14 rounded-xl object-cover bg-gray-800" onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=56&h=56&fit=crop"; }} />
-                                <label className="flex items-center gap-2 cursor-pointer bg-white/10 hover:bg-white/15 text-white font-semibold px-3 py-2 rounded-xl text-xs">
-                                  <Upload size={12} /> {productImageFile ? productImageFile.name.slice(0,20) : "Upload Custom Photo"}
-                                  <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (!f) return; setProductImageFile(f); const r = new FileReader(); r.onload = (ev) => setProductImagePreview(ev.target?.result as string); r.readAsDataURL(f); }} />
-                                </label>
-                              </div>
+                          <div className="mt-3 mb-3">
+                            <label className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2 block">Custom Photo (overrides Lootbar image)</label>
+                            <div className="flex items-center gap-3">
+                              <img src={productImagePreview || game.game_image} alt="" className="w-14 h-14 rounded-xl object-cover bg-gray-800" onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=56&h=56&fit=crop"; }} />
+                              <label className="flex items-center gap-2 cursor-pointer bg-white/10 hover:bg-white/15 text-white font-semibold px-3 py-2 rounded-xl text-xs">
+                                <Upload size={12} /> {productImageFile ? productImageFile.name.slice(0, 20) : "Upload Custom Photo"}
+                                <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (!f) return; setProductImageFile(f); const r = new FileReader(); r.onload = (ev) => setProductImagePreview(ev.target?.result as string); r.readAsDataURL(f); }} />
+                              </label>
                             </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3 mb-3">
                             <div><label className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1 block">Custom Price ($ override)</label><input type="number" value={editingProduct.custom_price} onChange={(e) => setEditingProduct({ ...editingProduct, custom_price: e.target.value })} placeholder="Leave empty = use Lootbar price" className="w-full bg-[#0f0f0f] border border-white/20 text-white rounded-xl px-4 py-2.5 text-sm outline-none focus:border-yellow-400" /></div>
                             <div><label className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1 block">Category Override</label><select value={editingProduct.category_override} onChange={(e) => setEditingProduct({ ...editingProduct, category_override: e.target.value })} className="w-full bg-[#0f0f0f] border border-white/20 text-white rounded-xl px-4 py-2.5 text-sm outline-none focus:border-yellow-400">{CATEGORIES.filter(c => c !== "All").map(cat => <option key={cat} value={cat}>{cat}</option>)}</select></div>
                           </div>
