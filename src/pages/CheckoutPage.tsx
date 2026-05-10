@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { CheckCircle, XCircle, Loader2, ArrowLeft, Edit2, Shield, CreditCard } from "lucide-react";
 import { lootbarApi } from "@/lib/lootbar-api";
@@ -500,4 +500,4 @@ export function CheckoutPage() {
   );
 }
 
-fix this also add language multi support on all page
+
