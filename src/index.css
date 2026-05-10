@@ -124,6 +124,16 @@
   .order-state-7 { @apply text-gray-500 bg-gray-50; }
 }
 
+@keyframes scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-scroll {
+  animation: scroll 18s linear infinite;
+}
+
+
 @layer utilities {
   .text-brand { color: hsl(var(--color-brand)); }
   .text-discount { color: hsl(var(--color-discount)); }
