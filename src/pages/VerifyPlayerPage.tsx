@@ -2,10 +2,11 @@
  * VerifyPlayerPage — User enters their game UID/Player ID before checkout.
  * Flow: GameDetail → VerifyPlayer → Checkout (after payment) → Create Lootbar Order
  * Server Region field uses a bottom-sheet picker matching the Order Information modal design.
+ * Free Fire UIDs are validated live via gameskinbo API (fallback to Lootbar on error).
  */
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { X, CheckCircle, Shield, ChevronDown } from "lucide-react";
+import { X, CheckCircle, Shield, ChevronDown, Loader2, UserCircle2 } from "lucide-react";
 import type { LootbarGame, SkuItem } from "@/types";
 
 interface LocationState {
@@ -21,6 +22,44 @@ export function VerifyPlayerPage() {
 
   const [extraInfo, setExtraInfo] = useState<Record<string, string>>({});
   const [activeSheet, setActiveSheet] = useState<string | null>(null); // field.name of the open sheet
+
+  // Free Fire player lookup state
+  const [ffPlayer, setFfPlayer] = useState<{ name: string; level: number } | null>(null);
+  const [ffLookupLoading, setFfLookupLoading] = useState(false);
+  const [ffLookupError, setFfLookupError] = useState<string | null>(null);
+
+  const isFreeFire = state?.game?.game_name?.toLowerCase().includes("free fire") ||
+    state?.game?.game_name?.toLowerCase().includes("freefire");
+
+  const lookupFreeFirePlayer = useCallback(async (uid: string) => {
+    if (!uid || uid.length < 6) {
+      setFfPlayer(null);
+      setFfLookupError(null);
+      return;
+    }
+    setFfLookupLoading(true);
+    setFfPlayer(null);
+    setFfLookupError(null);
+    try {
+      const res = await fetch(
+        `https://api.gameskinbo.com/ff-info/get?uid=${uid}`,
+        { headers: { "x-api-key": "2UvYv6OOhwFlujpc4AMFVjEW7Bkl2S6ZTmnx2uAn5EY" } }
+      );
+      if (!res.ok) throw new Error("not_found");
+      const data = await res.json();
+      const accountName = data?.AccountInfo?.AccountName;
+      const accountLevel = data?.AccountInfo?.AccountLevel;
+      if (accountName) {
+        setFfPlayer({ name: accountName, level: accountLevel || 0 });
+      } else {
+        setFfLookupError("Player not found");
+      }
+    } catch {
+      setFfLookupError("Could not verify UID");
+    } finally {
+      setFfLookupLoading(false);
+    }
+  }, []);
 
   if (!state?.sku || !state?.game) {
     return (
@@ -112,15 +151,50 @@ export function VerifyPlayerPage() {
                 <input
                   type="text"
                   value={extraInfo[field.name] || ""}
-                  onChange={(e) => setExtraInfo((prev) => ({ ...prev, [field.name]: e.target.value }))}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setExtraInfo((prev) => ({ ...prev, [field.name]: val }));
+                    if (field.name === "uid" && isFreeFire) {
+                      // Debounce: trigger lookup after user stops typing
+                      clearTimeout((window as any).__ffLookupTimer);
+                      (window as any).__ffLookupTimer = setTimeout(() => lookupFreeFirePlayer(val.trim()), 600);
+                    }
+                  }}
                   placeholder={field.placeholder || `Please fill in the game ${field.title}`}
                   className="w-full bg-gray-50 border-2 border-gray-200 rounded-2xl px-4 py-4 text-base text-gray-900 outline-none focus:ring-0 focus:border-yellow-400 transition-colors"
                 />
               </div>
             )}
 
-            {/* Verification badge for UID */}
-            {field.name === "uid" && extraInfo[field.name]?.trim() && (
+            {/* Free Fire player lookup badge */}
+            {field.name === "uid" && isFreeFire && (
+              <>
+                {ffLookupLoading && (
+                  <div className="mt-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 flex items-center gap-2">
+                    <Loader2 size={15} className="text-yellow-500 animate-spin flex-shrink-0" />
+                    <p className="text-sm text-gray-600">Looking up player info…</p>
+                  </div>
+                )}
+                {ffPlayer && !ffLookupLoading && (
+                  <div className="mt-2 bg-green-50 border border-green-200 rounded-xl px-3 py-2.5 flex items-center gap-2">
+                    <CheckCircle size={16} className="text-green-500 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-bold text-green-800">{ffPlayer.name}</p>
+                      <p className="text-xs text-green-600">Level {ffPlayer.level} · Verified</p>
+                    </div>
+                  </div>
+                )}
+                {ffLookupError && !ffLookupLoading && extraInfo[field.name]?.trim() && (
+                  <div className="mt-2 bg-yellow-50 border border-yellow-200 rounded-xl px-3 py-2.5 flex items-center gap-2">
+                    <UserCircle2 size={16} className="text-yellow-600 flex-shrink-0" />
+                    <p className="text-sm text-yellow-700">UID entered — please double-check before proceeding</p>
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Generic verification badge for non-FF UID */}
+            {field.name === "uid" && !isFreeFire && extraInfo[field.name]?.trim() && (
               <div className="mt-2 bg-green-50 border border-green-200 rounded-xl px-3 py-2.5 flex items-start gap-2">
                 <CheckCircle size={16} className="text-green-500 mt-0.5 flex-shrink-0" />
                 <p className="text-sm text-green-700">The account has successful top-ups before, feel free to continue your purchase</p>
@@ -236,4 +310,3 @@ export function VerifyPlayerPage() {
     </div>
   );
 }
-for free fire id enter allow real fetch gane name,lvl via:https://api.gameskinbo.com api key:2UvYv6OOhwFlujpc4AMFVjEW7Bkl2S6ZTmnx2uAn5EY read this https://api.gameskinbo.com/documentation if api fail error just use lootbar
