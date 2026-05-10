@@ -464,3 +464,4 @@ export function HomePage() {
     </div>
   );
 }
+when click view more its show other product in the home page lap show and si gen more show more show more after lel rive limit show less li close tout more yo
