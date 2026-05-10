@@ -236,3 +236,4 @@ export function VerifyPlayerPage() {
     </div>
   );
 }
+for free fire id enter allow real fetch gane name,lvl via:https://api.gameskinbo.com api key:2UvYv6OOhwFlujpc4AMFVjEW7Bkl2S6ZTmnx2uAn5EY read this https://api.gameskinbo.com/documentation if api fail error just use lootbar
