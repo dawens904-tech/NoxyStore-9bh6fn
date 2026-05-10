@@ -131,6 +131,11 @@ export function HomePage() {
       .filter(Boolean) as LootbarGame[];
   };
 
+  const [hotExpanded, setHotExpanded] = useState(false);
+  const [discountExpanded, setDiscountExpanded] = useState(false);
+  const [newExpanded, setNewExpanded] = useState(false);
+  const [giftExpanded, setGiftExpanded] = useState(false);
+
   const hotGames = games.filter((g) => g.is_hot).slice(0, 6);
   const discountGames = games.filter((g) => g.discount && g.discount > 0);
   // New games = latest by sort order (last added)
@@ -372,10 +377,15 @@ export function HomePage() {
             </button>
           </div>
           <div className="grid grid-cols-3 gap-3">
-            {isLoading ? <GameCardSkeleton count={3} /> : hotGames.slice(0, 3).map((game) => <GameCard key={game.game_id} game={game} size="sm" />)}
+            {isLoading
+              ? <GameCardSkeleton count={hotExpanded ? 9 : 3} />
+              : hotGames.concat(games.slice(0, 9 - hotGames.length)).slice(0, hotExpanded ? 9 : 3).map((game) => <GameCard key={game.game_id} game={game} size="sm" />)}
           </div>
-          <button onClick={() => navigate("/categories")} className="w-full mt-3 py-2.5 text-sm font-semibold text-gray-600 bg-white rounded-xl border border-gray-200 hover:bg-gray-50">
-            View More
+          <button
+            onClick={() => setHotExpanded((v) => !v)}
+            className="w-full mt-3 py-2.5 text-sm font-semibold text-gray-600 bg-white rounded-xl border border-gray-200 hover:bg-gray-50"
+          >
+            {hotExpanded ? "Show Less ▲" : "View More ▼"}
           </button>
         </div>
 
@@ -386,10 +396,13 @@ export function HomePage() {
               <button onClick={() => navigate("/categories")} className="flex items-center gap-1 text-xs text-gray-500 font-medium">All <ChevronRight size={12} /></button>
             </div>
             <div className="grid grid-cols-3 gap-3">
-              {discountGames.slice(0, 3).map((game) => <GameCard key={game.game_id} game={game} size="sm" />)}
+              {discountGames.slice(0, discountExpanded ? 9 : 3).map((game) => <GameCard key={game.game_id} game={game} size="sm" />)}
             </div>
-            <button onClick={() => navigate("/categories")} className="w-full mt-3 py-2.5 text-sm font-semibold text-gray-600 bg-white rounded-xl border border-gray-200 hover:bg-gray-50">
-              View More
+            <button
+              onClick={() => setDiscountExpanded((v) => !v)}
+              className="w-full mt-3 py-2.5 text-sm font-semibold text-gray-600 bg-white rounded-xl border border-gray-200 hover:bg-gray-50"
+            >
+              {discountExpanded ? "Show Less ▲" : "View More ▼"}
             </button>
           </div>
         )}
@@ -402,12 +415,15 @@ export function HomePage() {
               <button onClick={() => navigate("/categories")} className="flex items-center gap-1 text-xs text-gray-500 font-medium">All <ChevronRight size={12} /></button>
             </div>
             <div className="grid grid-cols-3 gap-3">
-              {newGames.slice(0, 3).map((game) => (
+              {newGames.slice(0, newExpanded ? 9 : 3).map((game) => (
                 <GameCard key={game.game_id} game={game} size="sm" />
               ))}
             </div>
-            <button onClick={() => navigate("/categories")} className="w-full mt-3 py-2.5 text-sm font-semibold text-gray-600 bg-white rounded-xl border border-gray-200 hover:bg-gray-50">
-              View More
+            <button
+              onClick={() => setNewExpanded((v) => !v)}
+              className="w-full mt-3 py-2.5 text-sm font-semibold text-gray-600 bg-white rounded-xl border border-gray-200 hover:bg-gray-50"
+            >
+              {newExpanded ? "Show Less ▲" : "View More ▼"}
             </button>
           </div>
         )}
@@ -420,12 +436,15 @@ export function HomePage() {
               <button onClick={() => navigate("/categories?filter=Gift+Card")} className="flex items-center gap-1 text-xs text-gray-500 font-medium">All <ChevronRight size={12} /></button>
             </div>
             <div className="grid grid-cols-3 gap-3">
-              {giftCardGames.slice(0, 3).map((game) => (
+              {giftCardGames.slice(0, giftExpanded ? 9 : 3).map((game) => (
                 <GameCard key={game.game_id} game={game} size="sm" />
               ))}
             </div>
-            <button onClick={() => navigate("/categories?filter=Gift+Card")} className="w-full mt-3 py-2.5 text-sm font-semibold text-gray-600 bg-white rounded-xl border border-gray-200 hover:bg-gray-50">
-              View More
+            <button
+              onClick={() => setGiftExpanded((v) => !v)}
+              className="w-full mt-3 py-2.5 text-sm font-semibold text-gray-600 bg-white rounded-xl border border-gray-200 hover:bg-gray-50"
+            >
+              {giftExpanded ? "Show Less ▲" : "View More ▼"}
             </button>
           </div>
         )}
@@ -464,4 +483,4 @@ export function HomePage() {
     </div>
   );
 }
-when click view more its show other product in the home page lap show and si gen more show more show more after lel rive limit show less li close tout more yo
+
