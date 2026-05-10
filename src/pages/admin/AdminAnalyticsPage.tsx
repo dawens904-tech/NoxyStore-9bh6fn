@@ -1,8 +1,26 @@
 import { useEffect, useState } from "react";
 import { RefreshCw, Eye, Users, Monitor, Smartphone, Globe, Star, BarChart2 } from "lucide-react";
+import {
+  BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer, Legend, Area, AreaChart,
+} from "recharts";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { getAnalytics } from "@/lib/analytics";
 import { toast } from "sonner";
+
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="bg-[#0f0f0f] border border-white/20 rounded-xl px-3 py-2.5 shadow-xl text-xs">
+      <p className="text-gray-400 mb-1">{label}</p>
+      {payload.map((p: any) => (
+        <p key={p.dataKey} className="font-bold" style={{ color: p.color }}>
+          {p.name}: {p.value}
+        </p>
+      ))}
+    </div>
+  );
+};
 
 export function AdminAnalyticsPage() {
   const [analyticsData, setAnalyticsData] = useState<any | null>(null);
@@ -18,9 +36,23 @@ export function AdminAnalyticsPage() {
     finally { setIsLoading(false); }
   };
 
+  // Format daily data for recharts
+  const dailyChartData = (analyticsData?.dailyData || []).map((d: any) => ({
+    date: d.date.slice(5), // MM-DD
+    visits: d.count,
+    fullDate: d.date,
+  }));
+
+  // Hourly data for recharts
+  const hourlyChartData = (analyticsData?.hourlyActivity || []).map((count: number, hour: number) => ({
+    hour: `${hour}h`,
+    visits: count,
+  }));
+
   return (
     <AdminLayout title="Analytics">
       <div className="space-y-6 max-w-5xl">
+        {/* Time range + refresh */}
         <div className="flex items-center gap-2">
           {[7, 14, 30].map((d) => (
             <button key={d} onClick={() => setDays(d)}
@@ -31,6 +63,7 @@ export function AdminAnalyticsPage() {
           <button onClick={load} disabled={isLoading} className="p-2 text-gray-400 hover:text-white ml-2">
             <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />
           </button>
+          <span className="text-xs text-gray-500 ml-2">Last {days} days</span>
         </div>
 
         {isLoading ? (
@@ -39,6 +72,7 @@ export function AdminAnalyticsPage() {
           </div>
         ) : analyticsData ? (
           <>
+            {/* KPI cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               {[
                 { icon: Eye, label: "Total Visits", value: String(analyticsData.totalVisits), color: "text-blue-400", bg: "bg-blue-400/10", border: "border-blue-400/20" },
@@ -58,77 +92,129 @@ export function AdminAnalyticsPage() {
               ))}
             </div>
 
-            {analyticsData.dailyData?.length > 0 && (
+            {/* Daily visits — Area chart */}
+            {dailyChartData.length > 0 && (
               <div className="bg-[#1a1a1a] border border-white/10 rounded-2xl p-5">
-                <h3 className="font-bold text-white mb-4">Daily Visits</h3>
-                <div className="flex items-end gap-1 h-32">
-                  {analyticsData.dailyData.map((d: any) => {
-                    const max = Math.max(...analyticsData.dailyData.map((x: any) => x.count), 1);
-                    const h = (d.count / max) * 100;
-                    return (
-                      <div key={d.date} className="flex-1 flex flex-col items-center gap-1">
-                        <div className="w-full bg-yellow-400/20 rounded-t relative" style={{ height: `${h}%` }}>
-                          <div className="absolute inset-0 bg-yellow-400 rounded-t opacity-80" />
-                        </div>
-                        <span className="text-[9px] text-gray-600 truncate w-full text-center">{d.date.slice(5)}</span>
-                      </div>
-                    );
-                  })}
+                <div className="flex items-center justify-between mb-5">
+                  <h3 className="font-bold text-white">Daily Visits</h3>
+                  <span className="text-xs text-gray-500">Last {days} days</span>
                 </div>
+                <ResponsiveContainer width="100%" height={200}>
+                  <AreaChart data={dailyChartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="visitsGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#FACC15" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#FACC15" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                    <XAxis dataKey="date" tick={{ fill: "#6b7280", fontSize: 10 }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fill: "#6b7280", fontSize: 10 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Area
+                      type="monotone" dataKey="visits" name="Visits"
+                      stroke="#FACC15" strokeWidth={2}
+                      fill="url(#visitsGrad)"
+                      dot={{ fill: "#FACC15", r: 3 }}
+                      activeDot={{ r: 5, fill: "#FACC15" }}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
               </div>
             )}
 
+            {/* Hourly activity — Bar chart */}
+            {hourlyChartData.length > 0 && (
+              <div className="bg-[#1a1a1a] border border-white/10 rounded-2xl p-5">
+                <div className="flex items-center justify-between mb-5">
+                  <h3 className="font-bold text-white">Hourly Activity (UTC)</h3>
+                  <span className="text-xs text-gray-500">Peak traffic hours</span>
+                </div>
+                <ResponsiveContainer width="100%" height={160}>
+                  <BarChart data={hourlyChartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
+                    <XAxis dataKey="hour" tick={{ fill: "#6b7280", fontSize: 9 }} axisLine={false} tickLine={false} interval={2} />
+                    <YAxis tick={{ fill: "#6b7280", fontSize: 10 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Bar dataKey="visits" name="Visits" fill="#FACC15" opacity={0.8} radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+
+            {/* Top pages + games */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Top pages bar chart */}
               <div className="bg-[#1a1a1a] border border-white/10 rounded-2xl p-5">
                 <h3 className="font-bold text-white mb-4">Top Pages</h3>
-                <div className="space-y-2">
-                  {(analyticsData.topPages || []).slice(0, 8).map((p: any) => (
-                    <div key={p.page} className="flex items-center justify-between">
-                      <span className="text-sm text-gray-300 font-mono truncate flex-1">{p.page || "/"}</span>
-                      <span className="text-sm font-bold text-yellow-400 ml-3">{p.count}</span>
+                {analyticsData.topPages?.length > 0 ? (
+                  <>
+                    <ResponsiveContainer width="100%" height={160}>
+                      <BarChart
+                        data={(analyticsData.topPages || []).slice(0, 6).map((p: any) => ({ page: p.page?.split("/").pop() || "/", count: p.count }))}
+                        layout="vertical"
+                        margin={{ top: 0, right: 10, left: 0, bottom: 0 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" horizontal={false} />
+                        <XAxis type="number" tick={{ fill: "#6b7280", fontSize: 9 }} axisLine={false} tickLine={false} />
+                        <YAxis type="category" dataKey="page" tick={{ fill: "#9ca3af", fontSize: 9 }} axisLine={false} tickLine={false} width={60} />
+                        <Tooltip content={<CustomTooltip />} />
+                        <Bar dataKey="count" name="Views" fill="#818cf8" radius={[0, 4, 4, 0]} opacity={0.8} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                    <div className="mt-3 space-y-1.5">
+                      {(analyticsData.topPages || []).slice(0, 5).map((p: any) => (
+                        <div key={p.page} className="flex items-center justify-between">
+                          <span className="text-xs text-gray-400 font-mono truncate flex-1">{p.page || "/"}</span>
+                          <span className="text-xs font-bold text-indigo-400 ml-3">{p.count}</span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                  {!analyticsData.topPages?.length && <p className="text-gray-500 text-sm">No page data yet</p>}
-                </div>
+                  </>
+                ) : <p className="text-gray-500 text-sm">No page data yet</p>}
               </div>
+
+              {/* Top games bar chart */}
               <div className="bg-[#1a1a1a] border border-white/10 rounded-2xl p-5">
                 <h3 className="font-bold text-white mb-4">Top Viewed Games</h3>
-                <div className="space-y-2">
-                  {(analyticsData.topGames || []).slice(0, 8).map((g: any) => (
-                    <div key={g.gameId} className="flex items-center justify-between">
-                      <span className="text-sm text-gray-300 truncate flex-1">{g.gameId}</span>
-                      <div className="flex items-center gap-3">
-                        <span className="text-xs text-gray-500">{g.uniqueUsers} users</span>
-                        <span className="text-sm font-bold text-yellow-400">{g.count}</span>
-                      </div>
+                {analyticsData.topGames?.length > 0 ? (
+                  <>
+                    <ResponsiveContainer width="100%" height={160}>
+                      <BarChart
+                        data={(analyticsData.topGames || []).slice(0, 6).map((g: any) => ({ game: g.gameId, count: g.count }))}
+                        layout="vertical"
+                        margin={{ top: 0, right: 10, left: 0, bottom: 0 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" horizontal={false} />
+                        <XAxis type="number" tick={{ fill: "#6b7280", fontSize: 9 }} axisLine={false} tickLine={false} />
+                        <YAxis type="category" dataKey="game" tick={{ fill: "#9ca3af", fontSize: 9 }} axisLine={false} tickLine={false} width={48} />
+                        <Tooltip content={<CustomTooltip />} />
+                        <Bar dataKey="count" name="Views" fill="#fb923c" radius={[0, 4, 4, 0]} opacity={0.8} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                    <div className="mt-3 space-y-1.5">
+                      {(analyticsData.topGames || []).slice(0, 5).map((g: any) => (
+                        <div key={g.gameId} className="flex items-center justify-between">
+                          <span className="text-xs text-gray-400 truncate flex-1">Game {g.gameId}</span>
+                          <div className="flex items-center gap-3">
+                            <span className="text-xs text-gray-500">{g.uniqueUsers} users</span>
+                            <span className="text-xs font-bold text-orange-400">{g.count}</span>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                  {!analyticsData.topGames?.length && <p className="text-gray-500 text-sm">No game view data yet</p>}
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-[#1a1a1a] border border-white/10 rounded-2xl p-5">
-              <h3 className="font-bold text-white mb-4">Hourly Activity (UTC)</h3>
-              <div className="grid grid-cols-12 gap-1">
-                {(analyticsData.hourlyActivity || Array(24).fill(0)).map((count: number, hour: number) => {
-                  const max = Math.max(...(analyticsData.hourlyActivity || [1]), 1);
-                  const intensity = count / max;
-                  return (
-                    <div key={hour} className="flex flex-col items-center gap-1">
-                      <div title={`${hour}:00 — ${count}`} className="w-full rounded"
-                        style={{ height: "32px", backgroundColor: `rgba(250, 204, 21, ${Math.max(0.08, intensity)})` }} />
-                      <span className="text-[8px] text-gray-600">{hour}</span>
-                    </div>
-                  );
-                })}
+                  </>
+                ) : <p className="text-gray-500 text-sm">No game view data yet</p>}
               </div>
             </div>
           </>
         ) : (
           <div className="bg-[#1a1a1a] border border-white/10 rounded-2xl p-12 text-center">
             <BarChart2 size={48} className="text-gray-600 mx-auto mb-4" />
-            <p className="text-gray-400">Click the refresh button to load analytics data</p>
+            <p className="text-gray-400 mb-3">Click refresh to load analytics data</p>
+            <button onClick={load} className="bg-yellow-400 text-black font-bold px-5 py-2.5 rounded-xl hover:bg-yellow-300 text-sm">
+              Load Analytics
+            </button>
           </div>
         )}
       </div>
