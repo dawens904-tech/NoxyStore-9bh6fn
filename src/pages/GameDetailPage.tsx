@@ -686,4 +686,4 @@ export function GameDetailPage() {
     </>
   );
 }
-add real info via lootbar api game info
+
