@@ -50,7 +50,27 @@ export function MobileFooter() {
     { name: 'SafeShell VPN', href: 'https://www.safeshellvpn.com/' },
     { name: 'GearUP Booster', href: 'https://www.gearupbooster.com/' },
   ];
-
+ {/* Trustpilot Badge */}
+      <div className="px-4 py-5 border-b bg-background">
+        <div
+          className="trustpilot-widget"
+          data-locale="en-US"
+          data-template-id="56278e9abfbbba0bdcd568bc"
+          data-businessunit-id="6957ec3e74cf034e3abd2cfb"
+          data-style-height="52px"
+          data-style-width="100%"
+          data-token="08edcd60-e52f-4637-9f1b-879188348ba2"
+        >
+          <a
+            href="https://www.trustpilot.com/review/noxystore.com"
+            target="_blank"
+            rel="noopener"
+          >
+            Trustpilot
+          </a>
+        </div>
+      </div>
+  
   return (
     <footer className="lg:hidden bg-background border-t">
       {/* Why Choose Us Section */}
@@ -113,27 +133,6 @@ export function MobileFooter() {
           <svg className="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 16.97a.599.599 0 0 1-.665.355c-.176-.044-4.318-1.107-9.744-.91-.485.018-.885-.352-.903-.834-.019-.482.352-.885.834-.903 5.917-.215 10.395.988 10.579 1.039a.601.601 0 0 1 .355.665z"/>
           </svg>
-        </div>
-      </div>
-
-      {/* Trustpilot Badge */}
-      <div className="px-4 py-5 border-b bg-background">
-        <div
-          className="trustpilot-widget"
-          data-locale="en-US"
-          data-template-id="56278e9abfbbba0bdcd568bc"
-          data-businessunit-id="6957ec3e74cf034e3abd2cfb"
-          data-style-height="52px"
-          data-style-width="100%"
-          data-token="08edcd60-e52f-4637-9f1b-879188348ba2"
-        >
-          <a
-            href="https://www.trustpilot.com/review/noxystore.com"
-            target="_blank"
-            rel="noopener"
-          >
-            Trustpilot
-          </a>
         </div>
       </div>
 
