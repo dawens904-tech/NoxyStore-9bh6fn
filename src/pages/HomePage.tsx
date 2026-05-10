@@ -374,6 +374,9 @@ export function HomePage() {
           <div className="grid grid-cols-3 gap-3">
             {isLoading ? <GameCardSkeleton count={3} /> : hotGames.slice(0, 3).map((game) => <GameCard key={game.game_id} game={game} size="sm" />)}
           </div>
+          <button onClick={() => navigate("/categories")} className="w-full mt-3 py-2.5 text-sm font-semibold text-gray-600 bg-white rounded-xl border border-gray-200 hover:bg-gray-50">
+            View More
+          </button>
         </div>
 
         {discountGames.length > 0 && (
@@ -385,6 +388,9 @@ export function HomePage() {
             <div className="grid grid-cols-3 gap-3">
               {discountGames.slice(0, 3).map((game) => <GameCard key={game.game_id} game={game} size="sm" />)}
             </div>
+            <button onClick={() => navigate("/categories")} className="w-full mt-3 py-2.5 text-sm font-semibold text-gray-600 bg-white rounded-xl border border-gray-200 hover:bg-gray-50">
+              View More
+            </button>
           </div>
         )}
 
@@ -400,6 +406,9 @@ export function HomePage() {
                 <GameCard key={game.game_id} game={game} size="sm" />
               ))}
             </div>
+            <button onClick={() => navigate("/categories")} className="w-full mt-3 py-2.5 text-sm font-semibold text-gray-600 bg-white rounded-xl border border-gray-200 hover:bg-gray-50">
+              View More
+            </button>
           </div>
         )}
 
@@ -415,11 +424,17 @@ export function HomePage() {
                 <GameCard key={game.game_id} game={game} size="sm" />
               ))}
             </div>
+            <button onClick={() => navigate("/categories?filter=Gift+Card")} className="w-full mt-3 py-2.5 text-sm font-semibold text-gray-600 bg-white rounded-xl border border-gray-200 hover:bg-gray-50">
+              View More
+            </button>
           </div>
         )}
 
         <div className="mt-6 px-3">
-          <h2 className="section-title mb-3">{t("allGames")}</h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="section-title">{t("allGames")}</h2>
+            <button onClick={() => navigate("/categories")} className="flex items-center gap-1 text-xs text-gray-500 font-medium">All <ChevronRight size={12} /></button>
+          </div>
           <div className="space-y-2">
             {isLoading
               ? Array.from({ length: 4 }).map((_, i) => (
@@ -449,5 +464,3 @@ export function HomePage() {
     </div>
   );
 }
-
-fix chak section gen 3 list 3items example premier an gen 3 row same 2em rive 3 and view more anba nn mitanl please looks this photo fetch:https://files.catbox.moe/ktnh5k.jpeg.
