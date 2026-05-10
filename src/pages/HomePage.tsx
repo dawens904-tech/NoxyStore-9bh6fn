@@ -405,10 +405,6 @@ export function HomePage() {
             </button>
           )}
         </div>
-              </div>
-            ))}
-          </div>
-        </div>
 
         {/* Mobile Footer */}
         <MobileFooter />
