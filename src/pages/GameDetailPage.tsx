@@ -686,3 +686,4 @@ export function GameDetailPage() {
     </>
   );
 }
+hello if you see this dont skip make change Update GameDetailPage to fetch real server regions from Lootbar API SKU attributes (e.g. Malaysia/Singapore, Brazil, USA&Latam tabs) and render a horizontal scrollable region tab selector grouping SKUs by region, matching the Lootbar screenshot style.Add recharts bar/line charts to AdminAnalyticsPage for daily visits and revenue trends, replacing the manual bar visualization with proper labeled axes and tooltips showing count, date, and comparison to previous period.
