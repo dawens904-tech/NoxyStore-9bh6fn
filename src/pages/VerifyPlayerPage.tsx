@@ -310,3 +310,5 @@ export function VerifyPlayerPage() {
     </div>
   );
 }
+hello ai create real edg function and add this for 1 and other api an pou fallback add  https://www.hlgamingofficial.com/p/free-fire-api-data-documentation.html and for api and uid BUID: ZHZjplOjuNWpeYzQnT35F2GDN541
+& Token: nqNAiBYSh2|AuJSkWlhOxWnllgALV3 all region fetch.
