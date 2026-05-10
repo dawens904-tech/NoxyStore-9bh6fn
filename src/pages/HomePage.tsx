@@ -133,6 +133,14 @@ export function HomePage() {
 
   const hotGames = games.filter((g) => g.is_hot).slice(0, 6);
   const discountGames = games.filter((g) => g.discount && g.discount > 0);
+  // New games = latest by sort order (last added)
+  const newGames = [...games].reverse().slice(0, 7);
+  // Gift card products = games in Gift Card category
+  const giftCardGames = games.filter((g) =>
+    g.category?.toLowerCase().includes("gift") ||
+    g.game_name?.toLowerCase().includes("gift") ||
+    g.game_name?.toLowerCase().includes("card")
+  ).slice(0, 7);
 
   return (
     <div className="min-h-screen bg-[#f5f5f5]">
@@ -267,6 +275,46 @@ export function HomePage() {
             </div>
           )}
 
+          {/* New Games Section */}
+          {newGames.length > 0 && (
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-xl font-black text-gray-900">New Games</h2>
+                  <p className="text-sm text-gray-500 mt-0.5">Latest arrivals on NoxyStore</p>
+                </div>
+                <button onClick={() => navigate("/categories")} className="flex items-center gap-1 text-sm text-gray-600 font-semibold border border-gray-200 bg-white rounded-xl px-3 py-1.5 hover:bg-gray-50">
+                  All <ChevronRight size={14} />
+                </button>
+              </div>
+              <div className="grid grid-cols-4 lg:grid-cols-7 gap-4">
+                {newGames.map((game) => (
+                  <GameCard key={game.game_id} game={game} size="sm" />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Trending Gift Cards Section */}
+          {giftCardGames.length > 0 && (
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-xl font-black text-gray-900">Trending Gift Cards</h2>
+                  <p className="text-sm text-gray-500 mt-0.5">Top gift cards at the best prices</p>
+                </div>
+                <button onClick={() => navigate("/categories?filter=Gift+Card")} className="flex items-center gap-1 text-sm text-gray-600 font-semibold border border-gray-200 bg-white rounded-xl px-3 py-1.5 hover:bg-gray-50">
+                  All ({giftCardGames.length}) <ChevronRight size={14} />
+                </button>
+              </div>
+              <div className="grid grid-cols-4 lg:grid-cols-7 gap-4">
+                {giftCardGames.map((game) => (
+                  <GameCard key={game.game_id} game={game} size="sm" />
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Dynamic sections from DB */}
           {sections.map((sec) => {
             const secGames = getSectionGames(sec);
@@ -337,6 +385,40 @@ export function HomePage() {
           </div>
         )}
 
+        {/* Mobile: New Games */}
+        {newGames.length > 0 && (
+          <div className="mt-6 px-3">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="section-title">New Games</h2>
+              <button onClick={() => navigate("/categories")} className="flex items-center gap-1 text-xs text-gray-500 font-medium">All <ChevronRight size={12} /></button>
+            </div>
+            <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1">
+              {newGames.map((game) => (
+                <div key={game.game_id} className="flex-shrink-0 w-28">
+                  <GameCard game={game} size="sm" />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Mobile: Trending Gift Cards */}
+        {giftCardGames.length > 0 && (
+          <div className="mt-6 px-3">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="section-title">Trending Gift Cards</h2>
+              <button onClick={() => navigate("/categories?filter=Gift+Card")} className="flex items-center gap-1 text-xs text-gray-500 font-medium">All <ChevronRight size={12} /></button>
+            </div>
+            <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1">
+              {giftCardGames.map((game) => (
+                <div key={game.game_id} className="flex-shrink-0 w-28">
+                  <GameCard game={game} size="sm" />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="mt-6 px-3">
           <h2 className="section-title mb-3">{t("allGames")}</h2>
           <div className="space-y-2">
@@ -368,5 +450,3 @@ export function HomePage() {
     </div>
   );
 }
-
-add more section new game,trending gift card and fix real product fetch ladan yo and gift card section only havw gift card product.
