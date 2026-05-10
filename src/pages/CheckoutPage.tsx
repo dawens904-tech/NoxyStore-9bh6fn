@@ -499,3 +499,5 @@ export function CheckoutPage() {
     </>
   );
 }
+
+fix this also add language multi support on all page
