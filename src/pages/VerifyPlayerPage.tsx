@@ -41,19 +41,13 @@ export function VerifyPlayerPage() {
     setFfPlayer(null);
     setFfLookupError(null);
     try {
-      const res = await fetch(
-        `https://api.gameskinbo.com/ff-info/get?uid=${uid}`,
-        { headers: { "x-api-key": "2UvYv6OOhwFlujpc4AMFVjEW7Bkl2S6ZTmnx2uAn5EY" } }
-      );
-      if (!res.ok) throw new Error("not_found");
-      const data = await res.json();
-      const accountName = data?.AccountInfo?.AccountName;
-      const accountLevel = data?.AccountInfo?.AccountLevel;
-      if (accountName) {
-        setFfPlayer({ name: accountName, level: accountLevel || 0 });
-      } else {
-        setFfLookupError("Player not found");
-      }
+      // Call our edge function which handles both APIs with fallback
+      const { supabase } = await import("@/lib/supabase");
+      const { data, error } = await supabase.functions.invoke("ff-lookup", {
+        body: { uid },
+      });
+      if (error || !data?.name) throw new Error("not_found");
+      setFfPlayer({ name: data.name, level: data.level || 0 });
     } catch {
       setFfLookupError("Could not verify UID");
     } finally {
@@ -310,5 +304,4 @@ export function VerifyPlayerPage() {
     </div>
   );
 }
-hello ai create real edg function and add this for 1 and other api an pou fallback add  https://www.hlgamingofficial.com/p/free-fire-api-data-documentation.html and for api and uid BUID: ZHZjplOjuNWpeYzQnT35F2GDN541
-& Token: nqNAiBYSh2|AuJSkWlhOxWnllgALV3 all region fetch.
+
