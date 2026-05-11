@@ -118,20 +118,63 @@ export function VipServicePage() {
       updated_at: new Date().toISOString(),
     });
 
+    // AI reply — only when session is in 'ai' mode (no human agent yet)
+    if (!isAdmin && sessionStatus === "ai" && (text.trim() || imageUrl)) {
+      const history = messages
+        .filter((m) => !m.id.startsWith("welcome"))
+        .map((m) => ({ role: m.sender === "user" ? "user" : "assistant", content: m.content || "[image]"}));
+      history.push({ role: "user", content: text.trim() || "[image attachment]" });
+
+      supabase.functions.invoke("ai-support", {
+        body: { messages: history, userEmail: user?.email, sessionId },
+      }).then(async ({ data: aiData, error: aiErr }) => {
+        if (aiErr) {
+          const { FunctionsHttpError } = await import("@supabase/supabase-js");
+          if (aiErr instanceof FunctionsHttpError) {
+            console.error("AI support error:", await aiErr.context.text());
+          }
+          return;
+        }
+        if (aiData?.reply) {
+          const aiMsg: ChatMessage = {
+            id: `ai_${Date.now()}`,
+            sender: "ai",
+            content: aiData.reply,
+            created_at: new Date().toISOString(),
+          };
+          setMessages((prev) => [...prev, aiMsg]);
+        }
+      });
+    }
+
     setIsSending(false);
-  }, [isSending, sessionId, user, isAdmin, sessionStatus]);
+  }, [isSending, sessionId, user, isAdmin, sessionStatus, messages]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    e.target.value = ""; // reset so same file can be re-selected
     if (file.size > 5 * 1024 * 1024) { toast.error("Image must be under 5MB"); return; }
+    if (!file.type.startsWith("image/")) { toast.error("Only image files are supported"); return; }
 
-    const ext = file.name.split(".").pop();
+    const toastId = toast.loading("Uploading image...");
+    const ext = file.name.split(".").pop() || "jpg";
     const path = `chat/${sessionId}/${Date.now()}.${ext}`;
-    const { data, error } = await supabase.storage.from("chat-images").upload(path, file);
-    if (error) { toast.error("Upload failed"); return; }
+
+    // Upload via fetch+blob for better performance
+    const arrayBuffer = await file.arrayBuffer();
+    const { error } = await supabase.storage
+      .from("chat-images")
+      .upload(path, arrayBuffer, { contentType: file.type, upsert: false });
+
+    if (error) {
+      toast.dismiss(toastId);
+      toast.error("Image upload failed. Please try again.");
+      return;
+    }
 
     const { data: urlData } = supabase.storage.from("chat-images").getPublicUrl(path);
+    toast.dismiss(toastId);
     sendMessage("", urlData.publicUrl);
   };
 
@@ -392,4 +435,4 @@ export function VipServicePage() {
     </div>
   );
 }
-fix real photo upload and connec this with ai edg only when ask for agent to give agent.
+
