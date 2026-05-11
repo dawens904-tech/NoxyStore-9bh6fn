@@ -525,3 +525,4 @@ function AddBankCardModal({ onClose, onSave, userEmail, userId }: {
     </div>
   );
 }
+fix this page in desktop like other coupon etc.
