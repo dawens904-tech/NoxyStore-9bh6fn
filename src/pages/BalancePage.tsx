@@ -1,11 +1,12 @@
-
 /**
  * Balance Page — Top Up / Withdraw / Cash Flow tabs
- * With bank card addition, real payment method icons
+ * Mobile: full-screen with back arrow | Desktop: sidebar + content panel (matches AccountPage style)
  */
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Plus, X, CreditCard, Check } from "lucide-react";
+import { ArrowLeft, Plus, X, CreditCard, Check, ChevronRight } from "lucide-react";
+import { DesktopHeader } from "@/components/layout/DesktopHeader";
+import { BottomNav } from "@/components/layout/BottomNav";
 import { useAuthStore } from "@/stores/authStore";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
@@ -87,11 +88,9 @@ export function BalancePage() {
 
   useEffect(() => {
     if (!user?.email) return;
-    // Load bank cards
     supabase.from("user_bank_cards").select("*").eq("user_email", user.email).then(({ data }) => {
       if (data) setBankCards(data);
     });
-    // Load transactions
     supabase.from("wallet_transactions").select("*").eq("user_email", user.email)
       .order("created_at", { ascending: false }).limit(50)
       .then(({ data }) => { if (data) setTransactions(data); });
@@ -99,7 +98,6 @@ export function BalancePage() {
 
   const processingFee = parseFloat(topupAmount || "0") * 0.035 + 0.15;
   const totalAmount = parseFloat(topupAmount || "0") + processingFee;
-
   const PRESETS = ["50.00", "90.00", "150.00"];
 
   const WITHDRAW_METHODS = [
@@ -114,9 +112,340 @@ export function BalancePage() {
     return <CreditCard size={16} className="text-gray-600" />;
   };
 
-  return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
+  // ─── Shared Tab Content ───────────────────────────────────────────────────
+  const TabContent = () => (
+    <div>
+      {/* TOP UP TAB */}
+      {activeTab === "topup" && (
+        <div className="space-y-5">
+          <div>
+            <h3 className="font-bold text-gray-900 mb-3">Top-up Amount</h3>
+            <div className="border border-gray-300 rounded-xl px-4 py-3 flex items-center gap-2 mb-3">
+              <span className="text-gray-400 font-semibold">$</span>
+              <input
+                type="number"
+                value={topupAmount}
+                onChange={(e) => setTopupAmount(e.target.value)}
+                className="flex-1 outline-none text-2xl font-bold text-gray-900 bg-transparent"
+              />
+            </div>
+            <div className="flex gap-2">
+              {PRESETS.map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setTopupAmount(p)}
+                  className={`flex-1 border rounded-full py-2 text-sm font-semibold transition-all ${
+                    topupAmount === p ? "border-yellow-400 bg-yellow-50 text-yellow-700" : "border-gray-300 text-gray-600"
+                  }`}
+                >
+                  $ {p}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <h3 className="font-bold text-gray-900 mb-3">Top-up Method</h3>
+            <div className="grid grid-cols-2 gap-3">
+              {PAYMENT_METHODS.map((method) => (
+                <button
+                  key={method.id}
+                  onClick={() => setSelectedPayment(method.id)}
+                  className={`border-2 rounded-xl py-4 px-3 flex items-center justify-center relative transition-all ${
+                    selectedPayment === method.id ? "border-yellow-400 bg-yellow-50" : "border-gray-200"
+                  }`}
+                >
+                  {selectedPayment === method.id && (
+                    <div className="absolute top-1 right-1 w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center">
+                      <Check size={10} className="text-black" />
+                    </div>
+                  )}
+                  {method.icon}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <h3 className="font-bold text-gray-900 mb-3">Payment Account</h3>
+            {bankCards.length > 0 ? (
+              <div className="space-y-2">
+                {bankCards.map((card) => (
+                  <div key={card.id} className="border border-gray-200 rounded-xl px-4 py-3 flex items-center gap-3">
+                    {getCardLogo(card.card_type)}
+                    <span className="text-sm font-semibold text-gray-700">{card.card_number_masked}</span>
+                    {card.is_default && <span className="ml-auto text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full font-semibold">Default</span>}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowAddCard(true)}
+                className="w-full border border-dashed border-gray-300 rounded-xl py-4 flex items-center justify-center gap-2 text-gray-500 hover:bg-gray-50 transition-colors"
+              >
+                <Plus size={18} />
+                <span className="font-semibold">Add a bank card</span>
+              </button>
+            )}
+          </div>
+
+          <div className="bg-yellow-50 border border-yellow-200 rounded-xl px-4 py-3">
+            <p className="text-xs text-gray-600 leading-relaxed">
+              Payment processing fees: <span className="text-orange-500 font-semibold">3.5% + $0.15</span>, Actual payment amount:{" "}
+              <span className="text-orange-500 font-semibold">${totalAmount.toFixed(2)}, processing fee: ${processingFee.toFixed(2)}</span>.
+              Deposit balance can only be used to purchase items on this platform.
+            </p>
+          </div>
+
+          <button
+            onClick={() => toast.info("Balance top-up coming soon. Please purchase directly from the game catalog.")}
+            className="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-bold py-4 rounded-2xl transition-colors"
+          >
+            Top Up
+          </button>
+        </div>
+      )}
+
+      {/* WITHDRAW TAB */}
+      {activeTab === "withdraw" && (
+        <div className="space-y-5">
+          <div>
+            <p className="text-sm text-gray-500 mb-1">Withdrawable Amount</p>
+            <p className="text-3xl font-black text-gray-900">${balance.toFixed(2)}</p>
+          </div>
+
+          <div>
+            <h3 className="font-bold text-gray-900 mb-3">Amount</h3>
+            <div className="border border-gray-300 rounded-xl px-4 py-3 flex items-center gap-2">
+              <span className="text-gray-400 font-semibold">$</span>
+              <input
+                type="number"
+                value={withdrawAmount}
+                onChange={(e) => setWithdrawAmount(e.target.value)}
+                placeholder="0.00"
+                className="flex-1 outline-none text-2xl font-bold text-gray-900 bg-transparent placeholder-gray-300"
+              />
+            </div>
+          </div>
+
+          <div>
+            <h3 className="font-bold text-gray-900 mb-3">Method</h3>
+            <div className="space-y-2">
+              {WITHDRAW_METHODS.map((m) => (
+                <button
+                  key={m.id}
+                  onClick={() => setSelectedWithdrawMethod(m.id)}
+                  className={`w-full border-2 rounded-xl px-4 py-3.5 flex items-center justify-between transition-all ${
+                    selectedWithdrawMethod === m.id ? "border-yellow-400 bg-yellow-50" : "border-gray-200"
+                  }`}
+                >
+                  <span className="font-semibold text-gray-800 text-sm">{m.label}</span>
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs text-gray-400">Powered by</span>
+                    <div className={`w-5 h-5 rounded-full ${m.powered === "Payoneer" ? "bg-orange-500" : "bg-red-500"} flex items-center justify-center`}>
+                      <span className="text-white text-[7px] font-bold">P</span>
+                    </div>
+                    <span className="text-xs font-semibold text-gray-600">{m.powered}</span>
+                    {selectedWithdrawMethod === m.id && (
+                      <div className="w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center ml-2">
+                        <Check size={10} className="text-black" />
+                      </div>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <h3 className="font-bold text-gray-900 mb-3">Account</h3>
+            <button
+              onClick={() => toast.info("Please link a Payoneer or Airwallex account first.")}
+              className="w-full border border-dashed border-gray-300 rounded-xl py-4 flex items-center justify-center gap-2 text-gray-500 hover:bg-gray-50 transition-colors"
+            >
+              <Plus size={18} />
+              <span className="font-semibold">Add A Payoneer Account</span>
+            </button>
+          </div>
+
+          <button
+            disabled={!withdrawAmount || parseFloat(withdrawAmount) <= 0}
+            onClick={() => toast.info("Withdrawal request submitted. Processing takes 3-5 business days.")}
+            className={`w-full font-bold py-4 rounded-2xl transition-colors ${
+              withdrawAmount && parseFloat(withdrawAmount) > 0
+                ? "bg-yellow-400 hover:bg-yellow-300 text-black"
+                : "bg-yellow-200 text-yellow-600 cursor-not-allowed"
+            }`}
+          >
+            Confirm
+          </button>
+        </div>
+      )}
+
+      {/* CASH FLOW TAB */}
+      {activeTab === "cashflow" && (
+        <div>
+          <div className="mb-4">
+            <select
+              value={cashflowFilter}
+              onChange={(e) => setCashflowFilter(e.target.value)}
+              className="border border-gray-300 rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-700 bg-white outline-none"
+            >
+              {["All", "Top Up", "Withdraw", "Purchase", "Refund"].map((f) => (
+                <option key={f}>{f}</option>
+              ))}
+            </select>
+          </div>
+
+          {transactions.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16">
+              <div className="w-24 h-24 bg-gray-100 rounded-2xl flex items-center justify-center mb-4">
+                <svg viewBox="0 0 80 80" className="w-16 h-16">
+                  <rect x="10" y="5" width="60" height="70" rx="6" fill="#e5e7eb"/>
+                  <rect x="20" y="18" width="40" height="4" rx="2" fill="#d1d5db"/>
+                  <rect x="20" y="28" width="30" height="4" rx="2" fill="#d1d5db"/>
+                  <rect x="20" y="38" width="35" height="4" rx="2" fill="#d1d5db"/>
+                  <path d="M50 55 L60 65 L70 50" stroke="#9ca3af" strokeWidth="3" fill="none" strokeLinecap="round"/>
+                </svg>
+              </div>
+              <p className="text-gray-500 font-semibold">No records</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {transactions.map((tx) => (
+                <div key={tx.id} className="flex items-center justify-between py-3 border-b border-gray-100">
+                  <div>
+                    <p className="font-semibold text-gray-800 text-sm capitalize">{tx.type}</p>
+                    <p className="text-xs text-gray-400">{tx.description}</p>
+                    <p className="text-xs text-gray-400">{new Date(tx.created_at).toLocaleDateString()}</p>
+                  </div>
+                  <span className={`font-bold text-sm ${tx.type === "purchase" || tx.type === "withdraw" ? "text-red-500" : "text-green-600"}`}>
+                    {tx.type === "purchase" || tx.type === "withdraw" ? "-" : "+"}${Math.abs(tx.amount).toFixed(2)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+
+  // ─── Desktop Layout ───────────────────────────────────────────────────────
+  const DesktopLayout = () => (
+    <div className="hidden lg:block min-h-screen bg-[#f5f5f5]">
+      <DesktopHeader />
+      <div className="max-w-[1280px] mx-auto px-6 py-3">
+        <div className="flex items-center gap-2 text-sm text-gray-500">
+          <button onClick={() => navigate("/")} className="hover:text-gray-700">Home</button>
+          <ChevronRight size={14} />
+          <button onClick={() => navigate("/account")} className="hover:text-gray-700">Account</button>
+          <ChevronRight size={14} />
+          <span className="text-gray-800 font-medium">Balance</span>
+        </div>
+      </div>
+      <div className="max-w-[1280px] mx-auto px-6 pb-12">
+        <div className="flex gap-6">
+          {/* Sidebar */}
+          <div className="w-72 flex-shrink-0">
+            <div className="bg-white rounded-2xl shadow-sm p-5 mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xl font-bold">
+                  {user?.nickname?.[0]?.toUpperCase()}
+                </div>
+                <div>
+                  <p className="font-bold text-gray-900 text-sm">{user?.nickname}</p>
+                  <p className="text-xs text-gray-400 truncate max-w-[140px]">{user?.email}</p>
+                </div>
+              </div>
+              <div className="mt-4 pt-4 border-t border-gray-100 flex items-center gap-4">
+                <div>
+                  <p className="text-lg font-black text-gray-900">${balance.toFixed(2)}</p>
+                  <p className="text-xs text-gray-400">Balance</p>
+                </div>
+                <div className="h-8 w-px bg-gray-200" />
+                <div>
+                  <p className="text-lg font-black text-gray-900">{user?.points ?? 0}</p>
+                  <p className="text-xs text-gray-400">Points</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+              {[
+                { label: "Account Settings", path: "/account", active: false },
+                { label: "Buy History", path: "/account", active: false },
+                { label: "Coupons", path: "/coupons", active: false },
+                { label: "Balance", path: "/balance", active: true },
+                { label: "Invite Friends", path: "/invite", active: false },
+                { label: "Affiliate Program", path: "/affiliate", active: false, highlight: true },
+              ].map((item) => (
+                <button
+                  key={item.label}
+                  onClick={() => navigate(item.path)}
+                  className={`w-full flex items-center justify-between px-4 py-3.5 text-sm font-medium transition-colors border-b border-gray-50 last:border-0 ${
+                    item.active
+                      ? "bg-yellow-50 text-yellow-700 border-l-4 border-l-yellow-400"
+                      : item.highlight
+                      ? "text-yellow-500 hover:bg-yellow-50"
+                      : "text-gray-700 hover:bg-gray-50"
+                  }`}
+                >
+                  {item.label}
+                  <ChevronRight size={14} className="text-gray-400" />
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Content */}
+          <div className="flex-1">
+            {/* Balance Hero */}
+            <div className="bg-gradient-to-r from-yellow-400 to-amber-400 rounded-2xl p-6 mb-6 flex items-center justify-between shadow-sm">
+              <div>
+                <p className="text-sm font-semibold text-yellow-900 opacity-75">Current Balance</p>
+                <p className="text-5xl font-black text-black mt-1">
+                  <span className="text-3xl">$</span>{balance.toFixed(2)}
+                </p>
+              </div>
+              <div className="w-24 h-24 opacity-70">
+                <svg viewBox="0 0 100 100" fill="none">
+                  <rect x="10" y="20" width="80" height="60" rx="8" fill="rgba(0,0,0,0.15)" stroke="rgba(0,0,0,0.2)" strokeWidth="2"/>
+                  <rect x="10" y="30" width="80" height="15" fill="rgba(0,0,0,0.1)"/>
+                  <circle cx="75" cy="65" r="10" fill="rgba(255,255,255,0.4)"/>
+                  <path d="M20 55 L40 55" stroke="white" strokeWidth="3" strokeLinecap="round"/>
+                  <path d="M20 62 L35 62" stroke="white" strokeWidth="3" strokeLinecap="round"/>
+                </svg>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+              {/* Tabs */}
+              <div className="flex border-b border-gray-200">
+                {([["topup", "Top Up"], ["withdraw", "Withdraw"], ["cashflow", "Cash Flow"]] as [BalanceTab, string][]).map(([tab, label]) => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`flex-1 py-4 text-sm font-semibold border-b-2 transition-colors ${
+                      activeTab === tab ? "border-yellow-400 text-gray-900" : "border-transparent text-gray-500 hover:text-gray-700"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <div className="p-8">
+                <TabContent />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // ─── Mobile Layout ────────────────────────────────────────────────────────
+  const MobileLayout = () => (
+    <div className="lg:hidden min-h-screen bg-white">
       <div className="bg-[#0a0a0a] sticky top-0 z-40">
         <div className="flex items-center gap-3 px-4 py-3">
           <button onClick={() => navigate(-1)} className="text-white"><ArrowLeft size={20} /></button>
@@ -125,7 +454,6 @@ export function BalancePage() {
         </div>
       </div>
 
-      {/* Balance Hero */}
       <div className="bg-gradient-to-r from-yellow-50 to-amber-100 px-4 py-5 flex items-center justify-between">
         <div>
           <p className="text-sm font-semibold text-gray-600">Balance</p>
@@ -144,9 +472,8 @@ export function BalancePage() {
         </div>
       </div>
 
-      {/* Tabs */}
       <div className="flex border-b border-gray-200">
-        {([["topup", "Top Up"], ["withdraw", "Withdraw"], ["cashflow", "Cash Flow"]] as const).map(([tab, label]) => (
+        {([["topup", "Top Up"], ["withdraw", "Withdraw"], ["cashflow", "Cash Flow"]] as [BalanceTab, string][]).map(([tab, label]) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -160,224 +487,25 @@ export function BalancePage() {
       </div>
 
       <div className="px-4 py-5 pb-24">
-        {/* TOP UP TAB */}
-        {activeTab === "topup" && (
-          <div className="space-y-5">
-            <div>
-              <h3 className="font-bold text-gray-900 mb-3">Top-up Amount</h3>
-              <div className="border border-gray-300 rounded-xl px-4 py-3 flex items-center gap-2 mb-3">
-                <span className="text-gray-400 font-semibold">$</span>
-                <input
-                  type="number"
-                  value={topupAmount}
-                  onChange={(e) => setTopupAmount(e.target.value)}
-                  className="flex-1 outline-none text-2xl font-bold text-gray-900 bg-transparent"
-                />
-              </div>
-              <div className="flex gap-2">
-                {PRESETS.map((p) => (
-                  <button
-                    key={p}
-                    onClick={() => setTopupAmount(p)}
-                    className={`flex-1 border rounded-full py-2 text-sm font-semibold transition-all ${
-                      topupAmount === p ? "border-yellow-400 bg-yellow-50 text-yellow-700" : "border-gray-300 text-gray-600"
-                    }`}
-                  >
-                    $ {p}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <h3 className="font-bold text-gray-900 mb-3">Top-up Method</h3>
-              <div className="grid grid-cols-2 gap-3">
-                {PAYMENT_METHODS.map((method) => (
-                  <button
-                    key={method.id}
-                    onClick={() => setSelectedPayment(method.id)}
-                    className={`border-2 rounded-xl py-4 px-3 flex items-center justify-center relative transition-all ${
-                      selectedPayment === method.id ? "border-yellow-400 bg-yellow-50" : "border-gray-200"
-                    }`}
-                  >
-                    {selectedPayment === method.id && (
-                      <div className="absolute top-1 right-1 w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center">
-                        <Check size={10} className="text-black" />
-                      </div>
-                    )}
-                    {method.icon}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <h3 className="font-bold text-gray-900 mb-3">Payment Account</h3>
-              {bankCards.length > 0 ? (
-                <div className="space-y-2">
-                  {bankCards.map((card) => (
-                    <div key={card.id} className="border border-gray-200 rounded-xl px-4 py-3 flex items-center gap-3">
-                      {getCardLogo(card.card_type)}
-                      <span className="text-sm font-semibold text-gray-700">{card.card_number_masked}</span>
-                      {card.is_default && <span className="ml-auto text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full font-semibold">Default</span>}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <button
-                  onClick={() => setShowAddCard(true)}
-                  className="w-full border border-dashed border-gray-300 rounded-xl py-4 flex items-center justify-center gap-2 text-gray-500 hover:bg-gray-50 transition-colors"
-                >
-                  <Plus size={18} />
-                  <span className="font-semibold">Add a bank card</span>
-                </button>
-              )}
-            </div>
-
-            <div className="bg-yellow-50 border border-yellow-200 rounded-xl px-4 py-3">
-              <p className="text-xs text-gray-600 leading-relaxed">
-                Payment processing fees: <span className="text-orange-500 font-semibold">3.5% + $0.15</span>, Actual payment amount:{" "}
-                <span className="text-orange-500 font-semibold">${totalAmount.toFixed(2)}, processing fee:${processingFee.toFixed(2)}</span>.
-                Deposit balance can only be used to purchase items on this platform.
-              </p>
-            </div>
-
-            <button
-              onClick={() => toast.info("Balance top-up coming soon. Please purchase directly from the game catalog.")}
-              className="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-bold py-4 rounded-2xl transition-colors"
-            >
-              Top Up
-            </button>
-          </div>
-        )}
-
-        {/* WITHDRAW TAB */}
-        {activeTab === "withdraw" && (
-          <div className="space-y-5">
-            <div>
-              <p className="text-sm text-gray-500 mb-1">Withdrawable Amount</p>
-              <p className="text-3xl font-black text-gray-900">${balance.toFixed(2)}</p>
-            </div>
-
-            <div>
-              <h3 className="font-bold text-gray-900 mb-3">Amount</h3>
-              <div className="border border-gray-300 rounded-xl px-4 py-3 flex items-center gap-2">
-                <span className="text-gray-400 font-semibold">$</span>
-                <input
-                  type="number"
-                  value={withdrawAmount}
-                  onChange={(e) => setWithdrawAmount(e.target.value)}
-                  placeholder="0.00"
-                  className="flex-1 outline-none text-2xl font-bold text-gray-900 bg-transparent placeholder-gray-300"
-                />
-              </div>
-            </div>
-
-            <div>
-              <h3 className="font-bold text-gray-900 mb-3">Method</h3>
-              <div className="space-y-2">
-                {WITHDRAW_METHODS.map((m) => (
-                  <button
-                    key={m.id}
-                    onClick={() => setSelectedWithdrawMethod(m.id)}
-                    className={`w-full border-2 rounded-xl px-4 py-3.5 flex items-center justify-between transition-all ${
-                      selectedWithdrawMethod === m.id ? "border-yellow-400 bg-yellow-50" : "border-gray-200"
-                    }`}
-                  >
-                    <span className="font-semibold text-gray-800 text-sm">{m.label}</span>
-                    <div className="flex items-center gap-1">
-                      <span className="text-xs text-gray-400">Powered by</span>
-                      <div className={`w-5 h-5 rounded-full ${m.powered === "Payoneer" ? "bg-orange-500" : "bg-red-500"} flex items-center justify-center`}>
-                        <span className="text-white text-[7px] font-bold">P</span>
-                      </div>
-                      <span className="text-xs font-semibold text-gray-600">{m.powered}</span>
-                      {selectedWithdrawMethod === m.id && (
-                        <div className="w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center ml-2">
-                          <Check size={10} className="text-black" />
-                        </div>
-                      )}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <h3 className="font-bold text-gray-900 mb-3">Account</h3>
-              <button
-                onClick={() => toast.info("Please link a Payoneer or Airwallex account first.")}
-                className="w-full border border-dashed border-gray-300 rounded-xl py-4 flex items-center justify-center gap-2 text-gray-500 hover:bg-gray-50 transition-colors"
-              >
-                <Plus size={18} />
-                <span className="font-semibold">Add A Payoneer Account</span>
-              </button>
-            </div>
-
-            <button
-              disabled={!withdrawAmount || parseFloat(withdrawAmount) <= 0}
-              onClick={() => toast.info("Withdrawal request submitted. Processing takes 3-5 business days.")}
-              className={`w-full font-bold py-4 rounded-2xl transition-colors ${
-                withdrawAmount && parseFloat(withdrawAmount) > 0
-                  ? "bg-yellow-400 hover:bg-yellow-300 text-black"
-                  : "bg-yellow-200 text-yellow-600 cursor-not-allowed"
-              }`}
-            >
-              Confirm
-            </button>
-          </div>
-        )}
-
-        {/* CASH FLOW TAB */}
-        {activeTab === "cashflow" && (
-          <div>
-            <div className="mb-4">
-              <select
-                value={cashflowFilter}
-                onChange={(e) => setCashflowFilter(e.target.value)}
-                className="border border-gray-300 rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-700 bg-white outline-none"
-              >
-                {["All", "Top Up", "Withdraw", "Purchase", "Refund"].map((f) => (
-                  <option key={f}>{f}</option>
-                ))}
-              </select>
-            </div>
-
-            {transactions.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-20">
-                <div className="w-24 h-24 bg-gray-100 rounded-2xl flex items-center justify-center mb-4">
-                  <svg viewBox="0 0 80 80" className="w-16 h-16">
-                    <rect x="10" y="5" width="60" height="70" rx="6" fill="#e5e7eb"/>
-                    <rect x="20" y="18" width="40" height="4" rx="2" fill="#d1d5db"/>
-                    <rect x="20" y="28" width="30" height="4" rx="2" fill="#d1d5db"/>
-                    <rect x="20" y="38" width="35" height="4" rx="2" fill="#d1d5db"/>
-                    <path d="M50 55 L60 65 L70 50" stroke="#9ca3af" strokeWidth="3" fill="none" strokeLinecap="round"/>
-                  </svg>
-                </div>
-                <p className="text-gray-500 font-semibold">No records</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {transactions.map((tx) => (
-                  <div key={tx.id} className="flex items-center justify-between py-3 border-b border-gray-100">
-                    <div>
-                      <p className="font-semibold text-gray-800 text-sm capitalize">{tx.type}</p>
-                      <p className="text-xs text-gray-400">{tx.description}</p>
-                      <p className="text-xs text-gray-400">{new Date(tx.created_at).toLocaleDateString()}</p>
-                    </div>
-                    <span className={`font-bold text-sm ${tx.type === "purchase" || tx.type === "withdraw" ? "text-red-500" : "text-green-600"}`}>
-                      {tx.type === "purchase" || tx.type === "withdraw" ? "-" : "+"}${Math.abs(tx.amount).toFixed(2)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+        <TabContent />
       </div>
-
-      {/* Add Bank Card Modal */}
-      {showAddCard && <AddBankCardModal onClose={() => setShowAddCard(false)} onSave={(card) => { setBankCards([...bankCards, card]); setShowAddCard(false); }} userEmail={user?.email || ""} userId={user?.id || ""} />}
+      <BottomNav />
     </div>
+  );
+
+  return (
+    <>
+      <DesktopLayout />
+      <MobileLayout />
+      {showAddCard && (
+        <AddBankCardModal
+          onClose={() => setShowAddCard(false)}
+          onSave={(card) => { setBankCards([...bankCards, card]); setShowAddCard(false); }}
+          userEmail={user?.email || ""}
+          userId={user?.id || ""}
+        />
+      )}
+    </>
   );
 }
 
@@ -440,7 +568,7 @@ function AddBankCardModal({ onClose, onSave, userEmail, userId }: {
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex flex-col">
-      <div className="bg-white flex-1 flex flex-col">
+      <div className="bg-white flex-1 flex flex-col max-w-lg mx-auto w-full mt-auto rounded-t-3xl lg:rounded-3xl lg:my-auto lg:max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100">
           <button onClick={onClose}><X size={22} className="text-gray-700" /></button>
           <h2 className="font-bold text-gray-900">Payment Information</h2>
@@ -455,7 +583,6 @@ function AddBankCardModal({ onClose, onSave, userEmail, userId }: {
             Your payment information are encrypted
           </div>
 
-          {/* Card type logos */}
           <div className="flex items-center gap-3">
             <div className={`border-2 rounded-lg px-3 py-1.5 transition-all ${cardType === "visa" ? "border-blue-500" : "border-gray-200"}`}>
               <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" alt="Visa" className="h-4" />
@@ -525,4 +652,3 @@ function AddBankCardModal({ onClose, onSave, userEmail, userId }: {
     </div>
   );
 }
-fix this page in desktop like other coupon etc.
