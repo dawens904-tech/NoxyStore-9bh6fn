@@ -128,24 +128,16 @@ export function VipServicePage() {
         .map((m) => ({ role: m.sender === "user" ? "user" : "assistant", content: m.content || "[image]"}));
       history.push({ role: "user", content: text.trim() || "[image attachment]" });
 
+      // Edge function saves the AI reply directly to DB; polling (loadNewMessages) will pick it up.
+      // Do NOT add it to local state here — that would cause duplicate messages.
       supabase.functions.invoke("ai-support", {
         body: { messages: history, userEmail: user?.email, sessionId },
-      }).then(async ({ data: aiData, error: aiErr }) => {
+      }).then(async ({ error: aiErr }) => {
         if (aiErr) {
           const { FunctionsHttpError } = await import("@supabase/supabase-js");
           if (aiErr instanceof FunctionsHttpError) {
             console.error("AI support error:", await aiErr.context.text());
           }
-          return;
-        }
-        if (aiData?.reply) {
-          const aiMsg: ChatMessage = {
-            id: `ai_${Date.now()}`,
-            sender: "ai",
-            content: aiData.reply,
-            created_at: new Date().toISOString(),
-          };
-          setMessages((prev) => [...prev, aiMsg]);
         }
       });
     }
@@ -550,4 +542,3 @@ export function VipServicePage() {
     </div>
   );
 }
-fix error ai send 2 same message
