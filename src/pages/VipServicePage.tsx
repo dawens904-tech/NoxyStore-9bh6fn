@@ -550,3 +550,4 @@ export function VipServicePage() {
     </div>
   );
 }
+fix error ai send 2 same message
