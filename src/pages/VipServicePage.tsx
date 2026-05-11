@@ -435,4 +435,4 @@ export function VipServicePage() {
     </div>
   );
 }
-
+fix when you ask for agent connect or ai cant help you its call agent ai when agent ai here disable edg call and when agent close chat enable and before user left the chat ask if they want to end chat or kontinye ekri if end edg enable and agent auto close.
