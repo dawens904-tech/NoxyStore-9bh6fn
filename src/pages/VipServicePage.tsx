@@ -392,3 +392,4 @@ export function VipServicePage() {
     </div>
   );
 }
+fix real photo upload and connec this with ai edg only when ask for agent to give agent.
