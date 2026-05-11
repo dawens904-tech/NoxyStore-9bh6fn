@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Settings, Globe, HelpCircle, MessageSquare, MessageCircle, Gift, DollarSign, User,
@@ -494,6 +494,9 @@ export function AccountPage() {
   const [showBindEmailPrompt, setShowBindEmailPrompt] = useState(false);
   const [pendingAction, setPendingAction] = useState<"password" | "passkey" | null>(null);
   const [hasPassword, setHasPassword] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   const hasEmail = !!(user?.email && user.email.includes("@"));
 
@@ -502,9 +505,43 @@ export function AccountPage() {
       if (data.user) {
         const identities = data.user.identities || [];
         setHasPassword(identities.some(id => id.provider === "email") && !!(data.user.user_metadata?.username));
+        if (data.user.user_metadata?.avatar_url) setAvatarUrl(data.user.user_metadata.avatar_url);
+        if (data.user.user_metadata?.birthday) setBirthday(data.user.user_metadata.birthday);
+        if (data.user.user_metadata?.age_range) setAgeRange(data.user.user_metadata.age_range);
       }
     });
   }, []);
+
+  const handleAvatarUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+    if (file.size > 5 * 1024 * 1024) { toast.error("Image must be under 5MB"); return; }
+    if (!file.type.startsWith("image/")) { toast.error("Only image files supported"); return; }
+    setIsUploadingAvatar(true);
+    const toastId = toast.loading("Uploading avatar...");
+    const ext = file.name.split(".").pop() || "jpg";
+    const path = `avatars/${user?.id}/${Date.now()}.${ext}`;
+    const arrayBuffer = await file.arrayBuffer();
+    const { error } = await supabase.storage.from("store-assets").upload(path, arrayBuffer, { contentType: file.type, upsert: true });
+    if (error) { toast.dismiss(toastId); toast.error("Upload failed"); setIsUploadingAvatar(false); return; }
+    const { data: urlData } = supabase.storage.from("store-assets").getPublicUrl(path);
+    const { error: updateErr } = await supabase.auth.updateUser({ data: { avatar_url: urlData.publicUrl } });
+    toast.dismiss(toastId);
+    if (updateErr) { toast.error("Failed to save avatar"); } else { setAvatarUrl(urlData.publicUrl); toast.success("Avatar updated!"); }
+    setIsUploadingAvatar(false);
+  }, [user]);
+
+  const saveBirthday = async (val: string) => {
+    setBirthday(val);
+    await supabase.auth.updateUser({ data: { birthday: val } });
+    toast.success("Birthday saved!");
+  };
+
+  const saveAgeRange = async (range: string) => {
+    setAgeRange(range);
+    await supabase.auth.updateUser({ data: { age_range: range } });
+  };
 
   const handleLogout = async () => { await logout(); toast.success("Logged out"); navigate("/"); };
   const handlePasswordAction = () => { if (!hasEmail) { setShowBindEmailPrompt(true); setPendingAction("password"); } else { navigate("/login"); } };
@@ -554,7 +591,7 @@ export function AccountPage() {
             <div className="bg-white rounded-2xl shadow-sm p-5 mb-4">
               <div className="flex items-center gap-3 mb-4">
                 <div className="relative">
-                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xl font-bold">{user?.nickname?.[0]?.toUpperCase()}</div>
+                  {avatarUrl ? <img src={avatarUrl} alt="avatar" className="w-14 h-14 rounded-full object-cover" /> : <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xl font-bold">{user?.nickname?.[0]?.toUpperCase()}</div>}
                   <div className="absolute bottom-0 right-0 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center border-2 border-white"><span className="text-black text-[8px] font-bold">V1</span></div>
                 </div>
                 <div>
@@ -602,10 +639,10 @@ export function AccountPage() {
                   <h2 className="text-xl font-bold text-gray-900 mb-6">{t("accountInfo")}</h2>
                   <div className="space-y-0">
                     {[
-                      { label: "Avatar", render: () => <div className="relative group cursor-pointer ml-auto mr-4"><div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-lg font-bold">{user?.nickname?.[0]?.toUpperCase()}</div><div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><Camera size={14} className="text-white" /></div></div> },
+                      { label: "Avatar", render: () => <div className="relative group cursor-pointer ml-auto mr-4" onClick={() => avatarInputRef.current?.click()}>{isUploadingAvatar ? <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center"><Loader2 size={18} className="animate-spin text-gray-400" /></div> : avatarUrl ? <img src={avatarUrl} alt="avatar" className="w-12 h-12 rounded-full object-cover" /> : <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-lg font-bold">{user?.nickname?.[0]?.toUpperCase()}</div>}<div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><Camera size={14} className="text-white" /></div></div> },
                       { label: "Nickname", value: user?.nickname, action: "Modify" },
-                      { label: "Birthday", value: birthday || "Fill in birthday info, don't miss the surprise", valueClass: birthday ? "text-gray-800" : "text-gray-400 text-sm", action: "Set", onAction: () => setShowBirthday(true) },
-                      { label: "Age Range", value: ageRange || <span className="text-sm text-gray-400">You need to set your age in accordance with NoxyStore's User Agreement.</span>, action: ageRange ? "Change" : "Set", onAction: () => setShowAgeRange(true) },
+                      { label: "Birthday", value: birthday || "Fill in birthday info", valueClass: birthday ? "text-gray-800" : "text-gray-400 text-sm", action: birthday ? "Change" : "Set", onAction: () => setShowBirthday(true) },
+                      { label: "Age Range", value: ageRange || <span className="text-sm text-gray-400">Set your age range</span>, action: ageRange ? "Change" : "Set", onAction: () => setShowAgeRange(true) },
                       { label: "Email", value: hasEmail ? user?.email?.replace(/(.{3}).*(@)/, "$1***$2") : null, action: hasEmail ? null : "Connect", onAction: hasEmail ? undefined : () => setShowBindEmail(true) },
                       { label: "Password", value: hasPassword ? "already set" : null, action: hasPassword ? "Change" : "Go to set up", onAction: handlePasswordAction },
                       { label: "Passkey", value: null, action: "Manage", onAction: handlePasskeyAction },
@@ -675,14 +712,14 @@ export function AccountPage() {
           <div className="space-y-4">
             <div className="bg-gradient-to-br from-blue-500 via-purple-600 to-pink-500 rounded-3xl p-5 text-white relative overflow-hidden">
               <div className="flex items-center gap-3 mb-5 mt-1">
-                <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center text-2xl font-bold border-2 border-white/30">{user?.nickname?.[0]?.toUpperCase()}</div>
+                <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-white/30 bg-white/20 backdrop-blur-sm flex items-center justify-center">{avatarUrl ? <img src={avatarUrl} alt="avatar" className="w-full h-full object-cover" /> : <span className="text-2xl font-bold text-white">{user?.nickname?.[0]?.toUpperCase()}</span>}</div>
                 <div><h2 className="text-lg font-bold">{user?.nickname}</h2><p className="text-white/70 text-sm">ID: {user?.id?.slice(-12)}</p><span className="bg-white/20 text-white text-xs font-semibold px-2.5 py-0.5 rounded-full mt-1 inline-block">{user?.role === "admin" ? "Admin" : "Member"}</span></div>
               </div>
               <div className="grid grid-cols-3 gap-2 mb-4">
                 {[
                   { label: t("balance"), value: `$${user?.balance?.toFixed(2)}`, path: "/balance" },
                   { label: t("points"), value: user?.points ?? 0, path: null },
-                  { label: t("coupons"), value: user?.coupons?.toFixed(2)}`, path: "/coupons" },
+                  { label: t("coupons"), value: `${user?.coupons ?? 0}`, path: "/coupons" },
                 ].map(item => (
                   <button key={item.label} onClick={() => (item as any).path && navigate((item as any).path)} className="bg-white/15 backdrop-blur-sm rounded-2xl p-3 text-center hover:bg-white/25 transition-colors">
                     <p className="text-lg font-bold">{item.value}</p><p className="text-white/70 text-xs">{item.label}</p>
@@ -757,13 +794,13 @@ export function AccountPage() {
             </div>
 
             {/* Avatar */}
-            <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100">
+            <button onClick={() => avatarInputRef.current?.click()} className="flex items-center justify-between px-4 py-4 border-b border-gray-100 w-full">
               <span className="text-sm font-medium text-gray-800">Avatar</span>
               <div className="flex items-center gap-2">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">{user?.nickname?.[0]?.toUpperCase()}</div>
+                {isUploadingAvatar ? <Loader2 size={20} className="animate-spin text-gray-400" /> : avatarUrl ? <img src={avatarUrl} alt="avatar" className="w-10 h-10 rounded-full object-cover" /> : <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">{user?.nickname?.[0]?.toUpperCase()}</div>}
                 <ChevronRight size={16} className="text-gray-400" />
               </div>
-            </div>
+            </button>
 
             {/* Nickname */}
             <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100">
@@ -868,11 +905,12 @@ export function AccountPage() {
       <DesktopLayout />
       <MobileLayout />
 
-      {showAgeRange && <AgeRangeModal onClose={() => setShowAgeRange(false)} onSave={(range) => { setAgeRange(range); setShowAgeRange(false); }} />}
-      {showBirthday && <BirthdayModal current={birthday} onClose={() => setShowBirthday(false)} onSave={(val) => { setBirthday(val); setShowBirthday(false); toast.success("Birthday saved!"); }} />}
+      <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+      {showAgeRange && <AgeRangeModal onClose={() => setShowAgeRange(false)} onSave={(range) => { saveAgeRange(range); setShowAgeRange(false); }} />}
+      {showBirthday && <BirthdayModal current={birthday} onClose={() => setShowBirthday(false)} onSave={(val) => { saveBirthday(val); setShowBirthday(false); }} />}
       {showBindEmail && <BindEmailModal onClose={() => setShowBindEmail(false)} onSuccess={() => { setShowBindEmail(false); if (pendingAction === "passkey") navigate("/passkeys"); else if (pendingAction === "password") navigate("/login"); setPendingAction(null); }} />}
       {showBindEmailPrompt && <BindEmailPrompt onClose={() => setShowBindEmailPrompt(false)} onConfirm={() => { setShowBindEmailPrompt(false); setShowBindEmail(true); }} />}
     </>
   );
 }
-add real avatar upload for desktop/mobile and fix settings birtdays real enter remove demo.
+
