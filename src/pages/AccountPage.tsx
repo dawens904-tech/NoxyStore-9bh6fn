@@ -481,7 +481,7 @@ function DesktopCoupons({ user }: { user: any }) {
 // ─── Main Component ───────────────────────────────────────────────────────────
 export function AccountPage() {
   const navigate = useNavigate();
-  const { user, isAuthenticated, logout, orders } = useAuthStore();
+  const { user, isAuthenticated, logout, orders, login } = useAuthStore();
   const { t } = useTranslation();
   const { currency, language } = useSettingsStore();
   const [activeTab, setActiveTab] = useState<AccountTab>("overview");
@@ -496,7 +496,10 @@ export function AccountPage() {
   const [hasPassword, setHasPassword] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [isEditingNickname, setIsEditingNickname] = useState(false);
+  const [nicknameInput, setNicknameInput] = useState("");
   const avatarInputRef = useRef<HTMLInputElement>(null);
+  const nicknameInputRef = useRef<HTMLInputElement>(null);
 
   const hasEmail = !!(user?.email && user.email.includes("@"));
 
@@ -531,6 +534,18 @@ export function AccountPage() {
     if (updateErr) { toast.error("Failed to save avatar"); } else { setAvatarUrl(urlData.publicUrl); toast.success("Avatar updated!"); }
     setIsUploadingAvatar(false);
   }, [user]);
+
+  const saveNickname = async () => {
+    const trimmed = nicknameInput.trim();
+    if (!trimmed) { setIsEditingNickname(false); return; }
+    const { data, error } = await supabase.auth.updateUser({ data: { username: trimmed } });
+    if (error) { toast.error("Failed to update nickname"); return; }
+    if (data.user && user) {
+      login({ ...user, nickname: trimmed });
+    }
+    setIsEditingNickname(false);
+    toast.success("Nickname updated!");
+  };
 
   const saveBirthday = async (val: string) => {
     setBirthday(val);
@@ -640,7 +655,15 @@ export function AccountPage() {
                   <div className="space-y-0">
                     {[
                       { label: "Avatar", render: () => <div className="relative group cursor-pointer ml-auto mr-4" onClick={() => avatarInputRef.current?.click()}>{isUploadingAvatar ? <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center"><Loader2 size={18} className="animate-spin text-gray-400" /></div> : avatarUrl ? <img src={avatarUrl} alt="avatar" className="w-12 h-12 rounded-full object-cover" /> : <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-lg font-bold">{user?.nickname?.[0]?.toUpperCase()}</div>}<div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><Camera size={14} className="text-white" /></div></div> },
-                      { label: "Nickname", value: user?.nickname, action: "Modify" },
+                      { label: "Nickname", render: () => isEditingNickname ? (
+                          <div className="flex items-center gap-2 flex-1">
+                            <input ref={nicknameInputRef} type="text" value={nicknameInput} onChange={(e) => setNicknameInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") saveNickname(); if (e.key === "Escape") setIsEditingNickname(false); }} className="flex-1 border border-yellow-400 rounded-lg px-3 py-1.5 text-sm text-gray-800 outline-none" autoFocus />
+                            <button onClick={saveNickname} className="text-xs font-bold bg-yellow-400 hover:bg-yellow-300 text-black px-3 py-1.5 rounded-lg">Save</button>
+                            <button onClick={() => setIsEditingNickname(false)} className="text-xs text-gray-400 hover:text-gray-600 px-2 py-1.5">Cancel</button>
+                          </div>
+                        ) : (
+                          <p className="text-sm text-gray-800">{user?.nickname}</p>
+                        ), action: isEditingNickname ? null : "Modify", onAction: () => { setNicknameInput(user?.nickname || ""); setIsEditingNickname(true); setTimeout(() => nicknameInputRef.current?.focus(), 50); } },
                       { label: "Birthday", value: birthday || "Fill in birthday info", valueClass: birthday ? "text-gray-800" : "text-gray-400 text-sm", action: birthday ? "Change" : "Set", onAction: () => setShowBirthday(true) },
                       { label: "Age Range", value: ageRange || <span className="text-sm text-gray-400">Set your age range</span>, action: ageRange ? "Change" : "Set", onAction: () => setShowAgeRange(true) },
                       { label: "Email", value: hasEmail ? user?.email?.replace(/(.{3}).*(@)/, "$1***$2") : null, action: hasEmail ? null : "Connect", onAction: hasEmail ? undefined : () => setShowBindEmail(true) },
@@ -805,7 +828,17 @@ export function AccountPage() {
             {/* Nickname */}
             <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100">
               <span className="text-sm font-medium text-gray-800">Nickname</span>
-              <div className="flex items-center gap-1 text-gray-400"><span className="text-sm">{user?.nickname}</span><ChevronRight size={16} /></div>
+              {isEditingNickname ? (
+                <div className="flex items-center gap-2 flex-1 ml-4">
+                  <input type="text" value={nicknameInput} onChange={(e) => setNicknameInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") saveNickname(); if (e.key === "Escape") setIsEditingNickname(false); }} className="flex-1 border border-yellow-400 rounded-lg px-3 py-1.5 text-sm text-gray-800 outline-none" autoFocus />
+                  <button onClick={saveNickname} className="text-xs font-bold bg-yellow-400 text-black px-3 py-1.5 rounded-lg">Save</button>
+                  <button onClick={() => setIsEditingNickname(false)} className="text-xs text-gray-400 px-2 py-1.5"><X size={14} /></button>
+                </div>
+              ) : (
+                <button onClick={() => { setNicknameInput(user?.nickname || ""); setIsEditingNickname(true); }} className="flex items-center gap-1 text-gray-400">
+                  <span className="text-sm">{user?.nickname}</span><ChevronRight size={16} />
+                </button>
+              )}
             </div>
 
             {/* Birthday */}
@@ -913,4 +946,4 @@ export function AccountPage() {
     </>
   );
 }
-hello ai if see this make change dont skip add inline nickname editing in AccountPage — clicking the Nickname row in the profile tab opens an input field, saves via supabase.auth.updateUser({ data: { username: newName } }), and updates the auth store immediately and fix avatar upload.
+
