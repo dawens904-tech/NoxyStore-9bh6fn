@@ -913,4 +913,3 @@ export function AccountPage() {
     </>
   );
 }
-fix avatar upload real and Upload failed
