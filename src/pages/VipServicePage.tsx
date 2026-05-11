@@ -550,3 +550,4 @@ export function VipServicePage() {
     </div>
   );
 }
+the chat image upload is failing with a 500 error on the storage bucket Please investigate and fix the chat-images storage bucket RLS policies to allow authenticated and anonymous users to upload files to the chat/ path.
