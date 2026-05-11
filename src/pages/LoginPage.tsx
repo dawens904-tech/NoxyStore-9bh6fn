@@ -269,8 +269,8 @@ export function LoginPage() {
   const Legal = () => (
     <p className="text-center text-xs text-gray-400 leading-relaxed">
       By registering or logging in, you agree to our{" "}
-      <button className="underline hover:text-gray-600">Privacy Policy</button> /{" "}
-      <button className="underline hover:text-gray-600">Terms of Service</button> /{" "}
+      <button className="underline hover:text-gray-600">Privacy Policy</button> /{"/privacy "}
+      <button className="underline hover:text-gray-600">Terms of Service</button> /{"/terms"}
       <button className="underline hover:text-gray-600">Cookie Policy</button>
     </p>
   );
@@ -374,7 +374,7 @@ export function LoginPage() {
               </div>
             </div>
             <div className="flex items-center justify-center gap-5 mb-8">
-              {[{ value: "4.9", label: "Trustpilot 30K+\nReviews", icon: "★" }, { value: "30%", label: "Up to 30% OFF" }, { value: "10M+", label: "Gamers' Choice" }].map((item, idx) => (
+              {[{ value: "4.9", label: "Trustpilot 1K+\nReviews", icon: "★" }, { value: "30%", label: "Up to 30% OFF" }, { value: "5M+", label: "Gamers' Choice" }].map((item, idx) => (
                 <div key={idx} className="flex items-center gap-5">
                   {idx > 0 && <div className="h-8 w-px bg-gray-200" />}
                   <div className="text-center">
