@@ -652,3 +652,4 @@ function AddBankCardModal({ onClose, onSave, userEmail, userId }: {
     </div>
   );
 }
+fix home screen white error
