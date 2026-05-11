@@ -682,7 +682,7 @@ export function AccountPage() {
                 {[
                   { label: t("balance"), value: `$${user?.balance?.toFixed(2)}`, path: "/balance" },
                   { label: t("points"), value: user?.points ?? 0, path: null },
-                  { label: t("coupons"), value: user?.coupons ?? 0, path: "/coupons },
+                  { label: t("coupons"), value: user?.coupons ?? 0, path: "/coupons" },
                 ].map(item => (
                   <button key={item.label} onClick={() => (item as any).path && navigate((item as any).path)} className="bg-white/15 backdrop-blur-sm rounded-2xl p-3 text-center hover:bg-white/25 transition-colors">
                     <p className="text-lg font-bold">{item.value}</p><p className="text-white/70 text-xs">{item.label}</p>
