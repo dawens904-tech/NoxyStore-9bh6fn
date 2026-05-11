@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, Component, ReactNode } from "react";
 import { Toaster } from "sonner";
 import { HomePage } from "@/pages/HomePage";
 import { CategoriesPage } from "@/pages/CategoriesPage";
@@ -44,6 +44,34 @@ import { AdminApiStatusPage } from "@/pages/admin/AdminApiStatusPage";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore, mapSupabaseUser } from "@/stores/authStore";
 import { trackEvent } from "@/lib/analytics";
+
+// ─── Error Boundary ─────────────────────────────────────────────────────────
+class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: Error | null }> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-[#f5f5f5] flex flex-col items-center justify-center px-6 text-center">
+          <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mb-4">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          </div>
+          <h2 className="text-lg font-bold text-gray-900 mb-2">Something went wrong</h2>
+          <p className="text-sm text-gray-500 mb-6 max-w-xs">{this.state.error?.message || "An unexpected error occurred."}</p>
+          <button onClick={() => { this.setState({ hasError: false, error: null }); window.location.href = "/"; }} className="bg-yellow-400 hover:bg-yellow-300 text-black font-bold px-8 py-3 rounded-xl">
+            Back to Home
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 function AuthInitializer() {
   const { login, setLoading } = useAuthStore();
@@ -101,8 +129,9 @@ function AuthInitializer() {
 function App() {
   return (
     <BrowserRouter>
-      <AuthInitializer />
-      <div className="min-h-screen bg-[#f5f5f5]">
+      <ErrorBoundary>
+        <AuthInitializer />
+        <div className="min-h-screen bg-[#f5f5f5]">
         <Routes>
           {/* Public routes */}
           <Route path="/" element={<HomePage />} />
@@ -153,6 +182,7 @@ function App() {
         </Routes>
       </div>
 
+      </ErrorBoundary>
       <Toaster
         position="top-center"
         toastOptions={{
