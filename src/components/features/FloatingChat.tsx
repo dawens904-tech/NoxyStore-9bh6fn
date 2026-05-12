@@ -57,14 +57,13 @@ export function FloatingChat() {
         </div>
 
         <button
-      onClick={() => navigate("/support")}
-      className="fixed bottom-24 right-4 z-50 w-14 h-14 bg-yellow-400 rounded-full shadow-lg flex items-center justify-center hover:bg-yellow-300 active:scale-95 transition-all lg:bottom-8"
-      aria-label="Chat support"
-    >
-      <MessageSquare size={24} className="text-black" />
-    </button>
+          onClick={() => navigate("/support")}
+          className="w-14 h-14 bg-yellow-400 rounded-full shadow-lg flex items-center justify-center hover:bg-yellow-300 active:scale-95 transition-all"
+          aria-label="Chat support"
+        >
+          <MessageCircle size={24} className="text-black" />
+        </button>
       </div>
     </div>
   );
 }
-fix MessageSquare is not defined
