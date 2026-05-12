@@ -8,7 +8,7 @@ const supabase = createClient(
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
 );
 
-// ─── Token Management ───────────────────────────────────────────────────────
+// ─── Token Management ────────────────────────────────────────────────────────
 
 async function getStoredToken(): Promise<{ token: string; callback_key: string } | null> {
   const { data, error } = await supabase
@@ -71,106 +71,6 @@ async function getToken(): Promise<{ token: string; callback_key: string }> {
   return doLogin();
 }
 
-// ─── Get games with caching — now stores REAL Lootbar images ────────────────
-async function getGamesWithCache(pageNum: number, pageSize: number): Promise<unknown> {
-  // Check cache — 1 hour TTL
-  const { data: cached, error: cacheError } = await supabase
-    .from("games_cache")
-    .select("*")
-    .order("game_name");
-
-  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-
-  // If cache has data and it's fresh
-  if (!cacheError && cached && cached.length > 0) {
-    const cacheAge = cached[0]?.cached_at;
-    if (cacheAge && cacheAge > oneHourAgo) {
-      console.log("[LootbarProxy] Returning cached games:", cached.length);
-      return {
-        status: "ok",
-        data: {
-          items: cached.map(g => ({
-            game_id: g.game_id,
-            game_name: g.game_name,
-            game_image: g.game_image,
-            category: g.category,
-            rating: g.rating,
-            sold_count: g.sold_count,
-            is_hot: g.is_hot,
-            discount: g.discount,
-          })),
-          page_num: pageNum,
-          page_size: pageSize,
-          total_count: cached.length,
-          total_page: 1,
-        }
-      };
-    }
-  }
-
-  // Fetch fresh from Lootbar API
-  console.log("[LootbarProxy] Fetching fresh games from Lootbar API...");
-  const result = await lootbarRequest("GET", `/api/reseller/games?page_num=1&page_size=200`) as Record<string, unknown>;
-
-  if (result.status === "ok") {
-    const data = result.data as Record<string, unknown>;
-    const items = (data.items as Array<Record<string, unknown>>) || [];
-
-    console.log("[LootbarProxy] Got", items.length, "games from API, caching...");
-
-    // Upsert all games in batch
-    const upsertData = items.map((game) => {
-      const name = String(game.game_name || "").toLowerCase();
-      let category = "Top Up";
-      if (name.includes("gift") || name.includes("card") || name.includes("voucher") || name.includes("itunes") || name.includes("google play")) category = "Gift Card";
-      else if (name.includes("coin") || name.includes("credit") || name.includes("gold") || name.includes("token")) category = "Game Coins";
-      else if (name.includes("key") || name.includes("steam") || name.includes("epic") || name.includes("ubisoft")) category = "Game Keys";
-
-      // Use the REAL image from Lootbar API if available
-      const rawImage = game.image_url || game.game_image || game.icon || game.thumb || null;
-      const gameImage = rawImage
-        ? String(rawImage)
-        : `https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&h=400&fit=crop&sig=${game.game_id}`;
-
-      const soldRaw = Number(game.sold_num || game.sold_count || 0);
-      const soldCount = soldRaw > 100000 ? `${Math.floor(soldRaw / 1000)}k+ Sold` : soldRaw > 1000 ? `${Math.floor(soldRaw / 1000)}k Sold` : soldRaw > 0 ? `${soldRaw} Sold` : "100k+ Sold";
-
-      return {
-        game_id: String(game.game_id),
-        game_name: String(game.game_name),
-        game_image: gameImage,
-        category,
-        rating: Number(game.rating || game.score || 5.0),
-        sold_count: soldCount,
-        is_hot: Boolean(game.is_hot || game.hot),
-        discount: Number(game.discount || game.discount_percent || 0),
-        cached_at: new Date().toISOString(),
-      };
-    });
-
-    if (upsertData.length > 0) {
-      // Batch upsert (Supabase supports up to 1000 rows per upsert)
-      const batchSize = 50;
-      for (let i = 0; i < upsertData.length; i += batchSize) {
-        await supabase.from("games_cache").upsert(upsertData.slice(i, i + batchSize));
-      }
-      console.log("[LootbarProxy] Cached", upsertData.length, "games");
-    }
-
-    // Return enriched result with category/image data
-    return {
-      status: "ok",
-      data: {
-        ...data,
-        items: upsertData,
-        total_count: upsertData.length,
-      }
-    };
-  }
-
-  return result;
-}
-
 // ─── Lootbar API Request ─────────────────────────────────────────────────────
 async function lootbarRequest(method: string, path: string, body?: unknown): Promise<unknown> {
   const { token } = await getToken();
@@ -196,6 +96,132 @@ async function lootbarRequest(method: string, path: string, body?: unknown): Pro
   return JSON.parse(text);
 }
 
+// ─── Get games with caching ──────────────────────────────────────────────────
+async function getGamesWithCache(pageNum: number, pageSize: number): Promise<unknown> {
+  // Check DB cache — 1 hour TTL
+  const { data: cached, error: cacheError } = await supabase
+    .from("games_cache")
+    .select("*")
+    .order("game_name");
+
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+
+  if (!cacheError && cached && cached.length > 0) {
+    const cacheAge = cached[0]?.cached_at;
+    if (cacheAge && cacheAge > oneHourAgo) {
+      console.log("[LootbarProxy] Returning cached games:", cached.length);
+      return {
+        status: "ok",
+        data: {
+          items: cached.map((g: Record<string, unknown>) => ({
+            game_id: g.game_id,
+            game_name: g.game_name,
+            game_image: g.game_image,
+            category: g.category,
+            rating: g.rating,
+            sold_count: g.sold_count,
+            is_hot: g.is_hot,
+            discount: g.discount,
+            min_price: g.min_price,
+          })),
+          page_num: pageNum,
+          page_size: pageSize,
+          total_count: cached.length,
+          total_page: 1,
+        }
+      };
+    }
+  }
+
+  // Fetch fresh from Lootbar API
+  console.log("[LootbarProxy] Fetching fresh games from Lootbar API...");
+  const result = await lootbarRequest("GET", `/api/reseller/games?page_num=1&page_size=200`) as Record<string, unknown>;
+
+  if (result.status === "ok") {
+    const data = result.data as Record<string, unknown>;
+    const items = (data.items as Array<Record<string, unknown>>) || [];
+
+    console.log("[LootbarProxy] Got", items.length, "games from API, caching...");
+
+    const upsertData = items.map((game: Record<string, unknown>) => {
+      const name = String(game.game_name || "").toLowerCase();
+      let category = "Top Up";
+      if (name.includes("gift") || name.includes("card") || name.includes("voucher") || name.includes("itunes") || name.includes("google play")) category = "Gift Card";
+      else if (name.includes("coin") || name.includes("credit") || name.includes("gold") || name.includes("token")) category = "Game Coins";
+      else if (name.includes("key") || name.includes("steam") || name.includes("epic") || name.includes("ubisoft")) category = "Game Keys";
+
+      // Use real Lootbar image — the API returns game_image directly
+      const rawImage = game.game_image || game.image_url || game.icon || game.thumb || null;
+      const gameImage = rawImage ? String(rawImage) : null;
+
+      const soldRaw = Number(game.sold_num || game.sold_count || 0);
+      const soldCount = soldRaw > 100000
+        ? `${Math.floor(soldRaw / 1000)}k+ Sold`
+        : soldRaw > 1000 ? `${Math.floor(soldRaw / 1000)}k Sold`
+        : soldRaw > 0 ? `${soldRaw} Sold` : "100k+ Sold";
+
+      return {
+        game_id: String(game.game_id),
+        game_name: String(game.game_name),
+        game_image: gameImage,
+        category,
+        rating: Number(game.rating || game.score || 5.0),
+        sold_count: soldCount,
+        is_hot: Boolean(game.is_hot || game.hot),
+        discount: Number(game.discount || game.discount_percent || 0),
+        // min_price will be updated separately when SKUs are fetched
+        cached_at: new Date().toISOString(),
+      };
+    });
+
+    if (upsertData.length > 0) {
+      const batchSize = 50;
+      for (let i = 0; i < upsertData.length; i += batchSize) {
+        await supabase.from("games_cache").upsert(upsertData.slice(i, i + batchSize));
+      }
+      console.log("[LootbarProxy] Cached", upsertData.length, "games");
+    }
+
+    return {
+      status: "ok",
+      data: {
+        ...data,
+        items: upsertData,
+        total_count: upsertData.length,
+      }
+    };
+  }
+
+  return result;
+}
+
+// ─── Get SKUs — also updates min_price in games_cache ────────────────────────
+async function getSkusWithMinPrice(gameId: string): Promise<unknown> {
+  const result = await lootbarRequest("GET", `/api/reseller/skus?game_id=${gameId}`) as Record<string, unknown>;
+
+  if (result.status === "ok") {
+    const data = result.data as Record<string, unknown>;
+    const items = (data.items as Array<Record<string, unknown>>) || [];
+
+    // Calculate min price from SKUs
+    const prices = items
+      .map((sku: Record<string, unknown>) => Number(sku.price || sku.final_price || 0))
+      .filter((p: number) => p > 0);
+
+    if (prices.length > 0) {
+      const minPrice = Math.min(...prices);
+      // Update min_price in games_cache
+      await supabase
+        .from("games_cache")
+        .update({ min_price: minPrice })
+        .eq("game_id", gameId);
+      console.log(`[LootbarProxy] Updated min_price for game ${gameId}: $${minPrice}`);
+    }
+  }
+
+  return result;
+}
+
 // ─── Main Handler ─────────────────────────────────────────────────────────────
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -219,7 +245,7 @@ Deno.serve(async (req) => {
 
       case "get_skus": {
         if (!params?.game_id) throw new Error("game_id required");
-        result = await lootbarRequest("GET", `/api/reseller/skus?game_id=${params.game_id}`);
+        result = await getSkusWithMinPrice(params.game_id);
         break;
       }
 
@@ -248,6 +274,9 @@ Deno.serve(async (req) => {
             sku_name: params.sku_name ?? "",
             quantity: params.num ?? 1,
             price: params.price ?? 0,
+            base_price: params.base_price ?? 0,
+            profit_amount: params.profit_amount ?? 0,
+            markup_percent: params.markup_percent ?? 0,
             state: 1,
             extra_info: params.extra_info ?? {},
             user_email: params.user_email ?? "",
