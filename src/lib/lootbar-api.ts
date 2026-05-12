@@ -153,3 +153,4 @@ export function generateReferenceId(): string {
 }
 
 export const tokenManager = { isAuthenticated: () => true, getToken: () => "server-side", logout: () => {} };
+please read amin dashboard and add real fetch information game.
