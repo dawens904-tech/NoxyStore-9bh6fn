@@ -204,7 +204,12 @@ export function GameDetailPage() {
           <ChevronRight size={14} />
           <span className="text-gray-800 font-medium">{game?.game_name} Top Up</span>
         </div>
-        <div className="flex items-center gap-3">
+        <a
+          href="https://www.trustpilot.com/review/noxystore.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-3 hover:opacity-75 transition-opacity cursor-pointer"
+        >
           <span className="text-sm text-gray-600 font-semibold">Excellent</span>
           <div className="flex gap-0.5">
             {Array.from({ length: 5 }).map((_, i) => (
@@ -214,13 +219,13 @@ export function GameDetailPage() {
             ))}
           </div>
           <span className="text-sm text-gray-500">44,884 reviews on Trustpilot</span>
-        </div>
+        </a>
       </div>
 
       <div className="max-w-[1280px] mx-auto px-6 pb-16">
-        <div className="flex gap-6">
-          {/* Left: Game info + SKU grid */}
-          <div className="flex-1 min-w-0">
+        <div className="flex gap-6 items-start">
+          {/* Left: Game info + SKU grid — scrollable, hidden scrollbar */}
+          <div className="flex-1 min-w-0 overflow-y-auto scrollbar-hide" style={{ maxHeight: "calc(100vh - 130px)", scrollbarWidth: "none", msOverflowStyle: "none" }}>
             {/* Game header card */}
             <div className="bg-white p-6 mb-4 border border-gray-100">
               <div className="flex items-start gap-5">
@@ -265,18 +270,21 @@ export function GameDetailPage() {
                 </div>
               </div>
 
-              {notice && (
-                <div className="mt-4 bg-amber-50 border border-amber-200 px-4 py-2.5 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <AlertCircle size={14} className="text-amber-600 flex-shrink-0" />
-                    <p className="text-sm text-amber-800">{notice}</p>
-                  </div>
-                  <button onClick={() => setNotice(null)} className="text-gray-400 hover:text-gray-600 ml-2">
-                    <X size={14} />
-                  </button>
-                </div>
-              )}
+
             </div>
+
+            {/* Notice banner — above region tabs */}
+            {notice && (
+              <div className="bg-amber-50 border border-amber-200 px-4 py-2.5 flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <AlertCircle size={14} className="text-amber-600 flex-shrink-0" />
+                  <p className="text-sm text-amber-800">{notice}</p>
+                </div>
+                <button onClick={() => setNotice(null)} className="text-gray-400 hover:text-gray-600 ml-2">
+                  <X size={14} />
+                </button>
+              </div>
+            )}
 
             {/* Region / Server tabs — real data from SKU attributes */}
             {regions.length > 1 && (
@@ -383,9 +391,9 @@ export function GameDetailPage() {
             </div>
           </div>
 
-          {/* Right: Sticky order panel */}
+          {/* Right: Sticky order panel — fixed, does NOT scroll */}
           <div className="w-72 flex-shrink-0">
-            <div className="sticky top-20 border border-gray-200 shadow-sm bg-white">
+            <div className="sticky top-[70px] border border-gray-200 shadow-sm bg-white">
 
               {/* Order Information Section */}
               <div className="px-5 pt-5 pb-4 border-b border-gray-200">
@@ -728,4 +736,4 @@ export function GameDetailPage() {
     </>
   );
 }
-fix region yo dwe apa pouko yo and message:Americas Area Topup may take 10 minutes, Longer during busy periods. dwe apa poukol and message excellent must be click with real trustpilot fix order info stay fix only bo product ka scroll and hide scroll line.
+
