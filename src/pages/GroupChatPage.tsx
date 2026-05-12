@@ -481,6 +481,10 @@ export function GroupChatPage() {
   const voice = useVoiceRecorder();
 
   const displayName = user?.username || user?.email?.split("@")[0] || "Guest";
+  const isCurrentUserAdmin = !!(user?.email && adminEmails.has(user.email));
+
+  const [announceMode, setAnnounceMode] = useState(false);
+  const [announceText, setAnnounceText] = useState("");
 
   // ─── Fetch helpers ────────────────────────────────────────────────────────
   const fetchAdmins = useCallback(async () => {
@@ -517,9 +521,11 @@ export function GroupChatPage() {
 
   const checkBan = useCallback(async () => {
     if (!user?.email) return;
+    // Admins are never banned from group chat
+    if (user?.email && adminEmails.has(user.email)) return;
     const info = await getBanInfo(user.email);
     if (info.banned) setBanned({ permanent: info.permanent, until: info.until });
-  }, [user]);
+  }, [user, adminEmails]);
 
   // ─── Read tracking ─────────────────────────────────────────────────────────
   const markRead = useCallback(async (lastMessageId: string) => {
@@ -611,7 +617,8 @@ export function GroupChatPage() {
   // ─── Send message ──────────────────────────────────────────────────────────
   const sendMessage = async (opts?: { content?: string; imageUrl?: string; isVoice?: boolean }) => {
     if (!isAuthenticated) { toast.error("Please log in to send messages"); navigate("/login"); return; }
-    if (banned) {
+    // Admins bypass all ban checks
+    if (!isCurrentUserAdmin && banned) {
       if (banned.permanent) { toast.error("Your account is permanently banned. Contact support."); return; }
       if (banned.until && Date.now() < banned.until) {
         const mins = Math.ceil((banned.until - Date.now()) / 60000);
@@ -662,6 +669,23 @@ export function GroupChatPage() {
   };
 
   const handleSendText = () => { if (text.trim()) sendMessage({ content: text.trim() }); };
+
+  const handleSendAnnouncement = async () => {
+    if (!announceText.trim() || !isCurrentUserAdmin) return;
+    setSending(true);
+    const { error } = await supabase.from("chat_messages").insert({
+      session_id: SESSION_ID,
+      user_email: user!.email,
+      user_id: user!.id,
+      sender: `📢 ${displayName}`,
+      content: announceText.trim(),
+      image_url: null,
+      is_read: false,
+    });
+    if (error) { toast.error("Failed to send announcement"); }
+    else { toast.success("Announcement sent!"); setAnnounceText(""); setAnnounceMode(false); await fetchMessages(); }
+    setSending(false);
+  };
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -721,11 +745,40 @@ export function GroupChatPage() {
   const isAdminMsg = (msg: ChatMessage) => !!(msg.user_email && adminEmails.has(msg.user_email));
   const isOwnMsg = (msg: ChatMessage) => !!(user && (msg.user_id === user.id || msg.user_email === user.email));
 
-  const banMessage = banned
+  const banMessage = !isCurrentUserAdmin && banned
     ? banned.permanent
       ? "Your account has been permanently banned for spam. Contact support@noxystore.com to appeal."
       : `You are temporarily banned for spam. ${banned.until ? `Ban lifts in ${Math.ceil((banned.until - Date.now()) / 60000)} min.` : ""}`
     : null;
+
+  // ─── Ban gate: banned non-admin users see a locked screen ────────────────
+  if (!isCurrentUserAdmin && banned) {
+    const timeLeft = banned.until ? Math.ceil((banned.until - Date.now()) / 60000) : 0;
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 px-6 text-center">
+        <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mb-5">
+          <Shield size={36} className="text-red-500" />
+        </div>
+        <h2 className="text-xl font-black text-gray-900 mb-2">Access Restricted</h2>
+        <p className="text-sm text-gray-500 mb-4 max-w-xs">
+          {banned.permanent
+            ? "Your account has been permanently banned from group chat due to spam violations."
+            : `You are temporarily banned from group chat. Ban lifts in ${timeLeft} minute${timeLeft !== 1 ? "s" : ""}.`}
+        </p>
+        {banned.permanent && (
+          <p className="text-xs text-gray-400 mb-6">
+            To appeal, contact <span className="font-semibold text-yellow-600">support@noxystore.com</span>
+          </p>
+        )}
+        <button
+          onClick={() => navigate(-1)}
+          className="bg-yellow-400 text-black font-bold px-8 py-3 rounded-2xl hover:bg-yellow-300 transition-colors"
+        >
+          Go Back
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col bg-gray-50" style={{ height: "100dvh" }}>
@@ -849,16 +902,47 @@ export function GroupChatPage() {
         </div>
       )}
 
+      {/* ─── ADMIN ANNOUNCE BAR ──────────────────────────────────────────── */}
+      {isCurrentUserAdmin && announceMode && (
+        <div className="px-3 py-2 bg-yellow-50 border-t border-yellow-300 flex items-center gap-2 flex-shrink-0">
+          <Crown size={15} className="text-yellow-600 flex-shrink-0" />
+          <input
+            type="text"
+            value={announceText}
+            onChange={(e) => setAnnounceText(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") handleSendAnnouncement(); }}
+            placeholder="Type announcement for all members..."
+            className="flex-1 bg-white border border-yellow-300 rounded-full px-4 py-2 text-sm outline-none text-gray-900 placeholder-gray-400"
+            autoFocus
+          />
+          <button onClick={handleSendAnnouncement} disabled={sending || !announceText.trim()} className="w-9 h-9 bg-yellow-400 rounded-full flex items-center justify-center disabled:opacity-60">
+            <Send size={14} className="text-black" />
+          </button>
+          <button onClick={() => { setAnnounceMode(false); setAnnounceText(""); }} className="text-gray-400"><X size={16} /></button>
+        </div>
+      )}
+
       {/* ─── INPUT BAR ───────────────────────────────────────────────────── */}
       {!imagePreview && !voice.audioBlob && !voice.recording && (
         <div
           className="px-3 py-2 bg-white border-t border-gray-200 flex items-center gap-2 flex-shrink-0"
           style={{ paddingBottom: "calc(0.5rem + env(safe-area-inset-bottom))" }}
         >
+          {isCurrentUserAdmin && (
+            <button
+              onClick={() => setAnnounceMode((v) => !v)}
+              title="Send Announcement"
+              className={`w-9 h-9 flex items-center justify-center transition-colors flex-shrink-0 ${
+                announceMode ? "text-yellow-600 bg-yellow-100 rounded-full" : "text-gray-500 hover:text-yellow-500"
+              }`}
+            >
+              <Crown size={18} />
+            </button>
+          )}
           <button
             onClick={() => fileInputRef.current?.click()}
             className="w-9 h-9 flex items-center justify-center text-gray-500 hover:text-yellow-500 transition-colors flex-shrink-0"
-            disabled={!!banned}
+            disabled={!isCurrentUserAdmin && !!banned}
           >
             <Image size={20} />
           </button>
@@ -931,4 +1015,4 @@ export function GroupChatPage() {
     </div>
   );
 }
-fix when you ban never enter to the group its lock for time ban and fix admin can chat to the group give anonce.
+
