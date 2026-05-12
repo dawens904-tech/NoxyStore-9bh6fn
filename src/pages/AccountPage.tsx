@@ -723,7 +723,8 @@ export function AccountPage() {
   // ─── Mobile Layout ────────────────────────────────────────────────────────
   const MobileLayout = () => (
     <div className="lg:hidden bg-[#f8f8f8] min-h-screen pb-20">
-      <div className="px-4 pt-5">
+      <Header showMenu />
+      <div className="px-4 pt-4">
         <h1 className="text-2xl font-bold text-gray-900 mb-4">{t("myAccount")}</h1>
         <div className="grid grid-cols-4 mb-4">
           {(["overview","orders","profile","activity"] as AccountTab[]).map(tab => (
@@ -947,4 +948,3 @@ export function AccountPage() {
   );
 }
 
-add header desktop and header mobile both.
