@@ -722,3 +722,4 @@ export function GameDetailPage() {
     </>
   );
 }
+add al tings square no border and Order Information separe ak quantity.
