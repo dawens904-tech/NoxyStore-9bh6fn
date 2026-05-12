@@ -26,6 +26,8 @@ const BitcoinLogo = () => <img src="https://upload.wikimedia.org/wikipedia/commo
 const EthLogo = () => <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Ethereum-icon-purple.svg/200px-Ethereum-icon-purple.svg.png" alt="ETH" className="h-5 w-5 object-contain" />;
 const SolLogo = () => <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-purple-600 text-white text-[8px] font-bold">SOL</span>;
 const MirLogo = () => <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Mir-logo.SVG.svg/200px-Mir-logo.SVG.svg.png" alt="MIR" className="h-5 w-auto object-contain" />;
+const PayPalLogo = () => <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/PayPal.svg/200px-PayPal.svg.png" alt="PayPal" className="h-5 w-auto object-contain" />;
+const PayLaterLogo = () => <span className="inline-flex items-center justify-center px-2 h-5 bg-blue-700 text-white text-[8px] font-bold tracking-tight">Pay Later</span>;
 const UsdtLogo = () => <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Tether_logo.png/200px-Tether_logo.png" alt="USDT" className="h-5 w-5 object-contain" />;
 const TronLogo = () => <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-600 text-white text-[8px] font-bold">TRX</span>;
 
@@ -430,7 +432,17 @@ export function CheckoutPage() {
           >
             {isProcessingPayment ? "Processing..." : "Pay Now"}
           </button>
-          <div className="flex items-center justify-center gap-1.5 mt-3">
+          {/* Accepted payment logos strip */}
+          <div className="flex items-center justify-center gap-2 mt-3 flex-wrap">
+            <VisaLogo />
+            <JCBLogo />
+            <PayPalLogo />
+            <PayLaterLogo />
+            <CashAppLogo />
+            <MirLogo />
+            <BitcoinLogo />
+          </div>
+          <div className="flex items-center justify-center gap-1.5 mt-2">
             <Shield size={12} className="text-green-500" />
             <span className="text-xs text-gray-400">NoxyStore Security Guarantee</span>
           </div>
@@ -921,4 +933,4 @@ export function CheckoutPage() {
   );
 }
 
-add only to put logo card visa,jcb,paypal,pay later, cashappp, mnp,bitcoin.
+
