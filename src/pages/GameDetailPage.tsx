@@ -239,8 +239,8 @@ export function GameDetailPage() {
 
       <div className="max-w-[1280px] mx-auto px-6 pb-16">
         <div className="flex gap-6 items-start">
-          {/* Left: Game info + SKU grid — scrollable, hidden scrollbar */}
-          <div className="flex-1 min-w-0 overflow-y-auto scrollbar-hide" style={{ maxHeight: "calc(100vh - 130px)", scrollbarWidth: "none", msOverflowStyle: "none" }}>
+          {/* Left: Game info + SKU grid — scrollable, thin light scrollbar */}
+          <div className="flex-1 min-w-0 overflow-y-auto" style={{ maxHeight: "calc(100vh - 130px)", scrollbarWidth: "thin", scrollbarColor: "#e5e7eb transparent" }}>
             {/* Game header card */}
             <div className="bg-white p-6 mb-4 border border-gray-100">
               <div className="flex items-start gap-5">
@@ -433,9 +433,9 @@ export function GameDetailPage() {
             </div>
           </div>
 
-          {/* Right: Fixed order panel — never scrolls with left panel */}
+          {/* Right: Fixed order panel — pinned to viewport, never scrolls */}
           <div className="w-72 flex-shrink-0">
-            <div style={{ position: "sticky", top: "70px", height: "fit-content" }}>
+            <div style={{ position: "fixed", top: "70px", width: "288px" }}>
             <div className="border border-gray-200 shadow-sm bg-white">
 
               {/* Order Information Section */}
@@ -780,4 +780,4 @@ export function GameDetailPage() {
     </>
   );
 }
-fix right panel never scroll even if you scroll in footer and right scroll line noir make it apear more small small color light also fix real fetch instruction from lootbar api.
+
