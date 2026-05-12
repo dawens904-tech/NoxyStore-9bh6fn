@@ -728,4 +728,4 @@ export function GameDetailPage() {
     </>
   );
 }
-
+fix region yo dwe apa pouko yo and message:Americas Area Topup may take 10 minutes, Longer during busy periods. dwe apa poukol and message excellent must be click with real trustpilot fix order info stay fix only bo product ka scroll and hide scroll line.
