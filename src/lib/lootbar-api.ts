@@ -47,30 +47,90 @@ async function isBackendAvailable(): Promise<boolean> {
   return _backendAvailable;
 }
 
+// ─── Cache helpers ───────────────────────────────────────────────────────────
+type CacheRow = {
+  game_id: string;
+  game_name: string;
+  game_image: string | null;
+  category: string | null;
+  rating: number | null;
+  sold_count: string | null;
+  is_hot: boolean | null;
+  discount: number | null;
+};
+
+let _cacheMap: Map<string, CacheRow> | null = null;
+let _cacheLoadedAt = 0;
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes in-memory
+
+async function getGamesCache(): Promise<Map<string, CacheRow>> {
+  const now = Date.now();
+  if (_cacheMap && now - _cacheLoadedAt < CACHE_TTL_MS) return _cacheMap;
+  try {
+    const { data } = await supabase
+      .from("games_cache")
+      .select("game_id, game_name, game_image, category, rating, sold_count, is_hot, discount");
+    if (data && data.length > 0) {
+      _cacheMap = new Map(data.map((r: CacheRow) => [r.game_id, r]));
+      _cacheLoadedAt = now;
+      console.log(`[LootbarAPI] Loaded ${data.length} games from games_cache`);
+    } else {
+      _cacheMap = new Map();
+    }
+  } catch (e) {
+    console.warn("[LootbarAPI] Failed to load games_cache:", e);
+    _cacheMap = _cacheMap ?? new Map();
+  }
+  return _cacheMap;
+}
+
+function mergeWithCache(g: { game_id: string; game_name: string; game_image?: string; category?: string; rating?: number; sold_count?: string; is_hot?: boolean; discount?: number }, cache: Map<string, CacheRow>): LootbarGame {
+  const row = cache.get(g.game_id);
+  return {
+    game_id: g.game_id,
+    game_name: row?.game_name || g.game_name,
+    // Always prefer real game_image from DB cache; fall back to API image; never use Unsplash
+    game_image: (row?.game_image && row.game_image.trim()) ? row.game_image : (g.game_image || ""),
+    category: row?.category || g.category || "Top Up",
+    rating: row?.rating ?? g.rating ?? 5.0,
+    sold_count: row?.sold_count || g.sold_count || "1k+ Sold",
+    is_hot: row?.is_hot ?? g.is_hot ?? false,
+    discount: row?.discount ?? g.discount ?? 0,
+  };
+}
+
 // ─── Public API ───────────────────────────────────────────────────────────────
 export const lootbarApi = {
   async getGames(pageNum = 1, pageSize = 200): Promise<LootbarGame[]> {
+    // Always load games_cache first (fast parallel fetch)
+    const cachePromise = getGamesCache();
     try {
       const available = await isBackendAvailable();
       if (!available) throw new Error("backend unavailable");
-      const res = await callProxy<{ status: string; data: { items: Array<{ game_id: string; game_name: string; game_image?: string; category?: string; rating?: number; sold_count?: string; is_hot?: boolean; discount?: number }> } }>(
-        "get_games", { page_num: pageNum, page_size: pageSize }
-      );
+      const [res, cache] = await Promise.all([
+        callProxy<{ status: string; data: { items: Array<{ game_id: string; game_name: string; game_image?: string; category?: string; rating?: number; sold_count?: string; is_hot?: boolean; discount?: number }> } }>(
+          "get_games", { page_num: pageNum, page_size: pageSize }
+        ),
+        cachePromise,
+      ]);
       if (res.status !== "ok") throw new Error("API returned error");
-      return res.data.items.map((g) => {
-        return {
-          game_id: g.game_id,
-          game_name: g.game_name,
-          game_image: g.game_image || `https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&h=400&fit=crop&sig=${g.game_id}`,
-          category: g.category || "Top Up",
-          rating: g.rating || 5.0,
-          sold_count: g.sold_count || "10k+ Sold",
-          is_hot: g.is_hot ?? false,
-          discount: g.discount ?? 0,
-        };
-      });
+      return res.data.items.map((g) => mergeWithCache(g, cache));
     } catch (e) {
-      console.warn("[LootbarAPI] getGames fallback to mock:", e);
+      console.warn("[LootbarAPI] getGames fallback to cache/mock:", e);
+      // If API fails, try returning cache rows directly
+      const cache = await cachePromise;
+      if (cache.size > 0) {
+        return Array.from(cache.values()).map((row) => ({
+          game_id: row.game_id,
+          game_name: row.game_name,
+          game_image: row.game_image || "",
+          category: row.category || "Top Up",
+          rating: row.rating ?? 5.0,
+          sold_count: row.sold_count || "1k+ Sold",
+          is_hot: row.is_hot ?? false,
+          discount: row.discount ?? 0,
+        }));
+      }
       await new Promise((r) => setTimeout(r, 300));
       return MOCK_GAMES;
     }
