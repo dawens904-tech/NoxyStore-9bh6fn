@@ -781,3 +781,4 @@ export function GameDetailPage() {
   );
 }
 
+remove left scroll line hidden and right scroll system fel piti.
