@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft, RefreshCw, TrendingUp, Package, DollarSign, Users, Activity,
@@ -72,34 +72,11 @@ export function AdminDashboardPage() {
   const [analyticsDays, setAnalyticsDays] = useState(7);
   const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(false);
 
-  // Lazy-load data only when a section becomes active
-  const loadedSections = useRef(new Set<string>());
-
   useEffect(() => {
     if (!isAuthenticated || user?.role !== "admin") { navigate("/login"); return; }
-    // Only load critical data upfront
-    fetchBalance();
-    loadMarkup();
-    loadChatSessions(); // needed for badge count
+    fetchBalance(); checkApiStatus(); loadMarkup(); loadSections(); loadRoles();
+    loadGameOverrides(); loadChatSessions(); loadAdminCoupons(); loadGamesForProducts(); loadBanners();
   }, []);
-
-  // Load section-specific data on demand
-  useEffect(() => {
-    if (loadedSections.current.has(section)) return;
-    loadedSections.current.add(section);
-    if (section === "dashboard") { checkApiStatus(); }
-    if (section === "orders") { /* orders come from authStore */ }
-    if (section === "markup") { loadMarkup(); }
-    if (section === "sections") { loadSections(); loadGamesForProducts(); }
-    if (section === "roles") { loadRoles(); }
-    if (section === "categories") { loadGameOverrides(); loadGamesForProducts(); }
-    if (section === "analytics") { loadAnalytics(); }
-    if (section === "livechat") { loadChatSessions(); }
-    if (section === "coupons") { loadAdminCoupons(); }
-    if (section === "products") { loadGamesForProducts(); }
-    if (section === "banners") { loadBanners(); }
-    if (section === "api") { checkApiStatus(); }
-  }, [section]);
 
   useEffect(() => { const i = setInterval(loadChatSessions, 5000); return () => clearInterval(i); }, []);
   useEffect(() => { if (!activeChatSession) return; const i = setInterval(() => loadChatMessages(activeChatSession), 3000); return () => clearInterval(i); }, [activeChatSession]);
@@ -768,4 +745,4 @@ export function AdminDashboardPage() {
     </div>
   );
 }
-
+make this more fast and add phone theme system dark/light.
