@@ -435,7 +435,7 @@ export function GameDetailPage() {
 
           {/* Right: Fixed order panel — pinned to viewport, never scrolls */}
           <div className="w-72 flex-shrink-0">
-            <div style={{ position: "fixed", top: "70px", width: "288px", maxHeight: "calc(100vh - 90px)", overflowY: "auto", scrollbarWidth: "thin", scrollbarColor: "#e5e7eb transparent" } as React.CSSProperties}>
+            <div style={{ position: "sticky", top: "70px", maxHeight: "calc(100vh - 90px)", overflowY: "auto", scrollbarWidth: "thin", scrollbarColor: "#e5e7eb transparent" } as React.CSSProperties}>
             <div className="border border-gray-200 shadow-sm bg-white">
 
               {/* Order Information Section */}
@@ -780,4 +780,4 @@ export function GameDetailPage() {
     </>
   );
 }
-when its in footer allow its can scroll sorry.
+
