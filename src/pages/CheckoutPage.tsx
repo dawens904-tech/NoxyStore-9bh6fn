@@ -16,11 +16,15 @@ type CheckoutState = "review" | "processing" | "success" | "failed";
 
 // ─── Payment Photo Card Components (replace src with your real card images) ──
 // Card dimensions: ~64×40px (payment card aspect ratio ~1.6:1), square corners
+// Detect platform for Apple Pay / Google Pay
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+const isAndroid = /Android/.test(navigator.userAgent);
+
 const PayCardImg = ({ src, alt }: { src: string; alt: string }) => (
   <img
     src={src}
     alt={alt}
-    className="h-10 w-16 object-cover border border-gray-200 flex-shrink-0"
+    className="h-9 w-[54px] object-contain border border-gray-200 flex-shrink-0 bg-white p-0.5"
     style={{ borderRadius: 0 }}
     onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
   />
@@ -32,13 +36,32 @@ const CashAppLogo = () => <PayCardImg src="https://uzxmmddivzqjhcnnrkns.supabase
 const BitcoinLogo = () => <PayCardImg src="https://uzxmmddivzqjhcnnrkns.supabase.co/storage/v1/object/public/hi/WhatsApp%20Image%202026-05-12%20at%201.19.31%20PM%20(2).jpeg" alt="Bitcoin" />;
 const PayPalLogo = () => <PayCardImg src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/PayPal.svg/200px-PayPal.svg.png" alt="PayPal" />;
 const PayLaterLogo = () => (
-  <div className="h-10 w-16 border border-blue-600 bg-blue-700 flex items-center justify-center flex-shrink-0" style={{ borderRadius: 0 }}>
+  <div className="h-9 w-[54px] border border-blue-600 bg-blue-700 flex items-center justify-center flex-shrink-0" style={{ borderRadius: 0 }}>
     <span className="text-white text-[9px] font-bold tracking-tight leading-tight text-center">Pay<br/>Later</span>
   </div>
 );
 const MirLogo = () => (
-  <div className="h-10 w-16 border border-green-700 bg-[#1a7f3c] flex items-center justify-center flex-shrink-0" style={{ borderRadius: 0 }}>
+  <div className="h-9 w-[54px] border border-green-700 bg-[#1a7f3c] flex items-center justify-center flex-shrink-0" style={{ borderRadius: 0 }}>
     <span className="text-white text-[11px] font-bold tracking-tight">МИР</span>
+  </div>
+);
+
+const ApplePayLogo = () => (
+  <div className="h-9 w-[54px] border border-gray-300 bg-black flex items-center justify-center flex-shrink-0" style={{ borderRadius: 0 }}>
+    <svg viewBox="0 0 60 26" className="h-5 w-auto" fill="white">
+      <path d="M11.5 3.5c.8-1 1.3-2.3 1.2-3.5-1.2.1-2.6.8-3.4 1.8C8.5 2.7 7.9 4 8 5.2c1.3.1 2.6-.6 3.5-1.7zm1.2 1.9c-1.9-.1-3.6 1.1-4.5 1.1-.9 0-2.3-1-3.8-1-2 0-3.8 1.2-4.8 3-2.1 3.6-.5 8.9 1.5 11.8 1 1.4 2.1 3 3.7 2.9 1.4-.1 2-1 3.7-1 1.7 0 2.2 1 3.7 1 1.6 0 2.6-1.4 3.6-2.9.4-.6.7-1.2 1-1.8-2.6-1-4.3-3.6-4.3-6.6 0-2.7 1.4-5.1 3.6-6.5-.8-1.3-2.1-2-3.4-2z"/>
+      <text x="20" y="19" fontSize="11" fontWeight="600" fontFamily="-apple-system,sans-serif">Pay</text>
+    </svg>
+  </div>
+);
+
+const GooglePayLogo = () => (
+  <div className="h-9 w-[54px] border border-gray-200 bg-white flex items-center justify-center flex-shrink-0" style={{ borderRadius: 0 }}>
+    <svg viewBox="0 0 60 24" className="h-5 w-auto">
+      <text x="2" y="18" fontSize="11" fontWeight="700" fontFamily="sans-serif">
+        <tspan fill="#4285F4">G</tspan><tspan fill="#EA4335">o</tspan><tspan fill="#4285F4">o</tspan><tspan fill="#34A853">g</tspan><tspan fill="#EA4335">l</tspan><tspan fill="#4285F4">e </tspan><tspan fill="#5F6368">Pay</tspan>
+      </text>
+    </svg>
   </div>
 );
 
@@ -452,6 +475,8 @@ export function CheckoutPage() {
             <CashAppLogo />
             <MirLogo />
             <BitcoinLogo />
+            {isIOS && <ApplePayLogo />}
+            {isAndroid && <GooglePayLogo />}
           </div>
           <div className="flex items-center justify-center gap-1.5 mt-2">
             <Shield size={12} className="text-green-500" />
@@ -943,4 +968,4 @@ export function CheckoutPage() {
     </>
   );
 }
-fix logo display yo bien pran tout image lan bien format and add gpay for android apple pay for ios show only
+
