@@ -105,10 +105,13 @@ export function CheckoutPage() {
   const [savedCards, setSavedCards] = useState<any[]>([]);
   const [quantity, setQuantity] = useState(state?.quantity || 1);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [showModifyModal, setShowModifyModal] = useState(false);
+  const [modifyValues, setModifyValues] = useState<Record<string, string>>({});
 
   // Auto-apply pending coupon from coupons page
   useEffect(() => {
     if (!state?.sku) return;
+    setModifyValues(extraInfo || {});
     const pending = sessionStorage.getItem("pending_coupon");
     if (pending) {
       const coupon = JSON.parse(pending);
@@ -334,13 +337,13 @@ export function CheckoutPage() {
   const PaymentDetailsPanel = () => (
     <div className="w-[360px] flex-shrink-0">
       <div className="sticky top-[60px] bg-white border border-gray-200">
-        <div className="px-5 pt-5 pb-3 border-b border-gray-100">
+        <div className="px-5 pt-5 pb-3 border-b border-gray-200">
           <h3 className="text-base font-bold text-gray-900">Payment Details</h3>
         </div>
 
-        <div className="px-5 py-3 space-y-0 border-b border-gray-100">
+        <div className="border-b border-gray-200">
           {/* Points row */}
-          <div className="flex items-center justify-between py-3 border-b border-gray-100">
+          <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200">
             <div className="flex items-center gap-2 text-gray-600">
               <PointsIcon />
               <span className="text-sm">{userRealPoints} Points</span>
@@ -350,9 +353,9 @@ export function CheckoutPage() {
             </span>
           </div>
 
-          {/* Coupon code row */}
-          <div className="flex items-center justify-between py-3 border-b border-gray-100">
-            <div className="flex items-center gap-2 flex-1">
+          {/* Coupon code row — input + separate square Redeem button */}
+          <div className="flex items-center border-b border-gray-200">
+            <div className="flex items-center gap-2 flex-1 px-5 py-3">
               <CouponIcon />
               <input
                 type="text"
@@ -365,7 +368,7 @@ export function CheckoutPage() {
             <button
               onClick={handleRedeemCoupon}
               disabled={isLoadingCoupon || !couponCode.trim()}
-              className="text-sm text-gray-500 font-semibold hover:text-gray-700 ml-2 flex-shrink-0"
+              className="h-full px-4 py-3 border-l border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-40 flex-shrink-0 bg-white"
             >
               {isLoadingCoupon ? "..." : "Redeem"}
             </button>
@@ -374,7 +377,7 @@ export function CheckoutPage() {
           {/* 5% OFF row — opens modal */}
           <button
             onClick={() => setShowCouponModal(true)}
-            className="flex items-center justify-between w-full py-3 hover:bg-gray-50 transition-colors"
+            className="flex items-center justify-between w-full px-5 py-3 hover:bg-gray-50 transition-colors"
           >
             <div className="flex items-center gap-2 text-gray-700">
               <GiftIcon />
@@ -392,7 +395,7 @@ export function CheckoutPage() {
         </div>
 
         {/* Price breakdown */}
-        <div className="px-5 py-4 space-y-2.5 border-b border-gray-100">
+        <div className="px-5 py-4 space-y-2.5 border-b border-gray-200">
           <div className="flex justify-between text-sm">
             <span className="text-gray-600">Price</span>
             <span className="text-gray-900">${basePrice.toFixed(2)}</span>
@@ -412,7 +415,7 @@ export function CheckoutPage() {
               {paymentFee >= 0 ? `+$${paymentFee.toFixed(2)}` : `−$${Math.abs(paymentFee).toFixed(2)}`}
             </span>
           </div>
-          <div className="flex justify-between items-center pt-2 border-t border-gray-100">
+          <div className="flex justify-between items-center pt-2 border-t border-gray-200">
             <span className="text-sm font-bold text-gray-900">Total Amount</span>
             <span className="text-xl font-black text-orange-500">USD ${totalPrice.toFixed(2)}</span>
           </div>
@@ -423,7 +426,7 @@ export function CheckoutPage() {
           <button
             onClick={handlePayNow}
             disabled={isProcessingPayment}
-            className="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-bold py-4 text-base transition-colors disabled:opacity-70"
+            className="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-bold py-4 text-base transition-colors disabled:opacity-70" style={{borderRadius:0}}
           >
             {isProcessingPayment ? "Processing..." : "Pay Now"}
           </button>
@@ -572,7 +575,7 @@ export function CheckoutPage() {
                     </span>
                   ))}
                 </div>
-                <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-blue-500 text-sm font-semibold hover:text-blue-600">
+                <button onClick={() => { setModifyValues({...extraInfo}); setShowModifyModal(true); }} className="flex items-center gap-1.5 text-blue-500 text-sm font-semibold hover:text-blue-600">
                   <Edit2 size={12} /> Modify
                 </button>
               </div>
@@ -678,6 +681,76 @@ export function CheckoutPage() {
       </div>
     </div>
   );
+
+  // ─── Modify Order Info Modal ───────────────────────────────────────────────
+  const ModifyModal = () => {
+    const fields = state?.sku?.extra_info || [];
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="absolute inset-0 bg-black/40" onClick={() => setShowModifyModal(false)} />
+        <div className="relative bg-white w-full max-w-md mx-4 shadow-2xl">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+            <h3 className="text-base font-bold text-gray-900">Order Information</h3>
+            <button onClick={() => setShowModifyModal(false)} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+          </div>
+          <div className="px-6 py-5 space-y-4">
+            {fields.length === 0 ? (
+              <p className="text-sm text-gray-500 text-center py-4">No fields to modify for this product.</p>
+            ) : fields.map((field: any) => (
+              <div key={field.name}>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                  {field.required && <span className="text-red-500 mr-0.5">*</span>}
+                  {field.title}
+                </label>
+                {field.type === "select" && field.options?.length > 0 ? (
+                  <select
+                    value={modifyValues[field.name] || ""}
+                    onChange={(e) => setModifyValues(prev => ({ ...prev, [field.name]: e.target.value }))}
+                    className="w-full border border-gray-200 px-4 py-3 text-sm outline-none focus:border-yellow-400 bg-white"
+                    style={{borderRadius:0}}
+                  >
+                    <option value="">Please select {field.title}</option>
+                    {field.options.map((opt: any) => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    value={modifyValues[field.name] || ""}
+                    onChange={(e) => setModifyValues(prev => ({ ...prev, [field.name]: e.target.value }))}
+                    placeholder={field.placeholder || `Enter your ${field.title}`}
+                    className="w-full border border-gray-200 px-4 py-3 text-sm outline-none focus:border-yellow-400"
+                    style={{borderRadius:0}}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="px-6 pb-6 flex gap-3">
+            <button
+              onClick={() => setShowModifyModal(false)}
+              className="flex-1 border border-gray-200 text-gray-700 font-semibold py-3 text-sm hover:bg-gray-50"
+              style={{borderRadius:0}}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => {
+                // Update extraInfo with modified values
+                Object.assign(extraInfo, modifyValues);
+                setShowModifyModal(false);
+              }}
+              className="flex-1 bg-yellow-400 text-black font-bold py-3 text-sm hover:bg-yellow-300"
+              style={{borderRadius:0}}
+            >
+              Confirm
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   // ─── Product Coupons Modal ────────────────────────────────────────────────
   const CouponModal = () => (
@@ -848,7 +921,7 @@ export function CheckoutPage() {
       <MobileCheckout />
       {showCouponModal && <CouponModal />}
       {showTicketModal && <TicketModal />}
+      {showModifyModal && <ModifyModal />}
     </>
   );
 }
-fix when you click modify in desktop its show a modal Order Information to re enter udid and top anle payment select and payment detail lan tro kole an header lan also fix payment detail all tings kare no border redeem button separe and kare like the photo.
