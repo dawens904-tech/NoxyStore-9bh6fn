@@ -1,5 +1,8 @@
+
 import { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { Footer } from "@/components/layout/Footer";
+import { MobileFooter } from "@/components/layout/MobileFooter";
 import { Star, Zap, Shield, Clock, ChevronRight, Info, AlertCircle, X, Check } from "lucide-react";
 import { DesktopHeader } from "@/components/layout/DesktopHeader";
 import { FloatingChat } from "@/components/features/FloatingChat";
@@ -448,6 +451,7 @@ export function GameDetailPage() {
         </div>
       </div>
 
+      <Footer />
       <FloatingChat />
     </div>
   );
@@ -639,6 +643,7 @@ export function GameDetailPage() {
         </div>
       </div>
 
+      <MobileFooter />
       <FloatingChat />
 
       {/* Invite Friends Modal */}
@@ -717,4 +722,3 @@ export function GameDetailPage() {
     </>
   );
 }
-add footer in this page and also add real price fetch and fix upload image for product.
