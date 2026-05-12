@@ -924,6 +924,6 @@ export function CheckoutPage() {
     </>
   );
 }
-
+fix error MirLogo is not defined
 
 
