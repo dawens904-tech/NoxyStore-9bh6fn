@@ -474,3 +474,4 @@ export function GroupChatPage() {
     </div>
   );
 }
+fix this page add real message saved real userr online mode and also add real voice send and stop like whatsapp and Add a pinned system welcome message in the group chat and give admins a gold crown badge next to their name in GroupChatPage.tsx to distinguish them from regular users.
