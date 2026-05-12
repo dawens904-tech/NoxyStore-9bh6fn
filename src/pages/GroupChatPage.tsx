@@ -854,3 +854,4 @@ export function GroupChatPage() {
     </div>
   );
 }
+hello ai if see this please make change Add an admin-only panel in AdminGroupChatPage that shows all group chat messages with delete, pin, and user mute/ban controls, fetching from chat_messages where session_id = 'group-chat-main' Show a small checkmark or avatar of users who have read each message in GroupChatPage.tsx by tracking last_read timestamps in analytics_events and displaying tiny avatars below the last message each user has seen. 
