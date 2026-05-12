@@ -587,3 +587,4 @@ export function GroupChatPage() {
     </div>
   );
 }
+fix this page stay stable only messge yo uka scroll and message user style whatsapp format user name and profile if click they icon its show a modal that gave report and if you click uswr mesage press long its show report , react ,reply and user mwssage copy,edit real and fix real vpice send and enable no spam word avts 6x and ban 24h if they ban 2time add ban never unban in the account contact support.
