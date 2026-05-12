@@ -920,4 +920,4 @@ export function CheckoutPage() {
     </>
   );
 }
-
+duplicate logo card image fixed 1 logo for chak mwen gen images ki gen 3 logo type pou chak.
