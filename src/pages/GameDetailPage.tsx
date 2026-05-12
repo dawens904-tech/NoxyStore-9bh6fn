@@ -780,3 +780,4 @@ export function GameDetailPage() {
     </>
   );
 }
+when its in footer allow its can scroll sorry.
