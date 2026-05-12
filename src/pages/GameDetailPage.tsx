@@ -780,4 +780,4 @@ export function GameDetailPage() {
     </>
   );
 }
-
+fix right panel never scroll even if you scroll in footer and right scroll line noir make it apear more small small color light also fix real fetch instruction from lootbar api.
