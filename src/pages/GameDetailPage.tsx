@@ -736,4 +736,4 @@ export function GameDetailPage() {
     </>
   );
 }
-
+right panel never scroll down even if you scroll rive just nn footer stay fixed add real fetch Top-up instructions from lootbar api and some instruction have photo add real fetch with them.
