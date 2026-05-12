@@ -68,4 +68,3 @@ export function FloatingChat() {
     </div>
   );
 }
-fix button click.
