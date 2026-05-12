@@ -153,4 +153,3 @@ export function generateReferenceId(): string {
 }
 
 export const tokenManager = { isAuthenticated: () => true, getToken: () => "server-side", logout: () => {} };
-hello ai please fix this add real image get and real game infomation.
