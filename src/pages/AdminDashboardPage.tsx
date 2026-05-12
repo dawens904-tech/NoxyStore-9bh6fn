@@ -745,3 +745,4 @@ export function AdminDashboardPage() {
     </div>
   );
 }
+make this more fast and add phone theme system dark/light.
