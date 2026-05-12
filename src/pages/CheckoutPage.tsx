@@ -21,6 +21,7 @@ const CashAppLogo = () => <img src="https://uzxmmddivzqjhcnnrkns.supabase.co/sto
 const BitcoinLogo = () => <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Bitcoin.svg/200px-Bitcoin.svg.png" alt="BTC" className="h-5 w-5 object-contain" />;
 const PayPalLogo = () => <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/PayPal.svg/200px-PayPal.svg.png" alt="PayPal" className="h-5 w-auto object-contain" />;
 const PayLaterLogo = () => <span className="inline-flex items-center justify-center px-2 h-5 bg-blue-700 text-white text-[8px] font-bold tracking-tight">Pay Later</span>;
+const MirLogo = () => <span className="inline-flex items-center justify-center px-2 h-5 bg-[#1a7f3c] text-white text-[8px] font-bold tracking-tight">МИР</span>;
 
 const WalletIcon = () => (
   <svg viewBox="0 0 24 24" className="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2">
@@ -924,5 +925,5 @@ export function CheckoutPage() {
   );
 }
 
-MirLogo is not defined
+
 
