@@ -147,3 +147,4 @@ export function AdminLiveChatPage() {
     </AdminLayout>
   );
 }
+fix remove empty live chat and When lootbar-proxy fetches SKUs for a game, store the full SKU list (sku_id, sku_name, price, attributes) in a new sku_cache table with a 1-hour TTL, so subsequent game detail page loads are instant without hitting the Lootbar API.
