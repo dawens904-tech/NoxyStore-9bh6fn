@@ -14,14 +14,33 @@ import { toast } from "sonner";
 
 type CheckoutState = "review" | "processing" | "success" | "failed";
 
-// ─── Payment Logo Placeholder Components (replace src with real logos) ──────
-const VisaLogo = () => <img src="https://uzxmmddivzqjhcnnrkns.supabase.co/storage/v1/object/public/hi/WhatsApp%20Image%202026-05-12%20at%201.19.31%20PM%20(4).jpeg" alt="Visa" className="h-5 w-auto object-contain" />;
-const JCBLogo = () => <img src="https://uzxmmddivzqjhcnnrkns.supabase.co/storage/v1/object/public/hi/WhatsApp%20Image%202026-05-12%20at%201.31.19%20PM.jpeg" alt="JCB" className="h-5 w-auto object-contain" />;
-const CashAppLogo = () => <img src="https://uzxmmddivzqjhcnnrkns.supabase.co/storage/v1/object/public/hi/WhatsApp%20Image%202026-05-12%20at%201.19.31%20PM%20(1).jpeg" alt="Cash App" className="h-5 w-5 object-contain" />;
-const BitcoinLogo = () => <img src="https://uzxmmddivzqjhcnnrkns.supabase.co/storage/v1/object/public/hi/WhatsApp%20Image%202026-05-12%20at%201.19.31%20PM%20(2).jpeg" alt="BTC" className="h-5 w-5 object-contain" />;
-const PayPalLogo = () => <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/PayPal.svg/200px-PayPal.svg.png" alt="PayPal" className="h-5 w-auto object-contain" />;
-const PayLaterLogo = () => <span className="inline-flex items-center justify-center px-2 h-5 bg-blue-700 text-white text-[8px] font-bold tracking-tight">Pay Later</span>;
-const MirLogo = () => <span className="inline-flex items-center justify-center px-2 h-5 bg-[#1a7f3c] text-white text-[8px] font-bold tracking-tight">МИР</span>;
+// ─── Payment Photo Card Components (replace src with your real card images) ──
+// Card dimensions: ~64×40px (payment card aspect ratio ~1.6:1), square corners
+const PayCardImg = ({ src, alt }: { src: string; alt: string }) => (
+  <img
+    src={src}
+    alt={alt}
+    className="h-10 w-16 object-cover border border-gray-200 flex-shrink-0"
+    style={{ borderRadius: 0 }}
+    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+  />
+);
+
+const VisaLogo = () => <PayCardImg src="https://uzxmmddivzqjhcnnrkns.supabase.co/storage/v1/object/public/hi/WhatsApp%20Image%202026-05-12%20at%201.19.31%20PM%20(4).jpeg" alt="Visa" />;
+const JCBLogo = () => <PayCardImg src="https://uzxmmddivzqjhcnnrkns.supabase.co/storage/v1/object/public/hi/WhatsApp%20Image%202026-05-12%20at%201.31.19%20PM.jpeg" alt="JCB" />;
+const CashAppLogo = () => <PayCardImg src="https://uzxmmddivzqjhcnnrkns.supabase.co/storage/v1/object/public/hi/WhatsApp%20Image%202026-05-12%20at%201.19.31%20PM%20(1).jpeg" alt="Cash App" />;
+const BitcoinLogo = () => <PayCardImg src="https://uzxmmddivzqjhcnnrkns.supabase.co/storage/v1/object/public/hi/WhatsApp%20Image%202026-05-12%20at%201.19.31%20PM%20(2).jpeg" alt="Bitcoin" />;
+const PayPalLogo = () => <PayCardImg src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/PayPal.svg/200px-PayPal.svg.png" alt="PayPal" />;
+const PayLaterLogo = () => (
+  <div className="h-10 w-16 border border-blue-600 bg-blue-700 flex items-center justify-center flex-shrink-0" style={{ borderRadius: 0 }}>
+    <span className="text-white text-[9px] font-bold tracking-tight leading-tight text-center">Pay<br/>Later</span>
+  </div>
+);
+const MirLogo = () => (
+  <div className="h-10 w-16 border border-green-700 bg-[#1a7f3c] flex items-center justify-center flex-shrink-0" style={{ borderRadius: 0 }}>
+    <span className="text-white text-[11px] font-bold tracking-tight">МИР</span>
+  </div>
+);
 
 const WalletIcon = () => (
   <svg viewBox="0 0 24 24" className="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2">
@@ -424,8 +443,8 @@ export function CheckoutPage() {
           >
             {isProcessingPayment ? "Processing..." : "Pay Now"}
           </button>
-          {/* Accepted payment logos strip */}
-          <div className="flex items-center justify-center gap-2 mt-3 flex-wrap">
+          {/* Accepted payment card strip */}
+          <div className="flex items-center justify-center gap-1.5 mt-3 flex-wrap">
             <VisaLogo />
             <JCBLogo />
             <PayPalLogo />
@@ -924,6 +943,6 @@ export function CheckoutPage() {
     </>
   );
 }
-fix payment method with pghoto card instead simple logo i will replace.
+
 
 
