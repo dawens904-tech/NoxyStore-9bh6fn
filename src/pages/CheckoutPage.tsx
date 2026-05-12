@@ -920,4 +920,4 @@ export function CheckoutPage() {
     </>
   );
 }
-
+add space antre header lan li tro kole vinn fm paka li product card and payment detail name kite ti space anle.
