@@ -75,4 +75,4 @@ export function SKUCard({ sku, selected, onSelect }: SKUCardProps) {
     </button>
   );
 }
-add real image real price real name.
+please read this add real image real price real name.
