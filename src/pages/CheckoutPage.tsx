@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { CheckCircle, XCircle, Loader2, ArrowLeft, Edit2, Shield, CreditCard } from "lucide-react";
+import { CheckCircle, XCircle, Loader2, ArrowLeft, Edit2, Shield, CreditCard, Ticket } from "lucide-react";
 import { lootbarApi } from "@/lib/lootbar-api";
 import { useAuthStore } from "@/stores/authStore";
 import { ORDER_STATE_MAP } from "@/types";
@@ -10,13 +10,137 @@ import { toast } from "sonner";
 
 type CheckoutState = "review" | "processing" | "success" | "failed";
 
-const PAYMENT_METHODS = [
-  { id: "visa", label: "VISA / Mastercard", icon: "💳", fee: 0, tag: "Last used" },
-  { id: "jcb", label: "JCB / AmEx / Discover / Diners", icon: "🏦", fee: -0.01 },
-  { id: "paypal", label: "PayPal", icon: "🅿", fee: 0.14 },
-  { id: "paylater", label: "Pay Later", icon: "⏱", fee: 0.14 },
-  { id: "cashapp", label: "Cash App", icon: "💚", fee: 0.14 },
-  { id: "crypto", label: "Bitcoin / Ethereum / USDT", icon: "₿", fee: -0.57 },
+// ─── SVG Logo Components ───────────────────────────────────────────────────
+
+const VisaLogo = ({ className = "w-8 h-5" }: { className?: string }) => (
+  <svg viewBox="0 0 48 16" className={className} fill="none">
+    <path d="M18.5 1.5L16 14.5H19.5L22 1.5H18.5Z" fill="#1A1F71"/>
+    <path d="M30.5 1.5C29.5 1.5 28.5 2 28 2.5L23.5 14.5H27.5L28 13H32.5L33 14.5H37L33.5 1.5H30.5ZM29.5 10L31 5.5L32 10H29.5Z" fill="#1A1F71"/>
+    <path d="M13.5 1.5L9.5 10L9 7C8 4 5 2 5 2L8.5 14.5H12.5L18 1.5H13.5Z" fill="#1A1F71"/>
+    <path d="M6.5 1.5H0.5L0 2C4.5 3 7.5 5.5 8.5 7.5L7.5 2.5C7.5 2 7 1.5 6.5 1.5Z" fill="#F7B600"/>
+    <path d="M43.5 1.5C42 1.5 40.5 2 40 2.5L39.5 3L39 1.5H36L38.5 14.5H42L41 9.5C41 6.5 43 4.5 45 4.5C46 4.5 46.5 4.5 47 4.5L47.5 1.5C47 1.5 46 1.5 43.5 1.5Z" fill="#1A1F71"/>
+  </svg>
+);
+
+const MastercardLogo = ({ className = "w-8 h-5" }: { className?: string }) => (
+  <svg viewBox="0 0 32 20" className={className} fill="none">
+    <circle cx="10" cy="10" r="10" fill="#EB001B"/>
+    <circle cx="22" cy="10" r="10" fill="#F79E1B"/>
+    <path d="M16 3C18.5 5 20 7.5 20 10C20 12.5 18.5 15 16 17C13.5 15 12 12.5 12 10C12 7.5 13.5 5 16 3Z" fill="#FF5F00"/>
+  </svg>
+);
+
+const PayPalLogo = ({ className = "w-8 h-5" }: { className?: string }) => (
+  <svg viewBox="0 0 80 20" className={className} fill="none">
+    <path d="M10 2H4C3.5 2 3 2.5 3 3L0 17C0 17.5 0.5 18 1 18H3.5L4.5 12H7.5C11.5 12 14 10 14.5 6.5C15 4 13 2 10 2Z" fill="#003087"/>
+    <path d="M25 2H19C18.5 2 18 2.5 18 3L15 17C15 17.5 15.5 18 16 18H18.5L19.5 12H22.5C26.5 12 29 10 29.5 6.5C30 4 28 2 25 2Z" fill="#0070E0"/>
+    <text x="32" y="14" fontSize="12" fontWeight="bold" fill="#003087" fontFamily="Arial, sans-serif">PayPal</text>
+  </svg>
+);
+
+const JCBLogo = ({ className = "w-8 h-5" }: { className?: string }) => (
+  <svg viewBox="0 0 48 16" className={className} fill="none">
+    <rect x="0" y="0" width="14" height="16" rx="2" fill="#0066B3"/>
+    <rect x="17" y="0" width="14" height="16" rx="2" fill="#00A650"/>
+    <rect x="34" y="0" width="14" height="16" rx="2" fill="#EF4123"/>
+    <text x="2" y="12" fontSize="9" fontWeight="bold" fill="white" fontFamily="Arial, sans-serif">JCB</text>
+  </svg>
+);
+
+const AmexLogo = ({ className = "w-8 h-5" }: { className?: string }) => (
+  <svg viewBox="0 0 48 16" className={className} fill="none">
+    <rect x="0" y="0" width="48" height="16" rx="2" fill="#016FD0"/>
+    <path d="M0 8L6 0H14L10 5H16L20 0H28L24 5H30L34 0H42L48 8L42 16H34L30 11H24L28 16H20L16 11H10L14 16H6L0 8Z" fill="white"/>
+    <text x="18" y="11" fontSize="7" fontWeight="bold" fill="#016FD0" fontFamily="Arial, sans-serif">AMEX</text>
+  </svg>
+);
+
+const DiscoverLogo = ({ className = "w-8 h-5" }: { className?: string }) => (
+  <svg viewBox="0 0 80 20" className={className} fill="none">
+    <text x="0" y="15" fontSize="14" fontWeight="bold" fill="#FF6000" fontFamily="Arial, sans-serif">Discover</text>
+    <circle cx="72" cy="10" r="6" fill="#FF6000"/>
+  </svg>
+);
+
+const DinersLogo = ({ className = "w-8 h-5" }: { className?: string }) => (
+  <svg viewBox="0 0 48 16" className={className} fill="none">
+    <rect x="0" y="0" width="48" height="16" rx="8" fill="#004E94"/>
+    <text x="6" y="11" fontSize="7" fontWeight="bold" fill="white" fontFamily="Arial, sans-serif">DINERS</text>
+    <text x="30" y="11" fontSize="5" fill="white" fontFamily="Arial, sans-serif">CLUB</text>
+  </svg>
+);
+
+const CashAppLogo = ({ className = "w-8 h-5" }: { className?: string }) => (
+  <svg viewBox="0 0 48 16" className={className} fill="none">
+    <rect x="0" y="0" width="16" height="16" rx="4" fill="#00D632"/>
+    <text x="4" y="12" fontSize="10" fontWeight="bold" fill="white" fontFamily="Arial, sans-serif">$</text>
+    <text x="20" y="12" fontSize="10" fontWeight="bold" fill="#00D632" fontFamily="Arial, sans-serif">Cash App</text>
+  </svg>
+);
+
+const BitcoinLogo = ({ className = "w-8 h-5" }: { className?: string }) => (
+  <svg viewBox="0 0 48 16" className={className} fill="none">
+    <circle cx="8" cy="8" r="7" fill="#F7931A"/>
+    <text x="5" y="12" fontSize="10" fontWeight="bold" fill="white" fontFamily="Arial, sans-serif">B</text>
+    <text x="18" y="12" fontSize="10" fontWeight="bold" fill="#F7931A" fontFamily="Arial, sans-serif">Bitcoin</text>
+  </svg>
+);
+
+const EthereumLogo = ({ className = "w-8 h-5" }: { className?: string }) => (
+  <svg viewBox="0 0 48 16" className={className} fill="none">
+    <polygon points="8,0 16,8 8,12 0,8" fill="#627EEA"/>
+    <polygon points="8,12 16,8 8,16 0,8" fill="#627EEA" opacity="0.6"/>
+    <text x="18" y="12" fontSize="10" fontWeight="bold" fill="#627EEA" fontFamily="Arial, sans-serif">Ethereum</text>
+  </svg>
+);
+
+const USDTLogo = ({ className = "w-8 h-5" }: { className?: string }) => (
+  <svg viewBox="0 0 48 16" className={className} fill="none">
+    <circle cx="8" cy="8" r="7" fill="#26A17B"/>
+    <text x="5" y="12" fontSize="10" fontWeight="bold" fill="white" fontFamily="Arial, sans-serif">T</text>
+    <text x="18" y="12" fontSize="10" fontWeight="bold" fill="#26A17B" fontFamily="Arial, sans-serif">USDT</text>
+  </svg>
+);
+
+const CryptoLogo = ({ className = "w-8 h-5" }: { className?: string }) => (
+  <svg viewBox="0 0 48 16" className={className} fill="none">
+    <circle cx="8" cy="8" r="7" fill="#F7931A"/>
+    <text x="5" y="12" fontSize="10" fontWeight="bold" fill="white" fontFamily="Arial, sans-serif">B</text>
+    <text x="18" y="12" fontSize="10" fontWeight="bold" fill="#F7931A" fontFamily="Arial, sans-serif">Crypto</text>
+  </svg>
+);
+
+const PointsIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+  </svg>
+);
+
+const DiscountIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 2L2 7l10 5 10-5-10-5z" />
+    <path d="M2 17l10 5 10-5" />
+    <path d="M2 12l10 5 10-5" />
+  </svg>
+);
+
+// ─── Payment Methods Config ────────────────────────────────────────────────
+
+type PaymentMethodConfig = {
+  id: string;
+  label: string;
+  logo: React.FC<{ className?: string }>;
+  fee: number;
+  tag?: string;
+};
+
+const PAYMENT_METHODS: PaymentMethodConfig[] = [
+  { id: "visa", label: "VISA / Mastercard", logo: VisaLogo, fee: 0, tag: "Last used" },
+  { id: "jcb", label: "JCB / AmEx / Discover / Diners", logo: JCBLogo, fee: -0.01 },
+  { id: "paypal", label: "PayPal", logo: PayPalLogo, fee: 0.14 },
+  { id: "paylater", label: "Pay Later", logo: CreditCard, fee: 0.14 },
+  { id: "cashapp", label: "Cash App", logo: CashAppLogo, fee: 0.14 },
+  { id: "crypto", label: "Bitcoin / Ethereum / USDT", logo: CryptoLogo, fee: -0.57 },
 ];
 
 export function CheckoutPage() {
@@ -258,14 +382,14 @@ export function CheckoutPage() {
     <div>
       <div className="flex items-center justify-between py-3 border-b border-gray-100">
         <div className="flex items-center gap-2 text-gray-500 text-sm">
-          <span className="w-5 h-5 rounded-full border border-gray-300 flex items-center justify-center text-[10px]">P</span>
+          <PointsIcon className="w-4 h-4 text-gray-400" />
           39 Points
         </div>
         <span className="text-xs text-gray-400">Available when over 100</span>
       </div>
       <div className="flex items-center justify-between py-3 border-b border-gray-100">
         <div className="flex items-center gap-3 flex-1">
-          <span className="text-gray-400">🎟</span>
+          <Ticket size={16} className="text-gray-400" />
           <input
             type="text"
             value={couponCode}
@@ -283,9 +407,12 @@ export function CheckoutPage() {
         </button>
       </div>
       <div className="flex items-center justify-between py-3 border-b border-gray-100">
-        <span className="text-sm flex items-center gap-2 text-gray-600"><span>🎁</span> 5% OFF</span>
+        <span className="text-sm flex items-center gap-2 text-gray-600">
+          <DiscountIcon className="w-4 h-4 text-orange-500" /> 5% OFF
+        </span>
         <button className="text-sm text-orange-500 font-semibold flex items-center gap-1">
-          -{couponDiscount > 0 ? `$${couponDiscount.toFixed(2)}` : "$0.70"} <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 18l6-6-6-6" /></svg>
+          -{couponDiscount > 0 ? `$${couponDiscount.toFixed(2)}` : "$0.70"} 
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 18l6-6-6-6" /></svg>
         </button>
       </div>
 
@@ -319,6 +446,7 @@ export function CheckoutPage() {
       {PAYMENT_METHODS.map((method) => {
         const price = totalPrice + method.fee - (paymentMethod?.fee || 0);
         const isSelected = selectedPayment === method.id;
+        const LogoComponent = method.logo;
         return (
           <button
             key={method.id}
@@ -331,7 +459,7 @@ export function CheckoutPage() {
               <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${isSelected ? "border-yellow-500" : "border-gray-300"}`}>
                 {isSelected && <div className="w-2.5 h-2.5 bg-yellow-500 rounded-full" />}
               </div>
-              <span className="text-2xl">{method.icon}</span>
+              <LogoComponent className="w-8 h-5 flex-shrink-0" />
               <span className="text-sm font-medium text-gray-700">{method.label}</span>
             </div>
             <div className="flex flex-col items-end">
@@ -499,5 +627,3 @@ export function CheckoutPage() {
     </>
   );
 }
-
-
