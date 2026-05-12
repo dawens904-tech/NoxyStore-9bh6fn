@@ -931,3 +931,4 @@ export function GroupChatPage() {
     </div>
   );
 }
+fix when you ban never enter to the group its lock for time ban and fix admin can chat to the group give anonce.
