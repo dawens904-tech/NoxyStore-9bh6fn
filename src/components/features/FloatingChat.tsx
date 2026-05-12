@@ -1,3 +1,4 @@
+
 /**
  * FloatingChat — floating action button that opens VIP support chat
  * Features: animated pulse ring, unread badge, tooltip on hover
@@ -46,37 +47,24 @@ export function FloatingChat() {
         </div>
       </div>
 
-      {/* Main FAB */}
-      <div className="flex items-center gap-2">
-        {/* Old-style label button beside the circle */}
+      {/* Single circle FAB */}
+      <div className="relative flex-shrink-0">
+        {/* Pulse ring animation */}
+        <span className="absolute inset-0 rounded-full bg-yellow-400 opacity-30 animate-ping" />
+
+        {/* Unread badge */}
+        <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center z-10 border-2 border-white">
+          <span className="text-white text-[9px] font-black">1</span>
+        </div>
+
         <button
           onClick={() => navigate("/support")}
-          className="bg-white border border-gray-200 shadow-md px-3 py-2 flex items-center gap-1.5 hover:bg-gray-50 active:scale-95 transition-all text-gray-800 text-sm font-semibold"
+          className="w-14 h-14 bg-yellow-400 rounded-full shadow-lg flex items-center justify-center hover:bg-yellow-300 active:scale-95 transition-all"
+          aria-label="Chat support"
         >
-          <MessageCircle size={14} className="text-yellow-500" />
-          Chat
+          <MessageCircle size={24} className="text-black" />
         </button>
-
-        {/* Main circle FAB */}
-        <div className="relative flex-shrink-0">
-          {/* Pulse ring animation */}
-          <span className="absolute inset-0 rounded-full bg-yellow-400 opacity-30 animate-ping" />
-
-          {/* Unread badge */}
-          <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center z-10 border-2 border-white">
-            <span className="text-white text-[9px] font-black">1</span>
-          </div>
-
-          <button
-            onClick={() => navigate("/support")}
-            className="w-14 h-14 bg-yellow-400 rounded-full shadow-lg flex items-center justify-center hover:bg-yellow-300 active:scale-95 transition-all"
-            aria-label="Chat support"
-          >
-            <MessageCircle size={24} className="text-black" />
-          </button>
-        </div>
       </div>
     </div>
   );
 }
-one button please.
