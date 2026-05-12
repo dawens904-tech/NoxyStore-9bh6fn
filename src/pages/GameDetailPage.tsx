@@ -25,6 +25,7 @@ export function GameDetailPage() {
   const [imgError, setImgError] = useState(false);
   const [markup, setMarkup] = useState(0);
   const [notice, setNotice] = useState<string | null>("Americas Area Topup may take 10 minutes. Longer during busy periods.");
+  const [instructions, setInstructions] = useState<Array<{ step: number; title: string; description: string; image?: string }>>([]);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [referralCode, setReferralCode] = useState("");
   const [inviteCopied, setInviteCopied] = useState(false);
@@ -49,6 +50,20 @@ export function GameDetailPage() {
       supabase.from("referral_codes").select("code, short_code").eq("user_email", data.user.email).single()
         .then(({ data: ref }) => { if (ref) setReferralCode(ref.short_code || ref.code); });
     });
+
+    // Fetch top-up instructions from Lootbar via proxy
+    supabase.functions.invoke("lootbar-proxy", {
+      body: { action: "game_guide", game_id: gameId }
+    }).then(({ data }) => {
+      if (data?.guide && Array.isArray(data.guide) && data.guide.length > 0) {
+        setInstructions(data.guide.map((g: any, i: number) => ({
+          step: i + 1,
+          title: g.title || `Step ${i + 1}`,
+          description: g.content || g.description || "",
+          image: g.image || g.img || undefined,
+        })));
+      }
+    }).catch(() => {});
 
     // Fetch game info from cache first (real image + metadata)
     supabase.from("games_cache").select("*").eq("game_id", gameId).single()
@@ -367,15 +382,12 @@ export function GameDetailPage() {
               )}
             </div>
 
-            {/* Top-up instructions */}
+            {/* Top-up instructions — real data from Lootbar API */}
             <div className="bg-white p-6 border border-gray-100">
-              <h3 className="text-lg font-bold text-gray-900 mb-3">Top-up instructions</h3>
-              <h4 className="font-bold text-gray-900 mb-2">{game?.game_name} Top-up Guidance</h4>
-              <p className="text-sm text-gray-600 leading-relaxed mb-3">
-                Please be sure to fill in the required information accurately to prevent your top-up from being delayed.
-                Top-up takes about 3–5 minutes. In special cases, the recharge arrival time may be delayed.
-              </p>
-              <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-gray-100">
+              <h3 className="text-lg font-bold text-gray-900 mb-4">Top-up Instructions</h3>
+
+              {/* Static info grid */}
+              <div className="grid grid-cols-2 gap-4 mb-5 pb-5 border-b border-gray-100">
                 {[
                   { label: "Category", value: game?.category || "Top Up" },
                   { label: "Delivery Method", value: "Direct top-up via API" },
@@ -388,12 +400,43 @@ export function GameDetailPage() {
                   </div>
                 ))}
               </div>
+
+              {/* Dynamic steps — from Lootbar API or fallback defaults */}
+              <div className="space-y-5">
+                {(instructions.length > 0 ? instructions : [
+                  { step: 1, title: "Select your package", description: "Choose the top-up amount that suits you from the list above.", image: undefined },
+                  { step: 2, title: "Fill in your player information", description: "Enter your Player ID or UID accurately. Double-check before proceeding.", image: game?.game_image || undefined },
+                  { step: 3, title: "Complete your payment", description: "Choose a payment method and complete the transaction securely.", image: undefined },
+                  { step: 4, title: "Receive your items", description: "Top-up is processed automatically. Items arrive within 3–5 minutes.", image: undefined },
+                ]).map((inst) => (
+                  <div key={inst.step} className="flex gap-4">
+                    <div className="flex-shrink-0 w-7 h-7 bg-yellow-400 flex items-center justify-center font-black text-sm text-black">
+                      {inst.step}
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-bold text-gray-900 text-sm mb-1">{inst.title}</p>
+                      {inst.description && (
+                        <p className="text-sm text-gray-600 leading-relaxed">{inst.description}</p>
+                      )}
+                      {inst.image && (
+                        <img
+                          src={inst.image}
+                          alt={inst.title}
+                          className="mt-2 max-w-xs object-cover border border-gray-100"
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                        />
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
-          {/* Right: Sticky order panel — fixed, does NOT scroll */}
+          {/* Right: Fixed order panel — never scrolls with left panel */}
           <div className="w-72 flex-shrink-0">
-            <div className="sticky top-[70px] border border-gray-200 shadow-sm bg-white">
+            <div style={{ position: "sticky", top: "70px", height: "fit-content" }}>
+            <div className="border border-gray-200 shadow-sm bg-white">
 
               {/* Order Information Section */}
               <div className="px-5 pt-5 pb-4 border-b border-gray-200">
@@ -460,6 +503,7 @@ export function GameDetailPage() {
                 </div>
               </div>
 
+            </div>
             </div>
           </div>
         </div>
@@ -736,4 +780,4 @@ export function GameDetailPage() {
     </>
   );
 }
-right panel never scroll down even if you scroll rive just nn footer stay fixed add real fetch Top-up instructions from lootbar api and some instruction have photo add real fetch with them.
+
