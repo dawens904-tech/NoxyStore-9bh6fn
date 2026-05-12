@@ -146,7 +146,8 @@ export function GameDetailPage() {
             <select
               value={extraInfoValues[field.name] || ""}
               onChange={(e) => setFieldValue(field.name, e.target.value)}
-              className="w-full border border-gray-300 focus:border-yellow-400 rounded-xl px-3 py-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-yellow-200 bg-white"
+              className="w-full border border-gray-300 focus:border-yellow-400 px-3 py-2.5 text-sm text-gray-900 outline-none bg-white"
+              style={{borderRadius:0}}
             >
               <option value="">Please select {field.title}</option>
               {field.options.map((opt) => (
@@ -159,7 +160,8 @@ export function GameDetailPage() {
               value={extraInfoValues[field.name] || ""}
               onChange={(e) => setFieldValue(field.name, e.target.value)}
               placeholder={field.placeholder || `Please enter your ${field.title}`}
-              className="w-full border border-gray-300 focus:border-yellow-400 rounded-xl px-3 py-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-yellow-200 transition-colors"
+              className="w-full border border-gray-300 focus:border-yellow-400 px-3 py-2.5 text-sm text-gray-900 outline-none transition-colors"
+              style={{borderRadius:0}}
             />
           )}
         </div>
@@ -220,13 +222,13 @@ export function GameDetailPage() {
           {/* Left: Game info + SKU grid */}
           <div className="flex-1 min-w-0">
             {/* Game header card */}
-            <div className="bg-white rounded-2xl p-6 mb-4 border border-gray-100">
+            <div className="bg-white p-6 mb-4 border border-gray-100">
               <div className="flex items-start gap-5">
                 {/* Real game image from cache */}
                 <img
                   src={imgError ? "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=100&h=100&fit=crop" : (game?.game_image || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=100&h=100&fit=crop")}
                   alt={game?.game_name}
-                  className="w-24 h-24 rounded-2xl object-cover flex-shrink-0 shadow-sm"
+                  className="w-24 h-24 object-cover flex-shrink-0"
                   onError={() => setImgError(true)}
                 />
                 <div className="flex-1">
@@ -235,7 +237,7 @@ export function GameDetailPage() {
                       <h1 className="text-2xl font-black text-gray-900 mb-1">{game?.game_name} Top Up</h1>
                       <div className="flex items-center gap-3 mb-2">
                         <div className="flex items-center gap-1.5">
-                          <span className="bg-yellow-400 text-black text-xs font-bold px-1.5 py-0.5 rounded">{(game?.rating ?? 5.0).toFixed(1)}</span>
+                          <span className="bg-yellow-400 text-black text-xs font-bold px-1.5 py-0.5">{(game?.rating ?? 5.0).toFixed(1)}</span>
                           <div className="flex">{Array.from({ length: 5 }).map((_, i) => <Star key={i} size={14} fill="#FFD200" stroke="none" />)}</div>
                           <span className="text-sm text-gray-400">30,000+ reviews</span>
                         </div>
@@ -249,12 +251,12 @@ export function GameDetailPage() {
                       </div>
                     </div>
                     {/* Promo invite card */}
-                    <div className="bg-gradient-to-br from-yellow-50 to-orange-50 border border-yellow-200 rounded-2xl px-4 py-3 text-center hidden xl:block flex-shrink-0">
+                    <div className="bg-gradient-to-br from-yellow-50 to-orange-50 border border-yellow-200 px-4 py-3 text-center hidden xl:block flex-shrink-0">
                       <p className="text-xs text-gray-700">Invite Friends & Get</p>
                       <p className="text-orange-500 font-black text-lg">3×10% OFF</p>
                       <button
                         onClick={() => setShowInviteModal(true)}
-                        className="mt-1.5 bg-orange-400 text-white text-xs font-bold px-4 py-1.5 rounded-xl hover:bg-orange-500"
+                        className="mt-1.5 bg-orange-400 text-white text-xs font-bold px-4 py-1.5 hover:bg-orange-500"
                       >
                         Invite Now
                       </button>
@@ -264,7 +266,7 @@ export function GameDetailPage() {
               </div>
 
               {notice && (
-                <div className="mt-4 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 flex items-center justify-between">
+                <div className="mt-4 bg-amber-50 border border-amber-200 px-4 py-2.5 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <AlertCircle size={14} className="text-amber-600 flex-shrink-0" />
                     <p className="text-sm text-amber-800">{notice}</p>
@@ -278,7 +280,7 @@ export function GameDetailPage() {
 
             {/* Region / Server tabs — real data from SKU attributes */}
             {regions.length > 1 && (
-              <div className="bg-white rounded-2xl px-5 py-4 mb-4 border border-gray-100">
+              <div className="bg-white px-5 py-4 mb-4 border border-gray-100">
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
                   {skus[0]?.attribute?.[0]?.key_text || "Server Region"}
                 </p>
@@ -287,11 +289,12 @@ export function GameDetailPage() {
                     <button
                       key={r.value}
                       onClick={() => { setSelectedRegion(r.value); setSelectedSku(null); setExtraInfoValues({}); }}
-                      className={`px-4 py-2 rounded-xl border text-sm font-semibold transition-all ${
+                      className={`px-4 py-2 border text-sm font-semibold transition-all ${
                         selectedRegion === r.value
-                          ? "border-yellow-400 bg-yellow-50 text-yellow-700 shadow-sm"
+                          ? "border-yellow-400 bg-yellow-50 text-yellow-700"
                           : "border-gray-200 text-gray-600 hover:border-gray-300 bg-white"
                       }`}
+                      style={{borderRadius:0}}
                     >
                       {r.label}
                     </button>
@@ -301,7 +304,7 @@ export function GameDetailPage() {
             )}
 
             {/* SKU grid — card style matching Lootbar */}
-            <div className="bg-white rounded-2xl p-5 mb-4 border border-gray-100">
+            <div className="bg-white p-5 mb-4 border border-gray-100">
               {isLoading ? (
                 <div className="grid grid-cols-3 xl:grid-cols-4 gap-3">
                   {Array.from({ length: 8 }).map((_, i) => <div key={i} className="shimmer h-36 rounded-xl" />)}
@@ -316,9 +319,10 @@ export function GameDetailPage() {
                       <button
                         key={sku.sku_id}
                         onClick={() => { setSelectedSku(sku); setExtraInfoValues({}); }}
-                        className={`relative flex flex-col bg-white rounded-xl border-2 overflow-hidden transition-all hover:shadow-md text-left ${
-                          isSelected ? "border-yellow-400 shadow-md ring-1 ring-yellow-300" : "border-gray-200 hover:border-gray-300"
+                        className={`relative flex flex-col bg-white border-2 overflow-hidden transition-all hover:shadow-md text-left ${
+                          isSelected ? "border-yellow-400 shadow-md" : "border-gray-200 hover:border-gray-300"
                         }`}
+                        style={{borderRadius:0}}
                       >
                         {/* SKU image */}
                         <div className="aspect-[4/3] bg-gray-100 relative">
@@ -329,12 +333,12 @@ export function GameDetailPage() {
                             onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=200&h=150&fit=crop"; }}
                           />
                           {isSelected && (
-                            <div className="absolute top-1.5 right-1.5 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center shadow-sm">
+                            <div className="absolute top-1.5 right-1.5 w-5 h-5 bg-yellow-400 flex items-center justify-center shadow-sm">
                               <Check size={11} className="text-black" />
                             </div>
                           )}
                           {savings > 0 && (
-                            <div className="absolute top-1.5 left-1.5 bg-orange-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md">
+                            <div className="absolute top-1.5 left-1.5 bg-orange-500 text-white text-[9px] font-bold px-1.5 py-0.5">
                               -{savings.toFixed(0)}%
                             </div>
                           )}
@@ -356,7 +360,7 @@ export function GameDetailPage() {
             </div>
 
             {/* Top-up instructions */}
-            <div className="bg-white rounded-2xl p-6 border border-gray-100">
+            <div className="bg-white p-6 border border-gray-100">
               <h3 className="text-lg font-bold text-gray-900 mb-3">Top-up instructions</h3>
               <h4 className="font-bold text-gray-900 mb-2">{game?.game_name} Top-up Guidance</h4>
               <p className="text-sm text-gray-600 leading-relaxed mb-3">
@@ -381,71 +385,73 @@ export function GameDetailPage() {
 
           {/* Right: Sticky order panel */}
           <div className="w-72 flex-shrink-0">
-            <div className="sticky top-20">
-              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-                <div className="p-5">
-                  <h3 className="font-bold text-gray-900 mb-4">Order Information</h3>
+            <div className="sticky top-20 border border-gray-200 shadow-sm bg-white">
 
-                  {/* Dynamic extra_info form */}
-                  {selectedSku ? (
-                    <ExtraInfoForm />
-                  ) : (
-                    <div className="bg-gray-50 rounded-xl p-3 text-center text-sm text-gray-400 mb-4 border border-dashed border-gray-200">
-                      ← Select a package
-                    </div>
-                  )}
-
-                  {/* Quantity */}
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-sm font-semibold text-gray-700">Quantity</span>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                        className="w-8 h-8 rounded-lg border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-50"
-                      >
-                        −
-                      </button>
-                      <span className="text-sm font-bold w-6 text-center">{quantity}</span>
-                      <button
-                        onClick={() => setQuantity(quantity + 1)}
-                        className="w-8 h-8 rounded-lg border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-50"
-                      >
-                        +
-                      </button>
-                    </div>
+              {/* Order Information Section */}
+              <div className="px-5 pt-5 pb-4 border-b border-gray-200">
+                <h3 className="font-bold text-gray-900 mb-4">Order Information</h3>
+                {selectedSku ? (
+                  <ExtraInfoForm />
+                ) : (
+                  <div className="bg-gray-50 p-3 text-center text-sm text-gray-400 border border-dashed border-gray-200">
+                    ← Select a package
                   </div>
+                )}
+              </div>
 
-                  {/* Price */}
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm text-gray-500">Price</span>
-                    <span className="text-xl font-black text-orange-500">
-                      {selectedSku ? `$${totalPrice.toFixed(2)}` : "—"}
-                    </span>
-                  </div>
-                  {totalSavings > 0 && (
-                    <p className="text-xs text-orange-500 text-right mb-2 font-semibold">
-                      Savings ${totalSavings.toFixed(2)}
-                    </p>
-                  )}
-
-                  <button
-                    onClick={handleTopUpNow}
-                    disabled={!selectedSku}
-                    className={`w-full py-3.5 rounded-xl font-bold text-base transition-all mt-3 ${
-                      selectedSku
-                        ? "bg-yellow-400 hover:bg-yellow-300 text-black active:scale-[0.99]"
-                        : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                    }`}
-                  >
-                    Top-up Now
-                  </button>
-
-                  <div className="flex items-center justify-center gap-1.5 mt-3">
-                    <Shield size={13} className="text-green-500" />
-                    <span className="text-xs text-gray-500">NoxyStore Security Guarantee</span>
+              {/* Quantity Section — separated */}
+              <div className="px-5 py-4 border-b border-gray-200">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold text-gray-700">Quantity</span>
+                  <div className="flex items-center border border-gray-300">
+                    <button
+                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                      className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-50 border-r border-gray-300"
+                    >
+                      −
+                    </button>
+                    <span className="text-sm font-bold w-10 text-center">{quantity}</span>
+                    <button
+                      onClick={() => setQuantity(quantity + 1)}
+                      className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-50 border-l border-gray-300"
+                    >
+                      +
+                    </button>
                   </div>
                 </div>
               </div>
+
+              {/* Price + CTA Section */}
+              <div className="px-5 py-4">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm text-gray-500">Price</span>
+                  <span className="text-xl font-black text-orange-500">
+                    {selectedSku ? `$${totalPrice.toFixed(2)}` : "—"}
+                  </span>
+                </div>
+                {totalSavings > 0 && (
+                  <p className="text-xs text-orange-500 text-right mb-2 font-semibold">
+                    Savings ${totalSavings.toFixed(2)}
+                  </p>
+                )}
+                <button
+                  onClick={handleTopUpNow}
+                  disabled={!selectedSku}
+                  className={`w-full py-3.5 font-bold text-base transition-all mt-3 ${
+                    selectedSku
+                      ? "bg-yellow-400 hover:bg-yellow-300 text-black"
+                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  }`}
+                  style={{borderRadius:0}}
+                >
+                  Top-up Now
+                </button>
+                <div className="flex items-center justify-center gap-1.5 mt-3">
+                  <Shield size={13} className="text-green-500" />
+                  <span className="text-xs text-gray-500">NoxyStore Security Guarantee</span>
+                </div>
+              </div>
+
             </div>
           </div>
         </div>
@@ -722,4 +728,4 @@ export function GameDetailPage() {
     </>
   );
 }
-add al tings square no border and Order Information separe ak quantity.
+
