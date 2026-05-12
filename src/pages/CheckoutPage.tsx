@@ -921,3 +921,4 @@ export function CheckoutPage() {
   );
 }
 
+add only to put logo card visa,jcb,paypal,pay later, cashappp, mnp,bitcoin.
