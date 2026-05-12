@@ -162,4 +162,4 @@ export function NewUserCouponModal({ isAuthenticated }: NewUserCouponModalProps)
     </div>
   );
 }
-
+make this square and better edit fix img lan dwe display right nn modal lan.
