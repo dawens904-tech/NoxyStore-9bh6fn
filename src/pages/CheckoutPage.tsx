@@ -16,7 +16,7 @@ type CheckoutState = "review" | "processing" | "success" | "failed";
 
 // ─── Payment Logo Placeholder Components (replace src with real logos) ──────
 const VisaLogo = () => <img src="https://uzxmmddivzqjhcnnrkns.supabase.co/storage/v1/object/public/hi/WhatsApp%20Image%202026-05-12%20at%201.19.31%20PM%20(4).jpeg" alt="Visa" className="h-5 w-auto object-contain" />;
-const JCBLogo = () => <img src="https://uzxmmddivzqjhcnnrkns.supabase.co/storage/v1/object/public/hi/WhatsApp%20Image%202026-05-12%20at%201.19.31%20PM%20(2).jpeg" alt="JCB" className="h-5 w-auto object-contain" />;
+const JCBLogo = () => <img src="https://uzxmmddivzqjhcnnrkns.supabase.co/storage/v1/object/public/hi/WhatsApp%20Image%202026-05-12%20at%201.31.19%20PM.jpeg" alt="JCB" className="h-5 w-auto object-contain" />;
 const CashAppLogo = () => <img src="https://uzxmmddivzqjhcnnrkns.supabase.co/storage/v1/object/public/hi/WhatsApp%20Image%202026-05-12%20at%201.19.31%20PM%20(1).jpeg" alt="Cash App" className="h-5 w-5 object-contain" />;
 const BitcoinLogo = () => <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Bitcoin.svg/200px-Bitcoin.svg.png" alt="BTC" className="h-5 w-5 object-contain" />;
 const PayPalLogo = () => <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/PayPal.svg/200px-PayPal.svg.png" alt="PayPal" className="h-5 w-auto object-contain" />;
