@@ -31,7 +31,7 @@ export function AdminLiveChatPage() {
 
   const loadSessions = async () => {
     const { data } = await supabase.from("chat_sessions").select("*")
-      .in("status", ["waiting", "live", "ai"]).order("updated_at", { ascending: false });
+      .in("status", ["waiting", "live"]).order("updated_at", { ascending: false });
     if (data) setSessions(data);
   };
 
@@ -147,4 +147,4 @@ export function AdminLiveChatPage() {
     </AdminLayout>
   );
 }
-fix remove empty live chat and When lootbar-proxy fetches SKUs for a game, store the full SKU list (sku_id, sku_name, price, attributes) in a new sku_cache table with a 1-hour TTL, so subsequent game detail page loads are instant without hitting the Lootbar API.
+

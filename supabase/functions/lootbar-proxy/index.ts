@@ -195,27 +195,76 @@ async function getGamesWithCache(pageNum: number, pageSize: number): Promise<unk
   return result;
 }
 
-// ─── Get SKUs — also updates min_price in games_cache ────────────────────────
+// ─── Get SKUs — with 1-hour sku_cache + min_price update ───────────────────────
 async function getSkusWithMinPrice(gameId: string): Promise<unknown> {
+  // Check sku_cache first (1-hour TTL)
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+  const { data: cached, error: cacheErr } = await supabase
+    .from("sku_cache")
+    .select("*")
+    .eq("game_id", gameId)
+    .gte("cached_at", oneHourAgo);
+
+  if (!cacheErr && cached && cached.length > 0) {
+    console.log(`[LootbarProxy] Returning ${cached.length} SKUs from sku_cache for game ${gameId}`);
+    return {
+      status: "ok",
+      data: {
+        items: cached.map((r: Record<string, unknown>) => ({
+          sku_id: r.sku_id,
+          sku_name: r.sku_name,
+          price: r.price,
+          original_price: r.original_price,
+          discount_amount: r.discount_amount,
+          attribute: r.attributes,
+          extra_info: r.extra_info,
+          image: r.image,
+        })),
+      },
+    };
+  }
+
+  // Fetch fresh from Lootbar API
   const result = await lootbarRequest("GET", `/api/reseller/skus?game_id=${gameId}`) as Record<string, unknown>;
 
   if (result.status === "ok") {
     const data = result.data as Record<string, unknown>;
     const items = (data.items as Array<Record<string, unknown>>) || [];
 
-    // Calculate min price from SKUs
+    // Calculate min price
     const prices = items
       .map((sku: Record<string, unknown>) => Number(sku.price || sku.final_price || 0))
       .filter((p: number) => p > 0);
 
     if (prices.length > 0) {
       const minPrice = Math.min(...prices);
-      // Update min_price in games_cache
-      await supabase
-        .from("games_cache")
-        .update({ min_price: minPrice })
-        .eq("game_id", gameId);
+      await supabase.from("games_cache").update({ min_price: minPrice }).eq("game_id", gameId);
       console.log(`[LootbarProxy] Updated min_price for game ${gameId}: $${minPrice}`);
+    }
+
+    // Cache SKUs in sku_cache
+    if (items.length > 0) {
+      const now = new Date().toISOString();
+      const upsertData = items.map((sku: Record<string, unknown>) => ({
+        game_id: gameId,
+        sku_id: String(sku.sku_id),
+        sku_name: String(sku.sku_name || ""),
+        price: Number(sku.price || sku.final_price || 0),
+        original_price: Number(sku.original_price || sku.price || 0),
+        discount_amount: Number(sku.discount_amount || 0),
+        attributes: sku.attribute || [],
+        extra_info: sku.extra_info || [],
+        image: sku.image || sku.icon || null,
+        cached_at: now,
+      }));
+
+      // Delete old cache for this game then insert fresh
+      await supabase.from("sku_cache").delete().eq("game_id", gameId);
+      const batchSize = 50;
+      for (let i = 0; i < upsertData.length; i += batchSize) {
+        await supabase.from("sku_cache").insert(upsertData.slice(i, i + batchSize));
+      }
+      console.log(`[LootbarProxy] Cached ${items.length} SKUs for game ${gameId}`);
     }
   }
 
