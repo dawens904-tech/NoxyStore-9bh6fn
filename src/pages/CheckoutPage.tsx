@@ -14,107 +14,20 @@ import { toast } from "sonner";
 
 type CheckoutState = "review" | "processing" | "success" | "failed";
 
-// ─── SVG Payment Logo Components ──────────────────────────────────────────────
-const VisaLogo = () => (
-  <svg viewBox="0 0 48 16" className="h-5 w-auto" fill="none">
-    <path d="M18.5 1.5L16 14.5H19.5L22 1.5H18.5Z" fill="#1A1F71"/>
-    <path d="M30.5 1.5C29.5 1.5 28.5 2 28 2.5L23.5 14.5H27.5L28 13H32.5L33 14.5H37L33.5 1.5H30.5ZM29.5 10L31 5.5L32 10H29.5Z" fill="#1A1F71"/>
-    <path d="M13.5 1.5L9.5 10L9 7C8 4 5 2 5 2L8.5 14.5H12.5L18 1.5H13.5Z" fill="#1A1F71"/>
-    <path d="M6.5 1.5H0.5L0 2C4.5 3 7.5 5.5 8.5 7.5L7.5 2.5C7.5 2 7 1.5 6.5 1.5Z" fill="#F7B600"/>
-    <path d="M43.5 1.5C42 1.5 40.5 2 40 2.5L39.5 3L39 1.5H36L38.5 14.5H42L41 9.5C41 6.5 43 4.5 45 4.5C46 4.5 46.5 4.5 47 4.5L47.5 1.5C47 1.5 46 1.5 43.5 1.5Z" fill="#1A1F71"/>
-  </svg>
-);
-
-const MastercardLogo = () => (
-  <svg viewBox="0 0 32 20" className="h-5 w-auto" fill="none">
-    <circle cx="10" cy="10" r="10" fill="#EB001B"/>
-    <circle cx="22" cy="10" r="10" fill="#F79E1B"/>
-    <path d="M16 3C18.5 5 20 7.5 20 10C20 12.5 18.5 15 16 17C13.5 15 12 12.5 12 10C12 7.5 13.5 5 16 3Z" fill="#FF5F00"/>
-  </svg>
-);
-
-const JCBLogo = () => (
-  <svg viewBox="0 0 36 20" className="h-5 w-auto" fill="none">
-    <rect x="0" y="0" width="11" height="20" rx="2" fill="#0066B3"/>
-    <rect x="13" y="0" width="11" height="20" rx="2" fill="#00A650"/>
-    <rect x="26" y="0" width="11" height="20" rx="2" fill="#EF4123"/>
-    <text x="1" y="14" fontSize="9" fontWeight="bold" fill="white" fontFamily="Arial,sans-serif">JCB</text>
-  </svg>
-);
-
-const AmexLogo = () => (
-  <svg viewBox="0 0 36 20" className="h-5 w-auto" fill="none">
-    <rect x="0" y="0" width="36" height="20" rx="2" fill="#016FD0"/>
-    <text x="4" y="14" fontSize="9" fontWeight="bold" fill="white" fontFamily="Arial,sans-serif">AMEX</text>
-  </svg>
-);
-
-const DiscoverLogo = () => (
-  <svg viewBox="0 0 52 20" className="h-5 w-auto" fill="none">
-    <rect x="0" y="0" width="52" height="20" rx="2" fill="#fff" stroke="#e5e7eb" strokeWidth="1"/>
-    <text x="3" y="14" fontSize="9" fontWeight="bold" fill="#231F20" fontFamily="Arial,sans-serif">DISCOVER</text>
-    <circle cx="44" cy="10" r="6" fill="#FF6000"/>
-  </svg>
-);
-
-const DinersLogo = () => (
-  <svg viewBox="0 0 40 20" className="h-5 w-auto" fill="none">
-    <rect x="0" y="0" width="40" height="20" rx="10" fill="#004E94"/>
-    <text x="4" y="13" fontSize="6" fontWeight="bold" fill="white" fontFamily="Arial,sans-serif">DINERS CLUB</text>
-  </svg>
-);
-
-const CashAppLogo = () => (
-  <svg viewBox="0 0 20 20" className="h-5 w-5" fill="none">
-    <rect width="20" height="20" rx="4" fill="#00D632"/>
-    <text x="5" y="15" fontSize="12" fontWeight="bold" fill="white" fontFamily="Arial,sans-serif">$</text>
-  </svg>
-);
-
-const BitcoinLogo = () => (
-  <svg viewBox="0 0 20 20" className="h-5 w-5" fill="none">
-    <circle cx="10" cy="10" r="10" fill="#F7931A"/>
-    <text x="6" y="14.5" fontSize="11" fontWeight="bold" fill="white" fontFamily="Arial,sans-serif">₿</text>
-  </svg>
-);
-
-const EthLogo = () => (
-  <svg viewBox="0 0 20 20" className="h-5 w-5" fill="none">
-    <circle cx="10" cy="10" r="10" fill="#627EEA"/>
-    <polygon points="10,3 10,10.5 16,13" fill="white" opacity="0.6"/>
-    <polygon points="10,3 4,13 10,10.5" fill="white"/>
-    <polygon points="10,12 16,13 10,17" fill="white" opacity="0.6"/>
-    <polygon points="10,12 4,13 10,17" fill="white"/>
-  </svg>
-);
-
-const SolLogo = () => (
-  <svg viewBox="0 0 20 20" className="h-5 w-5" fill="none">
-    <circle cx="10" cy="10" r="10" fill="#9945FF"/>
-    <text x="4" y="14" fontSize="9" fontWeight="bold" fill="white" fontFamily="Arial,sans-serif">SOL</text>
-  </svg>
-);
-
-const MirLogo = () => (
-  <svg viewBox="0 0 36 20" className="h-5 w-auto" fill="none">
-    <rect width="36" height="20" rx="2" fill="#0F754E"/>
-    <text x="4" y="14" fontSize="9" fontWeight="bold" fill="white" fontFamily="Arial,sans-serif">МИР</text>
-  </svg>
-);
-
-const UsdtLogo = () => (
-  <svg viewBox="0 0 20 20" className="h-5 w-5" fill="none">
-    <circle cx="10" cy="10" r="10" fill="#26A17B"/>
-    <text x="6" y="14" fontSize="11" fontWeight="bold" fill="white" fontFamily="Arial,sans-serif">T</text>
-  </svg>
-);
-
-const TronLogo = () => (
-  <svg viewBox="0 0 20 20" className="h-5 w-5" fill="none">
-    <circle cx="10" cy="10" r="10" fill="#FF060A"/>
-    <text x="4" y="14" fontSize="9" fontWeight="bold" fill="white" fontFamily="Arial,sans-serif">TRX</text>
-  </svg>
-);
+// ─── Payment Logo Placeholder Components (replace src with real logos) ──────
+const VisaLogo = () => <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/200px-Visa_Inc._logo.svg.png" alt="Visa" className="h-5 w-auto object-contain" />;
+const MastercardLogo = () => <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/200px-Mastercard-logo.svg.png" alt="Mastercard" className="h-5 w-auto object-contain" />;
+const JCBLogo = () => <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/JCB_logo.svg/200px-JCB_logo.svg.png" alt="JCB" className="h-5 w-auto object-contain" />;
+const AmexLogo = () => <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/American_Express_logo_%282018%29.svg/200px-American_Express_logo_%282018%29.svg.png" alt="Amex" className="h-5 w-auto object-contain" />;
+const DiscoverLogo = () => <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/Discover_Card_logo.svg/200px-Discover_Card_logo.svg.png" alt="Discover" className="h-5 w-auto object-contain" />;
+const DinersLogo = () => <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Diners_Club_Logo3.svg/200px-Diners_Club_Logo3.svg.png" alt="Diners" className="h-5 w-auto object-contain" />;
+const CashAppLogo = () => <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Square_Cash_app_logo.svg/200px-Square_Cash_app_logo.svg.png" alt="Cash App" className="h-5 w-5 object-contain" />;
+const BitcoinLogo = () => <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Bitcoin.svg/200px-Bitcoin.svg.png" alt="BTC" className="h-5 w-5 object-contain" />;
+const EthLogo = () => <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Ethereum-icon-purple.svg/200px-Ethereum-icon-purple.svg.png" alt="ETH" className="h-5 w-5 object-contain" />;
+const SolLogo = () => <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-purple-600 text-white text-[8px] font-bold">SOL</span>;
+const MirLogo = () => <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Mir-logo.SVG.svg/200px-Mir-logo.SVG.svg.png" alt="MIR" className="h-5 w-auto object-contain" />;
+const UsdtLogo = () => <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Tether_logo.png/200px-Tether_logo.png" alt="USDT" className="h-5 w-5 object-contain" />;
+const TronLogo = () => <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-600 text-white text-[8px] font-bold">TRX</span>;
 
 const WalletIcon = () => (
   <svg viewBox="0 0 24 24" className="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2">
@@ -613,7 +526,7 @@ export function CheckoutPage() {
 
       <div className="flex w-full pt-[60px] max-w-[1200px] mx-auto gap-6 px-6 py-6 items-start">
         {/* LEFT: Scrollable content */}
-        <div className="flex-1 min-w-0 overflow-y-auto" style={{ maxHeight: "calc(100vh - 80px)" }}>
+        <div className="flex-1 min-w-0 overflow-y-auto" style={{ maxHeight: "calc(100vh - 80px)", scrollbarWidth: "none", msOverflowStyle: "none" }}>
           <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-gray-500 hover:text-gray-700 mb-4 text-sm font-medium">
             <ArrowLeft size={16} /> Back
           </button>
@@ -938,4 +851,4 @@ export function CheckoutPage() {
     </>
   );
 }
-fix remove all logo add demo image i will replace and fix sroll line lan its must be scroll but line ki show lel ap croll lan remove it.
+
