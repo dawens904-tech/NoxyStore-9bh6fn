@@ -924,4 +924,5 @@ export function CheckoutPage() {
   );
 }
 
+MirLogo is not defined
 
