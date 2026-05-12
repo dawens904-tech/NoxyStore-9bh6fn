@@ -17,7 +17,6 @@ export interface LootbarGame {
   sold_count?: string;
   is_hot?: boolean;
   discount?: number;
-  min_price?: number | null;
 }
 
 export interface SkuAttribute {
