@@ -4,7 +4,7 @@
  */
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { X, ChevronRight, Send, MessageSquare, Home } from "lucide-react";
+import { X, ChevronRight, Send, MessageSquare, Home, Users } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 
 const FAQ_ITEMS = [
@@ -220,7 +220,24 @@ function MessagesTab({ navigate, user }: { navigate: (path: string) => void; use
           <p className="text-sm text-gray-500 truncate">{vipLastMessage.slice(0, 40)}...</p>
         </div>
       </button>
+
+      {/* Group Chat */}
+      <button
+        onClick={() => navigate("/support/group")}
+        className="w-full flex items-center gap-4 px-4 py-4 hover:bg-gray-50 transition-colors text-left"
+      >
+        <div className="w-14 h-14 bg-gray-900 rounded-full flex items-center justify-center flex-shrink-0 relative">
+          <Users size={22} className="text-yellow-400" />
+          <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-white" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-0.5">
+            <p className="font-bold text-gray-900">Community Chat</p>
+            <span className="bg-yellow-400 text-black text-[9px] font-black px-1.5 py-0.5 leading-none">LIVE</span>
+          </div>
+          <p className="text-sm text-gray-500 truncate">Chat with all NoxyStore members — photos &amp; voice</p>
+        </div>
+      </button>
     </div>
   );
 }
-hello ai if see this add a group chat and create group chat page with photo upload,voice send real message for all user in store.

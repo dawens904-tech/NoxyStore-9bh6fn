@@ -15,6 +15,7 @@ import { NotFoundPage } from "@/pages/NotFoundPage";
 import { SupportPage } from "@/pages/SupportPage";
 import { AiSupportPage } from "@/pages/AiSupportPage";
 import { VipServicePage } from "@/pages/VipServicePage";
+import { GroupChatPage } from "@/pages/GroupChatPage";
 import { BalancePage } from "@/pages/BalancePage";
 import { PasskeyPage } from "@/pages/PasskeyPage";
 import { FeedbackPage } from "@/pages/FeedbackPage";
@@ -169,6 +170,7 @@ function App() {
           <Route path="/support" element={<SupportPage />} />
           <Route path="/support/ai" element={<AiSupportPage />} />
           <Route path="/support/vip" element={<VipServicePage />} />
+          <Route path="/support/group" element={<GroupChatPage />} />
           <Route path="/balance" element={<BalancePage />} />
           <Route path="/passkeys" element={<PasskeyPage />} />
           <Route path="/feedback" element={<FeedbackPage />} />
