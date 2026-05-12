@@ -15,13 +15,13 @@ import { toast } from "sonner";
 type CheckoutState = "review" | "processing" | "success" | "failed";
 
 // ─── Payment Logo Placeholder Components (replace src with real logos) ──────
-const VisaLogo = () => <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/200px-Visa_Inc._logo.svg.png" alt="Visa" className="h-5 w-auto object-contain" />;
+const VisaLogo = () => <img src="https://uzxmmddivzqjhcnnrkns.supabase.co/storage/v1/object/public/hi/WhatsApp%20Image%202026-05-12%20at%201.19.31%20PM%20(4).jpeg" alt="Visa" className="h-5 w-auto object-contain" />;
 const MastercardLogo = () => <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/200px-Mastercard-logo.svg.png" alt="Mastercard" className="h-5 w-auto object-contain" />;
-const JCBLogo = () => <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/JCB_logo.svg/200px-JCB_logo.svg.png" alt="JCB" className="h-5 w-auto object-contain" />;
+const JCBLogo = () => <img src="https://uzxmmddivzqjhcnnrkns.supabase.co/storage/v1/object/public/hi/WhatsApp%20Image%202026-05-12%20at%201.19.31%20PM%20(2).jpeg" alt="JCB" className="h-5 w-auto object-contain" />;
 const AmexLogo = () => <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/American_Express_logo_%282018%29.svg/200px-American_Express_logo_%282018%29.svg.png" alt="Amex" className="h-5 w-auto object-contain" />;
 const DiscoverLogo = () => <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/Discover_Card_logo.svg/200px-Discover_Card_logo.svg.png" alt="Discover" className="h-5 w-auto object-contain" />;
 const DinersLogo = () => <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Diners_Club_Logo3.svg/200px-Diners_Club_Logo3.svg.png" alt="Diners" className="h-5 w-auto object-contain" />;
-const CashAppLogo = () => <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Square_Cash_app_logo.svg/200px-Square_Cash_app_logo.svg.png" alt="Cash App" className="h-5 w-5 object-contain" />;
+const CashAppLogo = () => <img src="https://uzxmmddivzqjhcnnrkns.supabase.co/storage/v1/object/public/hi/WhatsApp%20Image%202026-05-12%20at%201.19.31%20PM%20(1).jpeg" alt="Cash App" className="h-5 w-5 object-contain" />;
 const BitcoinLogo = () => <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Bitcoin.svg/200px-Bitcoin.svg.png" alt="BTC" className="h-5 w-5 object-contain" />;
 const EthLogo = () => <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Ethereum-icon-purple.svg/200px-Ethereum-icon-purple.svg.png" alt="ETH" className="h-5 w-5 object-contain" />;
 const SolLogo = () => <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-purple-600 text-white text-[8px] font-bold">SOL</span>;
