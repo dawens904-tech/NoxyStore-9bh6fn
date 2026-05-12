@@ -892,3 +892,4 @@ export function CheckoutPage() {
     </>
   );
 }
+remove the scroll line and remove all logo add demo photo i replace them all.
