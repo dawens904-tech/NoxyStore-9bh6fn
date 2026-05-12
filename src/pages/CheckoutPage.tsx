@@ -924,6 +924,6 @@ export function CheckoutPage() {
     </>
   );
 }
-
+fix payment method with pghoto card instead simple logo i will replace.
 
 
