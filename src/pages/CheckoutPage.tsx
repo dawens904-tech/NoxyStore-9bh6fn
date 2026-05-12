@@ -448,14 +448,13 @@ export function CheckoutPage() {
     return (
       <div key={method.id} className={`border border-gray-200 mb-2 ${isSelected ? "border-yellow-400" : ""}`}>
         <button
-          onClick={() => { if (!isInsufficient) setSelectedPayment(method.id); }}
-          disabled={isInsufficient}
+          onClick={() => { if (isInsufficient) { navigate("/balance"); } else { setSelectedPayment(method.id); } }}
           className={`w-full flex items-center justify-between px-5 py-4 text-left transition-colors ${isSelected ? "bg-yellow-50" : "bg-white hover:bg-gray-50"} ${isInsufficient ? "opacity-60" : ""}`}
         >
           <div className="flex items-center gap-3">
             {/* Radio */}
-            <div className={`w-5 h-5 border-2 flex items-center justify-center flex-shrink-0 ${isSelected ? "border-yellow-500" : "border-gray-300"}`}>
-              {isSelected && <div className="w-2.5 h-2.5 bg-yellow-500" />}
+            <div className={`w-5 h-5 border-2 rounded-full flex items-center justify-center flex-shrink-0 ${isSelected ? "border-yellow-500" : "border-gray-300"}`}>
+              {isSelected && <div className="w-2.5 h-2.5 bg-yellow-500 rounded-full" />}
             </div>
             {/* Logos */}
             <div className="flex items-center gap-1">
@@ -500,16 +499,16 @@ export function CheckoutPage() {
           <div className="border-t border-gray-100 bg-yellow-50 px-5 py-3 space-y-2">
             {savedCards.length > 0 ? savedCards.map((card, i) => (
               <label key={i} className="flex items-center gap-3 cursor-pointer">
-                <div className={`w-4 h-4 border-2 flex items-center justify-center ${selectedSubCard === `card_${i}` ? "border-yellow-500" : "border-gray-300"}`}>
-                  {selectedSubCard === `card_${i}` && <div className="w-2 h-2 bg-yellow-500" />}
+                <div className={`w-4 h-4 border-2 rounded-full flex items-center justify-center ${selectedSubCard === `card_${i}` ? "border-yellow-500" : "border-gray-300"}`}>
+                  {selectedSubCard === `card_${i}` && <div className="w-2 h-2 bg-yellow-500 rounded-full" />}
                 </div>
                 <span className="text-sm text-gray-700">{card.card_type?.toUpperCase() || "Visa"} **** **** **** {card.card_number_masked?.slice(-4) || "0000"}</span>
                 {card.is_default && <span className="text-[10px] text-orange-500 font-semibold ml-auto">Default</span>}
               </label>
             )) : null}
             <label className="flex items-center gap-3 cursor-pointer">
-              <div className={`w-4 h-4 border-2 flex items-center justify-center ${selectedSubCard === "new" ? "border-yellow-500" : "border-gray-300"}`}>
-                {selectedSubCard === "new" && <div className="w-2 h-2 bg-yellow-500" />}
+              <div className={`w-4 h-4 border-2 rounded-full flex items-center justify-center ${selectedSubCard === "new" ? "border-yellow-500" : "border-gray-300"}`}>
+                {selectedSubCard === "new" && <div className="w-2 h-2 bg-yellow-500 rounded-full" />}
               </div>
               <button onClick={() => setSelectedSubCard("new")} className="text-sm text-gray-500">Add an account for payment</button>
             </label>
@@ -527,7 +526,7 @@ export function CheckoutPage() {
         <DesktopHeader />
       </div>
 
-      <div className="flex w-full pt-[60px] max-w-[1200px] mx-auto gap-6 px-6 py-6 items-start">
+      <div className="flex w-full pt-[80px] max-w-[1200px] mx-auto gap-6 px-6 py-8 items-start">
         {/* LEFT: Scrollable content */}
         <div className="flex-1 min-w-0 overflow-y-auto" style={{ maxHeight: "calc(100vh - 80px)", scrollbarWidth: "none", msOverflowStyle: "none" }}>
           <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-gray-500 hover:text-gray-700 mb-4 text-sm font-medium">
@@ -925,4 +924,4 @@ export function CheckoutPage() {
     </>
   );
 }
-in payment method all squar button devan card yo must be round and when balance is Insufficient balance allow when click its go to balance fix page sa kole ak header an add ti space poum bien wel.
+
