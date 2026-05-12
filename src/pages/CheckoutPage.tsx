@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   CheckCircle, XCircle, Loader2, ArrowLeft, Edit2, Shield,
-  ChevronRight, X, Plus, Upload, HelpCircle
+  ChevronRight, X, Plus, HelpCircle, Minus
 } from "lucide-react";
 import { lootbarApi } from "@/lib/lootbar-api";
 import { useAuthStore } from "@/stores/authStore";
@@ -15,43 +15,131 @@ import { toast } from "sonner";
 type CheckoutState = "review" | "processing" | "success" | "failed";
 
 // ─── SVG Payment Logo Components ──────────────────────────────────────────────
-const PayLogo = ({ label, color = "#6b7280" }: { label: string; color?: string }) => (
-  <img
-    src={`https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=48&h=28&fit=crop&q=60`}
-    alt={label}
-    className="h-5 w-auto object-contain"
-    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-  />
+const VisaLogo = () => (
+  <svg viewBox="0 0 48 16" className="h-5 w-auto" fill="none">
+    <path d="M18.5 1.5L16 14.5H19.5L22 1.5H18.5Z" fill="#1A1F71"/>
+    <path d="M30.5 1.5C29.5 1.5 28.5 2 28 2.5L23.5 14.5H27.5L28 13H32.5L33 14.5H37L33.5 1.5H30.5ZM29.5 10L31 5.5L32 10H29.5Z" fill="#1A1F71"/>
+    <path d="M13.5 1.5L9.5 10L9 7C8 4 5 2 5 2L8.5 14.5H12.5L18 1.5H13.5Z" fill="#1A1F71"/>
+    <path d="M6.5 1.5H0.5L0 2C4.5 3 7.5 5.5 8.5 7.5L7.5 2.5C7.5 2 7 1.5 6.5 1.5Z" fill="#F7B600"/>
+    <path d="M43.5 1.5C42 1.5 40.5 2 40 2.5L39.5 3L39 1.5H36L38.5 14.5H42L41 9.5C41 6.5 43 4.5 45 4.5C46 4.5 46.5 4.5 47 4.5L47.5 1.5C47 1.5 46 1.5 43.5 1.5Z" fill="#1A1F71"/>
+  </svg>
 );
 
-const VisaLogo = () => <PayLogo label="Visa" />;
-const MastercardLogo = () => <PayLogo label="Mastercard" />;
-const JCBLogo = () => <PayLogo label="JCB" />;
-const AmexLogo = () => <PayLogo label="Amex" />;
-const DiscoverLogo = () => <PayLogo label="Discover" />;
-const DinersLogo = () => <PayLogo label="Diners" />;
-const CashAppLogo = () => <PayLogo label="CashApp" />;
-const BitcoinLogo = () => <PayLogo label="Bitcoin" />;
-const EthLogo = () => <PayLogo label="ETH" />;
-const SolLogo = () => <PayLogo label="SOL" />;
-const MirLogo = () => <PayLogo label="MIR" />;
+const MastercardLogo = () => (
+  <svg viewBox="0 0 32 20" className="h-5 w-auto" fill="none">
+    <circle cx="10" cy="10" r="10" fill="#EB001B"/>
+    <circle cx="22" cy="10" r="10" fill="#F79E1B"/>
+    <path d="M16 3C18.5 5 20 7.5 20 10C20 12.5 18.5 15 16 17C13.5 15 12 12.5 12 10C12 7.5 13.5 5 16 3Z" fill="#FF5F00"/>
+  </svg>
+);
 
-// ─── Points Icon ──────────────────────────────────────────────────────────────
+const JCBLogo = () => (
+  <svg viewBox="0 0 36 20" className="h-5 w-auto" fill="none">
+    <rect x="0" y="0" width="11" height="20" rx="2" fill="#0066B3"/>
+    <rect x="13" y="0" width="11" height="20" rx="2" fill="#00A650"/>
+    <rect x="26" y="0" width="11" height="20" rx="2" fill="#EF4123"/>
+    <text x="1" y="14" fontSize="9" fontWeight="bold" fill="white" fontFamily="Arial,sans-serif">JCB</text>
+  </svg>
+);
+
+const AmexLogo = () => (
+  <svg viewBox="0 0 36 20" className="h-5 w-auto" fill="none">
+    <rect x="0" y="0" width="36" height="20" rx="2" fill="#016FD0"/>
+    <text x="4" y="14" fontSize="9" fontWeight="bold" fill="white" fontFamily="Arial,sans-serif">AMEX</text>
+  </svg>
+);
+
+const DiscoverLogo = () => (
+  <svg viewBox="0 0 52 20" className="h-5 w-auto" fill="none">
+    <rect x="0" y="0" width="52" height="20" rx="2" fill="#fff" stroke="#e5e7eb" strokeWidth="1"/>
+    <text x="3" y="14" fontSize="9" fontWeight="bold" fill="#231F20" fontFamily="Arial,sans-serif">DISCOVER</text>
+    <circle cx="44" cy="10" r="6" fill="#FF6000"/>
+  </svg>
+);
+
+const DinersLogo = () => (
+  <svg viewBox="0 0 40 20" className="h-5 w-auto" fill="none">
+    <rect x="0" y="0" width="40" height="20" rx="10" fill="#004E94"/>
+    <text x="4" y="13" fontSize="6" fontWeight="bold" fill="white" fontFamily="Arial,sans-serif">DINERS CLUB</text>
+  </svg>
+);
+
+const CashAppLogo = () => (
+  <svg viewBox="0 0 20 20" className="h-5 w-5" fill="none">
+    <rect width="20" height="20" rx="4" fill="#00D632"/>
+    <text x="5" y="15" fontSize="12" fontWeight="bold" fill="white" fontFamily="Arial,sans-serif">$</text>
+  </svg>
+);
+
+const BitcoinLogo = () => (
+  <svg viewBox="0 0 20 20" className="h-5 w-5" fill="none">
+    <circle cx="10" cy="10" r="10" fill="#F7931A"/>
+    <text x="6" y="14.5" fontSize="11" fontWeight="bold" fill="white" fontFamily="Arial,sans-serif">₿</text>
+  </svg>
+);
+
+const EthLogo = () => (
+  <svg viewBox="0 0 20 20" className="h-5 w-5" fill="none">
+    <circle cx="10" cy="10" r="10" fill="#627EEA"/>
+    <polygon points="10,3 10,10.5 16,13" fill="white" opacity="0.6"/>
+    <polygon points="10,3 4,13 10,10.5" fill="white"/>
+    <polygon points="10,12 16,13 10,17" fill="white" opacity="0.6"/>
+    <polygon points="10,12 4,13 10,17" fill="white"/>
+  </svg>
+);
+
+const SolLogo = () => (
+  <svg viewBox="0 0 20 20" className="h-5 w-5" fill="none">
+    <circle cx="10" cy="10" r="10" fill="#9945FF"/>
+    <text x="4" y="14" fontSize="9" fontWeight="bold" fill="white" fontFamily="Arial,sans-serif">SOL</text>
+  </svg>
+);
+
+const MirLogo = () => (
+  <svg viewBox="0 0 36 20" className="h-5 w-auto" fill="none">
+    <rect width="36" height="20" rx="2" fill="#0F754E"/>
+    <text x="4" y="14" fontSize="9" fontWeight="bold" fill="white" fontFamily="Arial,sans-serif">МИР</text>
+  </svg>
+);
+
+const UsdtLogo = () => (
+  <svg viewBox="0 0 20 20" className="h-5 w-5" fill="none">
+    <circle cx="10" cy="10" r="10" fill="#26A17B"/>
+    <text x="6" y="14" fontSize="11" fontWeight="bold" fill="white" fontFamily="Arial,sans-serif">T</text>
+  </svg>
+);
+
+const TronLogo = () => (
+  <svg viewBox="0 0 20 20" className="h-5 w-5" fill="none">
+    <circle cx="10" cy="10" r="10" fill="#FF060A"/>
+    <text x="4" y="14" fontSize="9" fontWeight="bold" fill="white" fontFamily="Arial,sans-serif">TRX</text>
+  </svg>
+);
+
+const WalletIcon = () => (
+  <svg viewBox="0 0 24 24" className="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/>
+    <path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/>
+    <path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/>
+  </svg>
+);
+
 const PointsIcon = () => (
-  <svg viewBox="0 0 24 24" className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2">
-    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+  <svg viewBox="0 0 24 24" className="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2">
+    <circle cx="12" cy="12" r="10" strokeWidth="1.5"/>
+    <text x="9" y="16" fontSize="10" fontWeight="bold" fill="currentColor" fontFamily="Arial,sans-serif">P</text>
   </svg>
 );
 
 const CouponIcon = () => (
-  <svg viewBox="0 0 24 24" className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z"/>
+  <svg viewBox="0 0 24 24" className="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/>
     <path d="M13 5v2M13 17v2M13 11v2"/>
   </svg>
 );
 
 const GiftIcon = () => (
-  <svg viewBox="0 0 24 24" className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg viewBox="0 0 24 24" className="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2">
     <polyline points="20 12 20 22 4 22 4 12"/>
     <rect x="2" y="7" width="20" height="5"/>
     <line x1="12" y1="22" x2="12" y2="7"/>
@@ -66,7 +154,6 @@ type PaymentMethod = {
   label: string;
   logos: React.FC[];
   fee: number;
-  feeLabel?: string;
   tag?: string;
   subCards?: Array<{ masked: string; tag?: string }>;
   isBalance?: boolean;
@@ -103,7 +190,8 @@ export function CheckoutPage() {
   const [ticketContent, setTicketContent] = useState("");
   const [liveBalance, setLiveBalance] = useState<string | null>(null);
   const [savedCards, setSavedCards] = useState<any[]>([]);
-  const [addingCard, setAddingCard] = useState(false);
+  const [quantity, setQuantity] = useState(state?.quantity || 1);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   // Auto-apply pending coupon from coupons page
   useEffect(() => {
@@ -111,7 +199,7 @@ export function CheckoutPage() {
     const pending = sessionStorage.getItem("pending_coupon");
     if (pending) {
       const coupon = JSON.parse(pending);
-      const bp = (state.sku.price || 0) * (state.quantity || 1);
+      const bp = (state.sku.price || 0) * quantity;
       if (coupon.type === "percent") {
         const discount = Math.min(bp * (coupon.discount_value / 100), coupon.max_discount || Infinity);
         setCouponDiscount(discount);
@@ -120,12 +208,8 @@ export function CheckoutPage() {
       }
       sessionStorage.removeItem("pending_coupon");
     }
-
-    // Load user coupons
     loadUserCoupons();
-    // Load saved cards
     loadSavedCards();
-    // Get live balance
     lootbarApi.getBalance().then(setLiveBalance).catch(() => {});
   }, []);
 
@@ -160,7 +244,7 @@ export function CheckoutPage() {
     );
   }
 
-  const { sku, game, quantity, extraInfo } = state;
+  const { sku, game, extraInfo } = state;
   const basePrice = (sku.price || 0) * quantity;
 
   const PAYMENT_METHODS: PaymentMethod[] = [
@@ -180,7 +264,7 @@ export function CheckoutPage() {
     {
       id: "crypto",
       label: "Bitcoin / Ethereum / SOL and more",
-      logos: [BitcoinLogo, EthLogo, SolLogo],
+      logos: [BitcoinLogo, EthLogo, SolLogo, UsdtLogo, TronLogo],
       fee: -0.57,
       isCrypto: true,
     },
@@ -200,6 +284,20 @@ export function CheckoutPage() {
 
   const validCoupons = userCoupons.filter(c => !c.is_used && new Date(c.expires_at) > new Date());
   const invalidCoupons = userCoupons.filter(c => c.is_used || new Date(c.expires_at) <= new Date());
+
+  const handleQuantityChange = (delta: number) => {
+    const newQty = Math.max(1, quantity + delta);
+    setQuantity(newQty);
+    // Recalculate coupon discount
+    if (appliedCouponId && couponDiscount > 0) {
+      const coupon = userCoupons.find(c => c.id === appliedCouponId);
+      if (coupon) {
+        const newBasePrice = (sku.price || 0) * newQty;
+        const newDiscount = Math.min(newBasePrice * (coupon.discount_value / 100), coupon.max_discount || Infinity);
+        setCouponDiscount(newDiscount);
+      }
+    }
+  };
 
   const handleRedeemCoupon = async () => {
     if (!couponCode.trim()) return;
@@ -235,6 +333,8 @@ export function CheckoutPage() {
 
   const handlePayNow = async () => {
     if (!isAuthenticated) { toast.error("Please login to continue"); navigate("/login"); return; }
+    if (isProcessingPayment) return;
+    setIsProcessingPayment(true);
     setCheckoutState("processing");
     const refId = `NOXY-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
     setReferenceId(refId);
@@ -263,6 +363,8 @@ export function CheckoutPage() {
     } catch {
       setCheckoutState("failed");
       toast.error("Order failed. Please try again.");
+    } finally {
+      setIsProcessingPayment(false);
     }
   };
 
@@ -315,9 +417,9 @@ export function CheckoutPage() {
     );
   }
 
-  // ─── Right Panel: Payment Details (fixed) ─────────────────────────────────
+  // ─── Right Panel: Payment Details (FIXED - NO SCROLL) ───────────────────
   const PaymentDetailsPanel = () => (
-    <div className="w-[340px] flex-shrink-0">
+    <div className="w-[360px] flex-shrink-0">
       <div className="sticky top-[60px] bg-white border border-gray-200">
         <div className="px-5 pt-5 pb-3 border-b border-gray-100">
           <h3 className="text-base font-bold text-gray-900">Payment Details</h3>
@@ -407,15 +509,184 @@ export function CheckoutPage() {
         <div className="px-5 py-4">
           <button
             onClick={handlePayNow}
-            className="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-bold py-4 text-base transition-colors"
+            disabled={isProcessingPayment}
+            className="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-bold py-4 text-base transition-colors disabled:opacity-70"
           >
-            Pay Now
+            {isProcessingPayment ? "Processing..." : "Pay Now"}
           </button>
           <div className="flex items-center justify-center gap-1.5 mt-3">
             <Shield size={12} className="text-green-500" />
             <span className="text-xs text-gray-400">NoxyStore Security Guarantee</span>
           </div>
         </div>
+      </div>
+    </div>
+  );
+
+  // ─── Payment Row Renderer ──────────────────────────────────────────────────
+  const renderPaymentRow = (method: PaymentMethod) => {
+    const price = Math.max(0, basePrice - couponDiscount + method.fee);
+    const isSelected = selectedPayment === method.id;
+    const isInsufficient = method.isBalance && Number(liveBalance || 0) < totalPrice;
+
+    return (
+      <div key={method.id} className={`border border-gray-200 mb-2 ${isSelected ? "border-yellow-400" : ""}`}>
+        <button
+          onClick={() => { if (!isInsufficient) setSelectedPayment(method.id); }}
+          disabled={isInsufficient}
+          className={`w-full flex items-center justify-between px-5 py-4 text-left transition-colors ${isSelected ? "bg-yellow-50" : "bg-white hover:bg-gray-50"} ${isInsufficient ? "opacity-60" : ""}`}
+        >
+          <div className="flex items-center gap-3">
+            {/* Radio */}
+            <div className={`w-5 h-5 border-2 flex items-center justify-center flex-shrink-0 ${isSelected ? "border-yellow-500" : "border-gray-300"}`}>
+              {isSelected && <div className="w-2.5 h-2.5 bg-yellow-500" />}
+            </div>
+            {/* Logos */}
+            <div className="flex items-center gap-1">
+              {method.isBalance ? (
+                <div className="flex flex-col">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm font-semibold text-gray-800">My Balance</span>
+                    <WalletIcon />
+                  </div>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="text-xs text-gray-500">${liveBalance || "0.00"}</span>
+                    {isInsufficient && <span className="text-xs text-orange-500 flex items-center gap-1">⚠ Insufficient balance</span>}
+                    {isInsufficient && <button onClick={(e) => { e.stopPropagation(); navigate("/balance"); }} className="text-xs text-blue-500 font-medium">Go to top-up</button>}
+                  </div>
+                </div>
+              ) : method.isCrypto ? (
+                <div className="flex items-center gap-1">
+                  {method.logos.map((Logo, i) => <Logo key={i} />)}
+                  <span className="text-sm font-medium text-gray-700 ml-1">and more</span>
+                </div>
+              ) : (
+                <>
+                  {method.logos.map((Logo, i) => <Logo key={i} />)}
+                </>
+              )}
+            </div>
+          </div>
+          {!method.isBalance && (
+            <div className="flex flex-col items-end">
+              <span className="text-sm font-semibold text-gray-700">USD ${price.toFixed(2)}</span>
+              {method.tag && <span className="text-[10px] text-orange-500 font-semibold">{method.tag}</span>}
+              {method.fee < 0 && <span className="text-[10px] text-green-600 font-semibold">Save ${Math.abs(method.fee).toFixed(2)}</span>}
+            </div>
+          )}
+          {method.isBalance && !isInsufficient && (
+            <span className="text-sm font-semibold text-gray-700">USD ${price.toFixed(2)}</span>
+          )}
+        </button>
+
+        {/* Sub-cards for visa_mc */}
+        {method.id === "visa_mc" && isSelected && (
+          <div className="border-t border-gray-100 bg-yellow-50 px-5 py-3 space-y-2">
+            {savedCards.length > 0 ? savedCards.map((card, i) => (
+              <label key={i} className="flex items-center gap-3 cursor-pointer">
+                <div className={`w-4 h-4 border-2 flex items-center justify-center ${selectedSubCard === `card_${i}` ? "border-yellow-500" : "border-gray-300"}`}>
+                  {selectedSubCard === `card_${i}` && <div className="w-2 h-2 bg-yellow-500" />}
+                </div>
+                <span className="text-sm text-gray-700">{card.card_type?.toUpperCase() || "Visa"} **** **** **** {card.card_number_masked?.slice(-4) || "0000"}</span>
+                {card.is_default && <span className="text-[10px] text-orange-500 font-semibold ml-auto">Default</span>}
+              </label>
+            )) : null}
+            <label className="flex items-center gap-3 cursor-pointer">
+              <div className={`w-4 h-4 border-2 flex items-center justify-center ${selectedSubCard === "new" ? "border-yellow-500" : "border-gray-300"}`}>
+                {selectedSubCard === "new" && <div className="w-2 h-2 bg-yellow-500" />}
+              </div>
+              <button onClick={() => setSelectedSubCard("new")} className="text-sm text-gray-500">Add an account for payment</button>
+            </label>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // ─── Desktop Layout ────────────────────────────────────────────────────────
+  const DesktopCheckout = () => (
+    <div className="hidden lg:flex min-h-screen bg-[#f5f5f5]">
+      {/* Fixed Header */}
+      <div className="fixed top-0 left-0 right-0 z-50">
+        <DesktopHeader />
+      </div>
+
+      <div className="flex w-full pt-[60px] max-w-[1200px] mx-auto gap-6 px-6 py-6 items-start">
+        {/* LEFT: Scrollable content */}
+        <div className="flex-1 min-w-0 overflow-y-auto" style={{ maxHeight: "calc(100vh - 80px)" }}>
+          <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-gray-500 hover:text-gray-700 mb-4 text-sm font-medium">
+            <ArrowLeft size={16} /> Back
+          </button>
+
+          {/* Product Card - NO BORDER RADIUS (square corners) */}
+          <div className="bg-white border border-gray-200 mb-3">
+            <div className="px-6 py-5 flex items-start gap-4">
+              <img
+                src={sku.image || game.game_image || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=80&h=80&fit=crop"}
+                alt={sku.sku_name}
+                className="w-16 h-16 object-cover flex-shrink-0"
+                onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=80&h=80&fit=crop"; }}
+              />
+              <div className="flex-1">
+                <p className="font-bold text-gray-900 text-base">{sku.sku_name}</p>
+                <p className="text-gray-500 text-sm mt-0.5">{game.game_name}</p>
+                <p className="text-base font-bold text-gray-900 mt-1">USD ${basePrice.toFixed(2)}</p>
+              </div>
+              {/* Quantity - square buttons */}
+              <div className="flex items-center border border-gray-300">
+                <button 
+                  onClick={() => handleQuantityChange(-1)}
+                  className="px-3 py-2 text-gray-500 text-sm hover:bg-gray-50 flex items-center justify-center"
+                >
+                  <Minus size={14} />
+                </button>
+                <span className="px-4 py-2 text-sm font-bold border-x border-gray-300 min-w-[40px] text-center">{quantity}</span>
+                <button 
+                  onClick={() => handleQuantityChange(1)}
+                  className="px-3 py-2 text-gray-500 text-sm hover:bg-gray-50 flex items-center justify-center"
+                >
+                  <Plus size={14} />
+                </button>
+              </div>
+            </div>
+
+            {Object.entries(extraInfo).length > 0 && (
+              <div className="px-6 py-3 border-t border-gray-100 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  {Object.entries(extraInfo).map(([k, v]) => (
+                    <span key={k} className="text-sm text-gray-600">
+                      <span className="capitalize font-medium text-gray-700">{k}:</span> <span className="text-gray-900 font-semibold">{v}</span>
+                    </span>
+                  ))}
+                </div>
+                <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-blue-500 text-sm font-semibold hover:text-blue-600">
+                  <Edit2 size={12} /> Modify
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Payment Method - NO BORDER RADIUS */}
+          <div className="bg-white border border-gray-200 mb-3">
+            <div className="px-6 py-4 border-b border-gray-100">
+              <h3 className="font-bold text-gray-900">Payment Method</h3>
+            </div>
+            <div className="divide-y divide-gray-100">
+              {PAYMENT_METHODS.map((method) => renderPaymentRow(method))}
+            </div>
+            <div className="px-6 py-3 border-t border-gray-100">
+              <button
+                onClick={() => setShowTicketModal(true)}
+                className="text-sm text-blue-500 font-medium hover:text-blue-600 flex items-center gap-1"
+              >
+                Not the payment method you prefer? <ChevronRight size={14} />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT: Fixed Payment Details - NO SCROLL */}
+        <PaymentDetailsPanel />
       </div>
     </div>
   );
@@ -488,166 +759,9 @@ export function CheckoutPage() {
           <div><span className="text-sm text-gray-500">Total Amount</span></div>
           <span className="text-xl font-black text-orange-500">USD ${totalPrice.toFixed(2)}</span>
         </div>
-        <button onClick={handlePayNow} className="w-full bg-yellow-400 text-black font-bold py-4">Pay Now</button>
-      </div>
-    </div>
-  );
-
-  // ─── Payment Row Renderer ──────────────────────────────────────────────────
-  const renderPaymentRow = (method: PaymentMethod) => {
-    const price = Math.max(0, basePrice - couponDiscount + method.fee);
-    const isSelected = selectedPayment === method.id;
-    const isInsufficient = method.isBalance && Number(liveBalance || 0) < totalPrice;
-
-    return (
-      <div key={method.id} className={`border border-gray-200 mb-2 ${isSelected ? "border-yellow-400" : ""}`}>
-        <button
-          onClick={() => { if (!isInsufficient) setSelectedPayment(method.id); }}
-          disabled={isInsufficient}
-          className={`w-full flex items-center justify-between px-5 py-4 text-left transition-colors ${isSelected ? "bg-yellow-50" : "bg-white hover:bg-gray-50"} ${isInsufficient ? "opacity-60" : ""}`}
-        >
-          <div className="flex items-center gap-3">
-            {/* Radio */}
-            <div className={`w-5 h-5 border-2 flex items-center justify-center flex-shrink-0 ${isSelected ? "border-yellow-500" : "border-gray-300"}`}>
-              {isSelected && <div className="w-2.5 h-2.5 bg-yellow-500" />}
-            </div>
-            {/* Logos */}
-            <div className="flex items-center gap-1">
-              {method.isBalance ? (
-                <div className="flex flex-col">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-sm font-semibold text-gray-800">My Balance</span>
-                    <span className="text-xs bg-gray-100 px-1.5 py-0.5 text-gray-500">💳</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className="text-xs text-gray-500">${liveBalance || "0.00"}</span>
-                    {isInsufficient && <span className="text-xs text-orange-500 flex items-center gap-1">⚠ Insufficient balance</span>}
-                    {isInsufficient && <button onClick={(e) => { e.stopPropagation(); navigate("/balance"); }} className="text-xs text-blue-500 font-medium">Go to top-up</button>}
-                  </div>
-                </div>
-              ) : method.isCrypto ? (
-                <div className="flex items-center gap-1">
-                  {method.logos.map((Logo, i) => <Logo key={i} />)}
-                  <span className="text-sm font-medium text-gray-700 ml-1">and more</span>
-                </div>
-              ) : (
-                <>
-                  {method.logos.map((Logo, i) => <Logo key={i} />)}
-                  {!method.isBalance && !method.isCrypto && <span className="text-sm font-medium text-gray-700 ml-1">{method.id === "visa_mc" ? "" : ""}</span>}
-                </>
-              )}
-            </div>
-          </div>
-          {!method.isBalance && (
-            <div className="flex flex-col items-end">
-              <span className="text-sm font-semibold text-gray-700">USD ${price.toFixed(2)}</span>
-              {method.tag && <span className="text-[10px] text-orange-500 font-semibold">{method.tag}</span>}
-              {method.fee < 0 && <span className="text-[10px] text-green-600 font-semibold">Save ${Math.abs(method.fee).toFixed(2)}</span>}
-            </div>
-          )}
-          {method.isBalance && !isInsufficient && (
-            <span className="text-sm font-semibold text-gray-700">USD ${price.toFixed(2)}</span>
-          )}
+        <button onClick={handlePayNow} disabled={isProcessingPayment} className="w-full bg-yellow-400 text-black font-bold py-4 disabled:opacity-70">
+          {isProcessingPayment ? "Processing..." : "Pay Now"}
         </button>
-
-        {/* Sub-cards for visa_mc */}
-        {method.id === "visa_mc" && isSelected && (
-          <div className="border-t border-gray-100 bg-yellow-50 px-5 py-3 space-y-2">
-            {savedCards.length > 0 ? savedCards.map((card, i) => (
-              <label key={i} className="flex items-center gap-3 cursor-pointer">
-                <div className={`w-4 h-4 border-2 flex items-center justify-center ${selectedSubCard === `card_${i}` ? "border-yellow-500" : "border-gray-300"}`}>
-                  {selectedSubCard === `card_${i}` && <div className="w-2 h-2 bg-yellow-500" />}
-                </div>
-                <span className="text-sm text-gray-700">{card.card_type?.toUpperCase() || "Visa"} **** **** **** {card.card_number_masked?.slice(-4) || "0000"}</span>
-                {card.is_default && <span className="text-[10px] text-orange-500 font-semibold ml-auto">Default</span>}
-              </label>
-            )) : null}
-            <label className="flex items-center gap-3 cursor-pointer">
-              <div className={`w-4 h-4 border-2 flex items-center justify-center ${selectedSubCard === "new" ? "border-yellow-500" : "border-gray-300"}`}>
-                {selectedSubCard === "new" && <div className="w-2 h-2 bg-yellow-500" />}
-              </div>
-              <button onClick={() => setSelectedSubCard("new")} className="text-sm text-gray-500">Add an account for payment</button>
-            </label>
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  // ─── Desktop Layout ────────────────────────────────────────────────────────
-  const DesktopCheckout = () => (
-    <div className="hidden lg:flex min-h-screen bg-[#f5f5f5]">
-      {/* Fixed Header */}
-      <div className="fixed top-0 left-0 right-0 z-50">
-        <DesktopHeader />
-      </div>
-
-      <div className="flex w-full pt-[60px] max-w-[1200px] mx-auto gap-6 px-6 py-6 items-start">
-        {/* LEFT: Scrollable */}
-        <div className="flex-1 min-w-0">
-          <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-gray-500 hover:text-gray-700 mb-4 text-sm font-medium">
-            <ArrowLeft size={16} /> Back
-          </button>
-
-          {/* Product Card */}
-          <div className="bg-white border border-gray-200 mb-3">
-            <div className="px-6 py-5 flex items-start gap-4">
-              <img
-                src={sku.image || game.game_image || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=80&h=80&fit=crop"}
-                alt={sku.sku_name}
-                className="w-16 h-16 object-cover flex-shrink-0"
-                onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=80&h=80&fit=crop"; }}
-              />
-              <div className="flex-1">
-                <p className="font-bold text-gray-900 text-base">{sku.sku_name}</p>
-                <p className="text-gray-500 text-sm mt-0.5">{game.game_name}</p>
-                <p className="text-base font-bold text-gray-900 mt-1">USD ${basePrice.toFixed(2)}</p>
-              </div>
-              {/* Quantity */}
-              <div className="flex items-center border border-gray-300">
-                <button className="px-3 py-2 text-gray-500 text-sm hover:bg-gray-50">−</button>
-                <span className="px-4 py-2 text-sm font-bold border-x border-gray-300">{quantity}</span>
-                <button className="px-3 py-2 text-gray-500 text-sm hover:bg-gray-50">+</button>
-              </div>
-            </div>
-
-            {Object.entries(extraInfo).length > 0 && (
-              <div className="px-6 py-3 border-t border-gray-100 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  {Object.entries(extraInfo).map(([k, v]) => (
-                    <span key={k} className="text-sm text-gray-600">
-                      <span className="capitalize font-medium text-gray-700">{k}:</span> <span className="text-gray-900 font-semibold">{v}</span>
-                    </span>
-                  ))}
-                </div>
-                <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-blue-500 text-sm font-semibold hover:text-blue-600">
-                  <Edit2 size={12} /> Modify
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Payment Method */}
-          <div className="bg-white border border-gray-200 mb-3">
-            <div className="px-6 py-4 border-b border-gray-100">
-              <h3 className="font-bold text-gray-900">Payment Method</h3>
-            </div>
-            <div className="divide-y divide-gray-100">
-              {PAYMENT_METHODS.map((method) => renderPaymentRow(method))}
-            </div>
-            <div className="px-6 py-3 border-t border-gray-100">
-              <button
-                onClick={() => setShowTicketModal(true)}
-                className="text-sm text-blue-500 font-medium hover:text-blue-600 flex items-center gap-1"
-              >
-                Not the payment method you prefer? <ChevronRight size={14} />
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* RIGHT: Fixed Payment Details */}
-        <PaymentDetailsPanel />
       </div>
     </div>
   );
@@ -702,7 +816,6 @@ export function CheckoutPage() {
           ) : (
             (couponTab === "valid" ? validCoupons : invalidCoupons).map((coupon) => {
               const isApplied = selectedCouponId === coupon.id;
-              const discount = Math.min(basePrice * (coupon.discount_value / 100), coupon.max_discount || Infinity);
               return (
                 <div
                   key={coupon.id}
@@ -718,7 +831,6 @@ export function CheckoutPage() {
                       <p className="text-xs text-gray-500 mt-0.5">Valid for orders over ${coupon.min_order || 1.00}</p>
                       {coupon.description && <p className="text-xs text-gray-400 mt-0.5">{coupon.description}</p>}
                     </div>
-                    {/* Decorative */}
                     <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-yellow-100/40 to-transparent" />
                   </div>
                 </div>
@@ -826,4 +938,3 @@ export function CheckoutPage() {
     </>
   );
 }
-
