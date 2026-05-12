@@ -925,3 +925,4 @@ export function CheckoutPage() {
     </>
   );
 }
+in payment method all squar button devan card yo must be round and when balance is Insufficient balance allow when click its go to balance fix page sa kole ak header an add ti space poum bien wel.
