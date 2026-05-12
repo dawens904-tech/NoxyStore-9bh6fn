@@ -525,7 +525,12 @@ export function GameDetailPage() {
             <button onClick={() => navigate(-1)} className="text-white">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 5l-7 7 7 7" /></svg>
             </button>
-            <span className="text-white font-bold text-base">Top-up</span>
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 bg-yellow-400 rounded flex items-center justify-center flex-shrink-0">
+                <Zap size={13} className="text-black" />
+              </div>
+              <span className="text-white font-black text-sm tracking-tight">Noxy<span className="text-yellow-400">Store</span></span>
+            </div>
           </div>
           <div className="flex items-center gap-3 text-white/70 text-xs">
             <span className="flex items-center gap-1"><Zap size={12} className="text-yellow-400" />Fast</span>
@@ -685,9 +690,30 @@ export function GameDetailPage() {
             <button onClick={() => setQuantity(quantity + 1)} className="w-8 h-8 rounded-xl border border-gray-300 flex items-center justify-center text-gray-600">+</button>
           </div>
         </div>
+        {/* Clear price breakdown */}
+        {selectedSku && (
+          <div className="bg-gray-50 rounded-xl px-3 py-2 mb-2 space-y-1">
+            <div className="flex items-center justify-between text-xs text-gray-500">
+              <span>Unit price</span>
+              <span>${applyMarkup(selectedSku.price || 0).toFixed(2)}</span>
+            </div>
+            {quantity > 1 && (
+              <div className="flex items-center justify-between text-xs text-gray-500">
+                <span>× {quantity}</span>
+                <span>${totalPrice.toFixed(2)}</span>
+              </div>
+            )}
+            {totalSavings > 0 && (
+              <div className="flex items-center justify-between text-xs text-green-600 font-semibold">
+                <span>You save</span>
+                <span>-${totalSavings.toFixed(2)}</span>
+              </div>
+            )}
+          </div>
+        )}
         <div className="flex items-center justify-between">
           <div>
-            {totalSavings > 0 && <p className="text-xs text-orange-500 font-semibold mb-0.5">Savings ${totalSavings.toFixed(2)}</p>}
+            <p className="text-[10px] text-gray-400 uppercase font-semibold tracking-wide">Total</p>
             <p className="text-xl font-black text-orange-500">{selectedSku ? `$${totalPrice.toFixed(2)}` : "—"}</p>
           </div>
           <button
@@ -781,4 +807,3 @@ export function GameDetailPage() {
     </>
   );
 }
-add store header an dwe appear and fixed all must clear price 
