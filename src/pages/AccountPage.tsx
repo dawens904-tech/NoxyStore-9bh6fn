@@ -705,10 +705,10 @@ export function AccountPage() {
           <span className="text-gray-800 font-medium capitalize">{desktopSection === "earn" ? "Affiliate Program" : desktopSection}</span>
         </div>
       </div>
-      <div className="max-w-[1280px] mx-auto px-6 pb-12">
-        <div className="flex gap-6">
-          {/* Sidebar */}
-          <div className="w-72 flex-shrink-0">
+      <div className="max-w-[1280px] mx-auto px-6" style={{ height: "calc(100vh - 110px)" }}>
+        <div className="flex gap-6 h-full">
+          {/* Sidebar — fixed, never scrolls */}
+          <div className="w-72 flex-shrink-0 overflow-hidden">
             <div className="bg-white rounded-2xl shadow-sm p-5 mb-4">
               <div className="flex items-center gap-3 mb-4">
                 <div className="relative">
@@ -752,8 +752,8 @@ export function AccountPage() {
             </div>
           </div>
 
-          {/* Content */}
-          <div className="flex-1">
+          {/* Content — only this side scrolls, scrollbar hidden */}
+          <div className="flex-1 overflow-y-auto pb-12" style={{ scrollbarWidth: "none", msOverflowStyle: "none" } as React.CSSProperties}>
             <div className="bg-white rounded-2xl shadow-sm p-8">
               {desktopSection === "settings" && (
                 <>
@@ -1097,4 +1097,4 @@ export function AccountPage() {
     </>
   );
 }
-desktop version left side fix stay never sroll only right side can scroll and hidden scroll line.
+
