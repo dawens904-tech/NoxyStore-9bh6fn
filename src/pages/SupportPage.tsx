@@ -241,3 +241,4 @@ function MessagesTab({ navigate, user }: { navigate: (path: string) => void; use
     </div>
   );
 }
+add language support and also settings account coupons all page.
