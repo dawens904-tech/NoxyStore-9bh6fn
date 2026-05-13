@@ -67,21 +67,21 @@ export function SupportPage() {
         <div className="flex">
           <button
             onClick={() => setActiveTab("home")}
-            className={`flex-1 flex flex-col items-center py-3 gap-1 transition-colors ${activeTab === "home" ? "text-gray-900" : "text-gray-400"}`}
+            className={`flex-1 flex flex-col items-center py-2.5 gap-1 transition-colors ${activeTab === "home" ? "text-gray-900" : "text-gray-400"}`}
           >
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${activeTab === "home" ? "bg-yellow-400" : "bg-transparent"}`}>
-              <Home size={20} className={activeTab === "home" ? "text-black" : "text-gray-400"} />
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${activeTab === "home" ? "bg-yellow-400" : "bg-transparent"}`}>
+              <Home size={17} className={activeTab === "home" ? "text-black" : "text-gray-400"} />
             </div>
-            <span className="text-xs font-semibold">Home</span>
+            <span className="text-[11px] font-semibold">Home</span>
           </button>
           <button
             onClick={() => setActiveTab("messages")}
-            className={`flex-1 flex flex-col items-center py-3 gap-1 transition-colors ${activeTab === "messages" ? "text-gray-900" : "text-gray-400"}`}
+            className={`flex-1 flex flex-col items-center py-2.5 gap-1 transition-colors ${activeTab === "messages" ? "text-gray-900" : "text-gray-400"}`}
           >
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${activeTab === "messages" ? "bg-yellow-400" : "bg-transparent"}`}>
-              <MessageSquare size={20} className={activeTab === "messages" ? "text-black" : "text-gray-400"} />
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${activeTab === "messages" ? "bg-yellow-400" : "bg-transparent"}`}>
+              <MessageSquare size={17} className={activeTab === "messages" ? "text-black" : "text-gray-400"} />
             </div>
-            <span className="text-xs font-semibold">Messages</span>
+            <span className="text-[11px] font-semibold">Messages</span>
           </button>
         </div>
       </div>
@@ -123,20 +123,20 @@ function HomeTab({ faqItems, expandedFaq, setExpandedFaq, navigate }: {
           ))}
         </div>
 
-        <h1 className="text-2xl font-black text-black mb-1">Welcome!</h1>
-        <p className="text-lg font-semibold text-black/80">What can we do for you?</p>
+        <h1 className="text-xl font-black text-black mb-1">Welcome!</h1>
+        <p className="text-sm font-semibold text-black/80">What can we do for you?</p>
       </div>
 
       <div className="px-4 -mt-4 space-y-3 pb-6">
         {/* Send message card */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex items-center justify-between">
           <div>
-            <p className="font-bold text-gray-900">Send a message to us</p>
-            <p className="text-sm text-gray-500 mt-0.5">We usually respond within a few minutes.</p>
+            <p className="text-sm font-bold text-gray-900">Send a message to us</p>
+            <p className="text-xs text-gray-500 mt-0.5">We usually respond within a few minutes.</p>
           </div>
           <button
             onClick={() => navigate("/support/vip")}
-            className="flex items-center gap-1.5 bg-yellow-400 text-black font-bold px-4 py-2.5 rounded-full hover:bg-yellow-300 transition-colors flex-shrink-0 ml-3"
+            className="flex items-center gap-1.5 bg-yellow-400 text-black font-bold px-3 py-2 rounded-lg text-sm hover:bg-yellow-300 transition-colors flex-shrink-0 ml-3"
           >
             <Send size={14} />
             Send
@@ -157,7 +157,7 @@ function HomeTab({ faqItems, expandedFaq, setExpandedFaq, navigate }: {
                 onClick={() => setExpandedFaq(expandedFaq === i ? null : i)}
                 className="w-full text-left px-4 py-4 flex items-start justify-between gap-3"
               >
-                <span className="text-sm text-gray-800 leading-relaxed">{item.q}</span>
+                <span className="text-xs text-gray-800 leading-relaxed">{item.q}</span>
                 <ChevronRight
                   size={16}
                   className={`text-gray-400 flex-shrink-0 mt-0.5 transition-transform ${expandedFaq === i ? "rotate-90" : ""}`}
@@ -165,7 +165,7 @@ function HomeTab({ faqItems, expandedFaq, setExpandedFaq, navigate }: {
               </button>
               {expandedFaq === i && (
                 <div className="px-4 pb-4">
-                  <p className="text-sm text-gray-600 leading-relaxed bg-gray-50 rounded-xl p-3">{item.a}</p>
+                  <p className="text-xs text-gray-600 leading-relaxed bg-gray-50 rounded-xl p-3">{item.a}</p>
                 </div>
               )}
             </div>
@@ -195,8 +195,8 @@ function MessagesTab({ navigate, user }: { navigate: (path: string) => void; use
           </svg>
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-bold text-gray-900">AI support</p>
-          <p className="text-sm text-gray-500 truncate">AI Support is at your service around the cl...</p>
+          <p className="text-sm font-bold text-gray-900">AI support</p>
+          <p className="text-xs text-gray-500 truncate">AI Support is at your service around the cl...</p>
         </div>
       </button>
 
@@ -214,10 +214,10 @@ function MessagesTab({ navigate, user }: { navigate: (path: string) => void; use
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between mb-0.5">
-            <p className="font-bold text-gray-900">NoxyStore VIP Service</p>
-            <span className="text-xs text-gray-400">{vipTime}</span>
+            <p className="text-sm font-bold text-gray-900">NoxyStore VIP Service</p>
+            <span className="text-[11px] text-gray-400">{vipTime}</span>
           </div>
-          <p className="text-sm text-gray-500 truncate">{vipLastMessage.slice(0, 40)}...</p>
+          <p className="text-xs text-gray-500 truncate">{vipLastMessage.slice(0, 40)}...</p>
         </div>
       </button>
 
@@ -232,13 +232,12 @@ function MessagesTab({ navigate, user }: { navigate: (path: string) => void; use
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-0.5">
-            <p className="font-bold text-gray-900">Community Chat</p>
+            <p className="text-sm font-bold text-gray-900">Community Chat</p>
             <span className="bg-yellow-400 text-black text-[9px] font-black px-1.5 py-0.5 leading-none">LIVE</span>
           </div>
-          <p className="text-sm text-gray-500 truncate">Chat with all NoxyStore members — photos &amp; voice</p>
+          <p className="text-xs text-gray-500 truncate">Chat with all NoxyStore members — photos &amp; voice</p>
         </div>
       </button>
     </div>
   );
 }
-make this page more stable fix pi poul djanm and tex yo tro gro make it clear.
