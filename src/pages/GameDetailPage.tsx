@@ -923,4 +923,4 @@ export function GameDetailPage() {
     </>
   );
 }
-
+add real header desktop and mobile instead of the fake one and fix error mobile when select a game and click continue go to verify page.
