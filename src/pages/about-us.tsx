@@ -207,3 +207,4 @@ export default function AboutUsPage() {
     </div>
   );
 }
+remove fake header add real desktop and mobile header.
