@@ -477,5 +477,5 @@ export function VipBenefitsPage() {
     </>
   );
 }
-
+add real header desktop and mobile and also remove all emoji and fake icon yo create real logo or i will replace with mine and also add detail for all v1-v5.
 
