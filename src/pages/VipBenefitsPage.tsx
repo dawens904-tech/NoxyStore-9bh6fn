@@ -505,15 +505,24 @@ export function VipBenefitsPage() {
               <div className="w-6" />
             </div>
             <div className="px-6 py-8 text-center">
-              {/* Lucide icon, large */}
-              <div className={`flex justify-center mb-5 ${benefitModal.benefit.vipMin > vipLevel ? "text-gray-300" : "text-yellow-500"}`}>
-                <span className="w-16 h-16 flex items-center justify-center rounded-2xl bg-gray-50 border border-gray-100">
-                  {(() => {
-                    const Icon = BENEFIT_ICON_MAP[benefitModal.benefit.id];
-                    // Render larger via className override in a wrapper
-                    return <span className="scale-150">{Icon}</span>;
-                  })()}
-                </span>
+              {/* Benefit photo — replace with real image when ready */}
+              <div className="flex justify-center mb-5">
+                <img
+                  src={`https://images.unsplash.com/photo-${
+                    ["1542751371-adc38448a05e","1511512578047-dfb367046420","1493711662062-fa541adb3fc8",
+                     "1560419015-7c425b20b244","1538481199705-c710c4e965fc","1550745165-9bc0b252726f",
+                     "1556438064-2d7646166914","1485827404703-89b55fcc595e","1614680376408-81e91ffe3db7",
+                     "1616578492901-befd2b52f6c0"
+                    ][BENEFITS.findIndex(b => b.id === benefitModal.benefit!.id) % 10]
+                  }?w=200&h=200&fit=crop`}
+                  alt={benefitModal.benefit.label}
+                  className={`w-24 h-24 rounded-2xl object-cover ${
+                    benefitModal.benefit.vipMin > vipLevel
+                      ? "grayscale opacity-40 border-2 border-gray-200"
+                      : "border-2 border-yellow-300"
+                  }`}
+                  onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=200&h=200&fit=crop"; }}
+                />
               </div>
               <p className="text-base text-gray-700 leading-relaxed mb-6 whitespace-pre-line text-left">{benefitModal.benefit.description}</p>
               {benefitModal.benefit.vipMin > vipLevel ? (
