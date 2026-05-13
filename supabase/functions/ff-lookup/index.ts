@@ -1,13 +1,15 @@
 /**
  * ff-lookup Edge Function
- * Free Fire player info lookup with dual-API strategy:
- *   1. Primary: gameskinbo API (tries all regions automatically)
- *   2. Fallback: HL Gaming Official API (tries all regions serially)
- *
- * Returns: { name: string, level: number, region: string, source: string }
+ * Free Fire player info lookup with dual-API strategy
  */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { corsHeaders } from "../_shared/cors.ts";
+
+// ── CORS Headers (defini isit la pou pa depann nan lòt fichye) ────────────────
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
 
 // ── Supported regions for HL Gaming fallback ──────────────────────────────────
 const HL_REGIONS = ["ind", "br", "sg", "id", "us", "pk", "bd", "ru", "tw", "vn", "th", "me", "cis"];
@@ -16,13 +18,18 @@ const HL_REGIONS = ["ind", "br", "sg", "id", "us", "pk", "bd", "ru", "tw", "vn",
 async function lookupGameskinbo(uid: string): Promise<{ name: string; level: number; region: string } | null> {
   const apiKey = Deno.env.get("GAMESKINBO_API_KEY") || "2UvYv6OOhwFlujpc4AMFVjEW7Bkl2S6ZTmnx2uAn5EY";
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    
     const res = await fetch(
       `https://api.gameskinbo.com/ff-info/get?uid=${uid}`,
       {
         headers: { "x-api-key": apiKey },
-        signal: AbortSignal.timeout(8000),
+        signal: controller.signal,
       }
     );
+    clearTimeout(timeoutId);
+    
     if (!res.ok) return null;
     const data = await res.json();
     const name = data?.AccountInfo?.AccountName;
@@ -43,11 +50,15 @@ async function lookupHLGaming(uid: string): Promise<{ name: string; level: numbe
   const useruid = Deno.env.get("HLGAMING_BUID") || "ZHZjplOjuNWpeYzQnT35F2GDN541";
   const apiKey  = Deno.env.get("HLGAMING_TOKEN") || "nqNAiBYSh2|AuJSkWlhOxWnllgALV3";
 
-  // Try each region until we get a valid response
   for (const region of HL_REGIONS) {
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 6000);
+      
       const url = `https://proapis.hlgamingofficial.com/main/games/freefire/account/api?sectionName=AccountInfo&PlayerUid=${uid}&region=${region}&useruid=${encodeURIComponent(useruid)}&api=${encodeURIComponent(apiKey)}`;
-      const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
+      const res = await fetch(url, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      
       if (!res.ok) continue;
       const data = await res.json();
       if (data?.error) continue;
@@ -60,7 +71,6 @@ async function lookupHLGaming(uid: string): Promise<{ name: string; level: numbe
         region: result?.AccountRegion || region,
       };
     } catch {
-      // Try next region
       continue;
     }
   }
@@ -75,7 +85,26 @@ serve(async (req) => {
   }
 
   try {
-    const { uid } = await req.json();
+    // Verify it's a POST request
+    if (req.method !== "POST") {
+      return new Response(
+        JSON.stringify({ error: "Method not allowed" }),
+        { status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Parse JSON body with error handling
+    let body;
+    try {
+      body = await req.json();
+    } catch {
+      return new Response(
+        JSON.stringify({ error: "Invalid JSON body" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const { uid } = body;
 
     if (!uid || typeof uid !== "string" || uid.trim().length < 6) {
       return new Response(
