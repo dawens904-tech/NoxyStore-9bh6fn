@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { RefreshCw, Edit2, Upload, Save, X, Trash2, EyeOff, Eye, Star } from "lucide-react";
+import { RefreshCw, Edit2, Upload, Save, EyeOff, Eye, Star, Camera } from "lucide-react";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { supabase } from "@/lib/supabase";
 import { lootbarApi } from "@/lib/lootbar-api";
@@ -102,9 +102,28 @@ export function AdminProductsPage() {
       await supabase.from("games_cache").update(cacheUpdates).eq("game_id", gameId);
     }
 
+    // Immediately update local games state so image changes appear without reload
+    setGames(prev => prev.map(g =>
+      g.game_id === gameId
+        ? { ...g, game_image: imageUrl || g.game_image, category: editData.category_override || g.category, is_hot: editData.is_featured ?? g.is_hot }
+        : g
+    ));
+    // Immediately update local overrides state
+    setOverrides(prev => ({
+      ...prev,
+      [gameId]: {
+        ...prev[gameId],
+        game_id: gameId,
+        custom_image_url: imageUrl || prev[gameId]?.custom_image_url,
+        category_override: editData.category_override,
+        is_featured: editData.is_featured,
+        is_hidden: editData.is_hidden,
+        custom_price: editData.custom_price_str ? parseFloat(editData.custom_price_str) : prev[gameId]?.custom_price,
+      },
+    }));
+
     toast.success("Product saved — changes are live on all pages!");
     setEditingId(null); setImgFile(null); setImgPreview("");
-    loadAll();
     setIsUploading(false);
   };
 
@@ -143,12 +162,19 @@ export function AdminProductsPage() {
                 return (
                   <div key={game.game_id} className={isHidden ? "opacity-50" : ""}>
                     <div className="px-5 py-4 flex items-center gap-4">
-                      <img
-                        src={ovr?.custom_image_url || game.game_image}
-                        alt={game.game_name}
-                        className="w-12 h-12 rounded-xl object-cover flex-shrink-0 bg-gray-800"
-                        onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=48&h=48&fit=crop"; }}
-                      />
+                      <div className="relative flex-shrink-0">
+                        <img
+                          src={ovr?.custom_image_url || game.game_image}
+                          alt={game.game_name}
+                          className="w-12 h-12 rounded-xl object-cover bg-gray-800"
+                          onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=48&h=48&fit=crop"; }}
+                        />
+                        {ovr?.custom_image_url && (
+                          <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center" title="Custom photo">
+                            <Camera size={9} className="text-black" />
+                          </span>
+                        )}
+                      </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <p className="text-sm font-bold text-white truncate">{game.game_name}</p>
