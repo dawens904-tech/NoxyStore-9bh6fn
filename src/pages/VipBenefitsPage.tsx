@@ -585,4 +585,4 @@ export function VipBenefitsPage() {
     </>
   );
 }
-
+please remove all BENEFIT_ICON_MAP add fake photo instead i will replace and chak v1 v2 gen color pa yo and photo pa yo.
