@@ -428,7 +428,7 @@ export function VipBenefitsPage() {
 
   // ─── Benefit card for mobile grid ──────────────────────────────────────────
   const BenefitCard = ({ benefit }: { benefit: typeof BENEFITS[0] }) => {
-    const isLocked = benefit.vipMin > vipLevel;
+    const isLocked = benefit.vipMin > activeVipCard;
     const photoUrl = getBenefitPhoto(benefit.id);
 
     return (
@@ -454,7 +454,7 @@ export function VipBenefitsPage() {
 
   // ─── Desktop benefit card (vertical) ──────────────────────────────────────
   const BenefitCardDesktop = ({ benefit }: { benefit: typeof BENEFITS[0] }) => {
-    const isLocked = benefit.vipMin > vipLevel;
+    const isLocked = benefit.vipMin > activeVipCard;
     const photoUrl = getBenefitPhoto(benefit.id);
 
     return (
@@ -741,7 +741,7 @@ export function VipBenefitsPage() {
                 />
               </div>
               <p className={`text-base leading-relaxed mb-6 whitespace-pre-line text-left ${isV5 ? "text-gray-300" : "text-gray-700"}`}>{benefitModal.benefit.description}</p>
-              {benefitModal.benefit.vipMin > vipLevel ? (
+              {benefitModal.benefit.vipMin > activeVipCard ? (
                 <div>
                   <div className={`rounded-xl px-4 py-3 mb-4 ${isV5 ? "bg-gray-800" : "bg-gray-100"}`}>
                     <p className={`text-sm ${isV5 ? "text-gray-400" : "text-gray-600"}`}>Requires <span className={`font-bold ${isV5 ? "text-yellow-400" : "text-gray-900"}`}>VIP {benefitModal.benefit.vipMin}</span> to unlock</p>
@@ -801,4 +801,4 @@ export function VipBenefitsPage() {
     </>
   );
 }
-unlock v4 v5 all function and i cant see desktop header and mobile.
+
