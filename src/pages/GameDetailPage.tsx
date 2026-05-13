@@ -900,4 +900,4 @@ export function GameDetailPage() {
     </>
   );
 }
-remove all fake header add real desktop and mobile header and for gift card add fetch gift card country if usa,turkey,japan.
+
