@@ -149,3 +149,4 @@ export function AdminDashboardPage() {
     </AdminLayout>
   );
 }
+nane real light/dark system and if a user not login make /admin di page pa exist and si user login li make admin add overlay blur ki pa gen okenn product only show header desktop and mobile only admin can see this routes.
