@@ -80,19 +80,12 @@ export function Header({ showMenu, title, showBack }: HeaderProps) {
                 <span className="text-white">STORE</span>
               </span>
             </div>
-            <nav className="flex-1 py-2 overflow-y-auto">
+            <nav className="flex-1 py-4">
               {[
                 { label: t("home"), path: "/" },
                 { label: t("games"), path: "/categories" },
-                { label: "Top Up", path: "/categories?filter=Top+Up" },
-                { label: "Gift Cards", path: "/categories?filter=Gift+Card" },
-                { label: "Game Keys", path: "/categories?filter=Game+Keys" },
                 { label: t("myAccount"), path: "/account" },
-                { label: "VIP Benefits", path: "/vip" },
-                { label: "Points & Rewards", path: "/points" },
-                { label: "Invite for Coupons", path: "/invite" },
-                { label: t("helpCenter"), path: "/support" },
-                { label: "About NoxyStore", path: "/about" },
+                { label: t("helpCenter"), path: "/help" },
               ].map((item) => (
                 <button
                   key={item.label}
@@ -109,4 +102,3 @@ export function Header({ showMenu, title, showBack }: HeaderProps) {
     </>
   );
 }
-
