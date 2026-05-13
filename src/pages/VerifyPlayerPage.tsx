@@ -321,4 +321,4 @@ export function VerifyPlayerPage() {
     </div>
   );
 }
-
+on this page after a Free Fire UID is verified successfully, auto-populate the Server Region field by detecting the region from the ff-lookup API response (e.g. data.region), so users don't have to manually select it and give user account name and level account and region.
