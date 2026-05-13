@@ -35,26 +35,26 @@ const VisaMasterLogo = () => (
 
 const JCBAmexDiscoverDinersLogo = () => (
   <div className="flex items-center gap-1.5">
-    <PayCard src="/img/pay.png" alt="JCB / Amex / Discover / Diners" w="w-28" />
+    <PayCard src="/images/IMG_8725.webp" alt="JCB / Amex / Discover / Diners" w="w-28" />
   </div>
 );
 
 const PayPalLogo = () => (
   <div className="flex items-center gap-1.5">
-    <PayCard src="/img/pay.png" alt="PayPal" />
+    <PayCard src="/images/IMG_8726.webp" alt="PayPal" />
   </div>
 );
 
 const PayLaterLogo = () => (
   <div className="flex items-center gap-1.5">
-    <PayCard src="/img/pay.png" alt="Pay Later" />
+    <PayCard src="/images/IMG_8729.webp" alt="Pay Later" />
     <span className="text-sm font-semibold text-gray-800">Pay Later</span>
   </div>
 );
 
 const CashAppLogo = () => (
   <div className="flex items-center gap-1.5">
-    <PayCard src="/img/pay.png" alt="Cash App" />
+    <PayCard src="/images/IMG_8727.webp" alt="Cash App" />
     <span className="text-sm font-bold text-gray-900">Cash App</span>
   </div>
 );
@@ -68,7 +68,7 @@ const MirLogo = () => (
 
 const CryptoLogo = () => (
   <div className="flex items-center gap-1.5">
-    <PayCard src="/img/pay.png" alt="Crypto" w="w-32" />
+    <PayCard src="/images/IMG_8728.webp" alt="Crypto" w="w-32" />
     <span className="text-sm font-medium text-gray-700">and more</span>
   </div>
 );
