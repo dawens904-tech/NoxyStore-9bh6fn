@@ -915,4 +915,4 @@ export function GameDetailPage() {
     </>
   );
 }
-
+for desktop never go to verify page auto setup the lookup in Order Information enter uid for desktop use lootbar never use edg and verify player page and fix edg for mobile request better.
