@@ -801,4 +801,3 @@ export function VipBenefitsPage() {
     </>
   );
 }
-add desktop header and mobile header.
