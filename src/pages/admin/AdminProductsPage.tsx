@@ -217,4 +217,4 @@ export function AdminProductsPage() {
     </AdminLayout>
   );
 }
-hello ai please fix error saved product photo and add support page that have multi faq and name enter email select support type or other and message enter and photo upload require make its more stable.
+hello ai please fix error saved product photo and add contact page that have multi faq and name enter email select support type or other and message enter and photo upload require make its more stable.
