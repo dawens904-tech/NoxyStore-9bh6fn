@@ -31,7 +31,7 @@ function daysUntil(dateStr: string) {
   return Math.max(0, Math.ceil((new Date(dateStr).getTime() - Date.now()) / 86400000));
 }
 
-// ─── Passkey Modal (photo 11) ─────────────────────────────────────────────────
+// ─── Passkey Modal ────────────────────────────────────────────────────────────
 function PasskeyModal({ onClose, onNavigate }: { onClose: () => void; onNavigate: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4" onClick={onClose}>
@@ -49,7 +49,6 @@ function PasskeyModal({ onClose, onNavigate }: { onClose: () => void; onNavigate
             Learn More <ChevronRight size={14} />
           </button>
         </div>
-        {/* Passkey illustration */}
         <div className="px-8 pb-4 flex justify-center">
           <div className="relative w-56 h-40 flex items-center justify-center">
             <div className="w-20 h-24 border-4 border-gray-900 rounded-2xl flex items-center justify-center bg-white shadow-lg relative z-10">
@@ -165,7 +164,7 @@ function BirthdayModal({ onClose, onSave, current }: { onClose: () => void; onSa
           </div>
         </div>
         <div className="px-4 py-5">
-          <p className="text-xs text-gray-500 text-center mb-3">⚠️ Birthday cannot be changed after saving</p>
+          <p className="text-xs text-gray-500 text-center mb-3">Birthday cannot be changed after saving</p>
           <button onClick={() => onSave(`${String(selectedMonth + 1).padStart(2, "0")}-${String(selectedDay).padStart(2, "0")}`)} className="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-bold py-4 rounded-2xl">Confirm</button>
         </div>
       </div>
@@ -214,7 +213,7 @@ function BindEmailModal({ onClose, onSuccess }: { onClose: () => void; onSuccess
             <button onClick={handleSend} disabled={countdown > 0} className={`text-sm font-semibold ${countdown > 0 ? "text-gray-400" : "text-yellow-600"}`}>{countdown > 0 ? `${countdown}s` : "Send"}</button>
           </div>
         )}
-        <p className="text-xs text-gray-500 leading-relaxed">Please verify your Email address before trading, we'll send you trade related messages and other important notifications via Email.</p>
+        <p className="text-xs text-gray-500 leading-relaxed">Please verify your Email address before trading, we will send you trade related messages and other important notifications via Email.</p>
       </div>
       <div className="px-4 pb-8 pt-4">
         <button onClick={step === "email" ? handleSend : handleVerify} disabled={isSending || isVerifying} className={`w-full font-bold py-4 rounded-2xl transition-colors ${email.trim() ? "bg-yellow-400 hover:bg-yellow-300 text-black" : "bg-yellow-200 text-yellow-600"}`}>
@@ -440,8 +439,8 @@ function DesktopInvite({ user }: { user: any }) {
         <div className="grid grid-cols-2 gap-3">
           {[
             { title: "Invite Master", desc: "Invite new users to join NoxyStore", progress: `${usersInvited} / 5`, img: couponSave5 },
-            { title: "Slow and Steady – Basic", desc: "Earn rewards as your users purchase", progress: `${ordersCompleted} / 3`, img: couponSave5 },
-            { title: "Slow and Steady – Advanced", desc: "Unlock even more advanced rewards", progress: `${ordersCompleted} / 3`, img: couponSave5 },
+            { title: "Slow and Steady Basic", desc: "Earn rewards as your users purchase", progress: `${ordersCompleted} / 3`, img: couponSave5 },
+            { title: "Slow and Steady Advanced", desc: "Unlock even more advanced rewards", progress: `${ordersCompleted} / 3`, img: couponSave5 },
             { title: "Big Spender", desc: "Invited users reach spending milestones", progress: `$${totalSpending.toFixed(0)} / $500`, img: couponSave5 },
           ].map((t, i) => (
             <div key={i} className="border border-gray-200 rounded-2xl p-4 bg-white relative overflow-hidden">
@@ -603,18 +602,15 @@ export function AccountPage() {
   };
 
   const saveBirthday = async (val: string) => {
-    // Birthday can only be set once — never changed
     if (birthday) { toast.error("Birthday cannot be changed once set"); return; }
     setBirthday(val);
     await supabase.auth.updateUser({ data: { birthday: val } });
-    // Check if today is user's birthday and issue VIP-level coupon
     const today = new Date();
     const todayMM = String(today.getMonth() + 1).padStart(2, "0");
     const todayDD = String(today.getDate()).padStart(2, "0");
     if (val === `${todayMM}-${todayDD}`) {
-      const pts = 0; // newly set — no orders yet, default V1
-      const discountMap: Record<number, number> = { 1: 5, 2: 8, 3: 10, 4: 15, 5: 20 };
       const vip = 1;
+      const discountMap: Record<number, number> = { 1: 5, 2: 8, 3: 10, 4: 15, 5: 20 };
       const discount = discountMap[vip];
       const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
       if (user?.email) {
@@ -625,13 +621,13 @@ export function AccountPage() {
           type: "percent",
           discount_value: discount,
           min_order: 0.01,
-          description: `Happy Birthday! VIP ${vip} birthday gift — ${discount}% off`,
+          description: `Happy Birthday! VIP ${vip} birthday gift - ${discount}% off`,
           expires_at: expires,
         });
-        toast.success(`🎂 Happy Birthday! Your ${discount}% birthday coupon has been added!`);
+        toast.success(`Happy Birthday! Your ${discount}% birthday coupon has been added!`);
       }
     } else {
-      toast.success("Birthday saved! You won't be able to change this.");
+      toast.success("Birthday saved! You will not be able to change this.");
     }
   };
 
@@ -659,7 +655,6 @@ export function AccountPage() {
     );
   }
 
-  // VIP level (simple calculation)
   const vipLevel = 1;
 
   const sidebarItems: { key: DesktopSection; icon: any; label: string; badge?: string; dot?: boolean; highlight?: boolean }[] = [
@@ -792,14 +787,17 @@ export function AccountPage() {
                     <div className="text-center py-16"><Package size={48} className="text-gray-200 mx-auto mb-4" /><p className="text-gray-500">{t("noOrdersYet")}</p><button onClick={() => navigate("/")} className="btn-primary mt-4 px-8">{t("browseGames")}</button></div>
                   ) : (
                     <div className="space-y-3">
-                      {orders.map(order => { const si = ORDER_STATE_MAP[order.state] || ORDER_STATE_MAP[1]; return (
-                        <div key={order.id} className="flex items-center gap-4 p-4 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors">
-                          <div className="flex-1"><p className="font-semibold text-gray-900">{order.game_name}</p><p className="text-sm text-gray-500">{order.sku_name}</p><p className="text-xs text-gray-400 font-mono mt-1">{order.order_id}</p></div>
-                          <span className="text-[10px] font-black bg-yellow-400 text-black px-1.5 py-0.5 rounded-sm border border-yellow-500">V{vipLevel}</span>
-                          <span className={`tag-badge ${si.color} ${si.bg}`}>{si.label}</span>
-                          <p className="font-bold text-gray-900">${order.price.toFixed(2)}</p>
-                        </div>
-                      ); })}
+                      {orders.map(order => {
+                        const si = ORDER_STATE_MAP[order.state] || ORDER_STATE_MAP[1];
+                        return (
+                          <div key={order.id} className="flex items-center gap-4 p-4 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors">
+                            <div className="flex-1"><p className="font-semibold text-gray-900">{order.game_name}</p><p className="text-sm text-gray-500">{order.sku_name}</p><p className="text-xs text-gray-400 font-mono mt-1">{order.order_id}</p></div>
+                            <span className="text-[10px] font-black bg-yellow-400 text-black px-1.5 py-0.5 rounded-sm border border-yellow-500">V{vipLevel}</span>
+                            <span className={`tag-badge ${si.color} ${si.bg}`}>{si.label}</span>
+                            <p className="font-bold text-gray-900">${order.price.toFixed(2)}</p>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -907,7 +905,6 @@ export function AccountPage() {
               <button onClick={() => navigate("/secure-dashboard-92x2011")} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-2xl py-4 font-bold flex items-center justify-center gap-2 shadow-md"><LayoutDashboard size={18} />{t("adminDashboard")}</button>
             )}
 
-            {/* Logout button — styled as outlined button (photo 7) */}
             <button onClick={handleLogout} className="w-full py-4 border border-gray-200 bg-white rounded-2xl text-gray-700 font-semibold flex items-center justify-center gap-2 hover:bg-gray-50">
               <LogOut size={18} className="text-gray-500" /> Log out
             </button>
@@ -918,18 +915,21 @@ export function AccountPage() {
           <div className="space-y-3">
             {orders.length === 0 ? (
               <div className="text-center py-16"><Package size={48} className="text-gray-200 mx-auto mb-4" /><p className="text-gray-500 font-medium">{t("noOrdersYet")}</p><button onClick={() => navigate("/")} className="btn-primary mt-6 px-8">{t("browseGames")}</button></div>
-            ) : orders.map(order => { const si = ORDER_STATE_MAP[order.state] || ORDER_STATE_MAP[1]; return (
-              <div key={order.id} className="bg-white rounded-2xl p-4 shadow-sm">
-                <div className="flex items-start justify-between mb-2">
-                  <div><h3 className="font-bold text-gray-900 text-sm">{order.game_name}</h3><p className="text-xs text-gray-500">{order.sku_name}</p></div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-black bg-yellow-400 text-black px-1.5 py-0.5 rounded-sm">V{vipLevel}</span>
-                    <span className={`tag-badge ${si.color} ${si.bg}`}>{si.label}</span>
+            ) : orders.map(order => {
+              const si = ORDER_STATE_MAP[order.state] || ORDER_STATE_MAP[1];
+              return (
+                <div key={order.id} className="bg-white rounded-2xl p-4 shadow-sm">
+                  <div className="flex items-start justify-between mb-2">
+                    <div><h3 className="font-bold text-gray-900 text-sm">{order.game_name}</h3><p className="text-xs text-gray-500">{order.sku_name}</p></div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-black bg-yellow-400 text-black px-1.5 py-0.5 rounded-sm">V{vipLevel}</span>
+                      <span className={`tag-badge ${si.color} ${si.bg}`}>{si.label}</span>
+                    </div>
                   </div>
+                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100"><p className="text-xs text-gray-400 font-mono">{order.order_id}</p><p className="font-bold text-gray-900">${order.price.toFixed(2)}</p></div>
                 </div>
-                <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100"><p className="text-xs text-gray-400 font-mono">{order.order_id}</p><p className="font-bold text-gray-900">${order.price.toFixed(2)}</p></div>
-              </div>
-            ); })
+              );
+            })}
           </div>
         )}
 
@@ -964,7 +964,6 @@ export function AccountPage() {
               )}
             </div>
 
-            {/* Birthday — once set, locked forever */}
             <div className="flex items-start justify-between px-4 py-4 border-b border-gray-100">
               <span className="text-sm font-medium text-gray-800">Birthday</span>
               {birthday ? (
@@ -976,7 +975,7 @@ export function AccountPage() {
                 </div>
               ) : (
                 <button onClick={() => setShowBirthday(true)} className="flex items-center gap-1 text-right">
-                  <span className="text-sm text-gray-400">{"Fill in birthday info, don't miss the surprise"}</span>
+                  <span className="text-sm text-gray-400">Fill in birthday info</span>
                   <ChevronRight size={16} className="text-gray-400 flex-shrink-0" />
                 </button>
               )}
@@ -985,7 +984,7 @@ export function AccountPage() {
             <div className="flex items-start justify-between px-4 py-4 border-b border-gray-100">
               <div>
                 <span className="text-sm font-medium text-gray-800">Age Range</span>
-                {!ageRange && <p className="text-xs text-gray-400 mt-0.5 max-w-[180px] leading-relaxed">You need to set your age in accordance with NoxyStore's User Agreement.</p>}
+                {!ageRange && <p className="text-xs text-gray-400 mt-0.5 max-w-[180px] leading-relaxed">Set your age in accordance with our User Agreement.</p>}
               </div>
               <button onClick={() => setShowAgeRange(true)} className="flex items-center gap-1 ml-4 flex-shrink-0">
                 {ageRange && <span className="text-sm text-gray-800">{ageRange}</span>}
@@ -1051,7 +1050,6 @@ export function AccountPage() {
           <div className="text-center py-16"><Package size={48} className="text-gray-200 mx-auto mb-4" /><p className="text-gray-500 font-medium">Activity tracking coming soon</p></div>
         )}
 
-        {/* More Games — conditional: 30s + search/buy */}
         {activeTab === "overview" && <MoreGamesSection />}
       </div>
       <BottomNav />
@@ -1072,4 +1070,3 @@ export function AccountPage() {
     </>
   );
 }
-fix all error read al file you editing point page,vip page, account.
