@@ -332,8 +332,6 @@ export function SearchPage() {
   const handleChange = (val: string) => {
     setQuery(val);
     triggerSearch(val);
-    // Set session flag for "More Games" in AccountPage
-    if (val.trim()) sessionStorage.setItem("has_searched", "1");
   };
 
   const handleClear = () => {
