@@ -69,12 +69,15 @@ export function AdminProductsPage() {
     setIsUploading(true);
     let imageUrl = editData.custom_image_url || "";
 
-    // Upload new file if selected
+    // Upload new file if selected (use arrayBuffer for reliability)
     if (imgFile) {
-      const ext = imgFile.name.split(".").pop();
+      const ext = imgFile.name.split(".").pop() || "jpg";
       const path = `game_${gameId}_${Date.now()}.${ext}`;
-      const { error: upErr } = await supabase.storage.from("store-assets").upload(path, imgFile, { upsert: true, contentType: imgFile.type });
-      if (upErr) { toast.error("Upload failed"); setIsUploading(false); return; }
+      const buffer = await imgFile.arrayBuffer();
+      const { error: upErr } = await supabase.storage
+        .from("store-assets")
+        .upload(path, buffer, { upsert: true, contentType: imgFile.type });
+      if (upErr) { toast.error(`Upload failed: ${upErr.message}`); setIsUploading(false); return; }
       imageUrl = supabase.storage.from("store-assets").getPublicUrl(path).data.publicUrl;
     }
 

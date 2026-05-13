@@ -149,4 +149,3 @@ export function AdminDashboardPage() {
     </AdminLayout>
   );
 }
-when i upload a photo its how me the photo upload after li ale please fix that fix real ohoot saved and saty only if admin change or delete.
