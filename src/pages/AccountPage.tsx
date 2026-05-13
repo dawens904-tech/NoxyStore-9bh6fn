@@ -911,7 +911,6 @@ export function AccountPage() {
                 { icon: Settings, label: t("settings"), path: null, onTap: () => setActiveTab("profile") },
                 { icon: Globe, label: t("languageAndCurrency"), sub: `${currency} | ${language.toUpperCase().slice(0,2)}`, path: "/language-currency" },
                 { icon: HelpCircle, label: t("helpCenter"), path: "/support" },
-                { icon: MessageCircle, label: "Live Chat Support", sub: "Get instant help", highlight: true, path: "/support/vip" },
                 { icon: MessageSquare, label: "Feedback", sub: "Report issues or suggestions", path: "/feedback" },
                 { icon: Gift, label: t("inviteForCoupons"), sub: "Unlock rich coupon rewards", highlight2: true, path: "/invite" },
                 { icon: DollarSign, label: t("affiliateProgram"), sub: "Earn up to 10% money", highlight2: true, path: "/affiliate" },
