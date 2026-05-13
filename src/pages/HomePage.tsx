@@ -487,3 +487,4 @@ export function HomePage() {
     </div>
   );
 }
+add price game on popular game key and for mobile li dwe gen 10 line gamme and make li more size piti yo tro gro make page la pa tro gro.
