@@ -343,16 +343,10 @@ export function GameDetailPage() {
     }
   };
 
-  // Mobile: auto-navigate when SKU selected for products needing verification
+  // Mobile: select SKU only — user must tap Continue/Top-up Now to proceed
   const handleMobileSkuSelect = (sku: SkuItem) => {
     setSelectedSku(sku);
     setExtraInfoValues({});
-    // If product needs no verification, stay on page (user taps Top-up Now)
-    // If product needs verification, auto-navigate to verify page
-    if ((sku.extra_info || []).length > 0) {
-      const finalSku = { ...sku, price: applyMarkup(sku.price || 0) };
-      navigate("/verify-player", { state: { sku: finalSku, game, quantity } });
-    }
   };
 
   const setFieldValue = (name: string, value: string) => {
@@ -929,4 +923,4 @@ export function GameDetailPage() {
     </>
   );
 }
-when select a game on mobile dont auto go to verify player only if continue and fix verify player when i enter my free fire id its says UID entered — please double-check before proceeding fix auto call edg and give answer if no answer fallback to lootbar go checkout.
+

@@ -59,11 +59,11 @@ export function VerifyPlayerPage() {
           try { const t = await (error as any).context.text(); if (t) msg = t; } catch {}
         }
         console.log("ff-lookup error:", msg);
-        setFfLookupError("UID entered — please double-check before proceeding");
+        setFfLookupError("lookup_failed");
         return;
       }
       if (!data?.name) {
-        setFfLookupError("Player not found — please double-check your UID");
+        setFfLookupError("lookup_failed");
         return;
       }
 
@@ -92,7 +92,7 @@ export function VerifyPlayerPage() {
       }
     } catch (e: any) {
       console.log("ff-lookup exception:", e?.message);
-      setFfLookupError("Could not verify UID — proceed carefully");
+      setFfLookupError("lookup_failed");
     } finally {
       setFfLookupLoading(false);
     }
@@ -222,10 +222,18 @@ export function VerifyPlayerPage() {
                     </div>
                   </div>
                 )}
-                {ffLookupError && !ffLookupLoading && extraInfo[field.name]?.trim() && (
-                  <div className="mt-2 bg-yellow-50 border border-yellow-200 rounded-xl px-3 py-2.5 flex items-center gap-2">
-                    <UserCircle2 size={16} className="text-yellow-600 flex-shrink-0" />
-                    <p className="text-sm text-yellow-700">UID entered — please double-check before proceeding</p>
+                {ffLookupError === "lookup_failed" && !ffLookupLoading && extraInfo[field.name]?.trim() && (
+                  <div className="mt-2 bg-yellow-50 border border-yellow-200 rounded-xl px-3 py-2.5">
+                    <div className="flex items-center gap-2 mb-2">
+                      <UserCircle2 size={16} className="text-yellow-600 flex-shrink-0" />
+                      <p className="text-sm text-yellow-700 font-medium">Could not verify UID automatically</p>
+                    </div>
+                    <button
+                      onClick={() => navigate("/checkout", { state: { sku, game, quantity, extraInfo } })}
+                      className="w-full bg-yellow-400 text-black font-bold text-sm py-2 rounded-lg hover:bg-yellow-300 transition-colors"
+                    >
+                      Continue anyway (unverified)
+                    </button>
                   </div>
                 )}
               </>
