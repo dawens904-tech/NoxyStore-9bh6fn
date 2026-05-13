@@ -122,6 +122,38 @@ function AuthInitializer() {
 
     trackEvent("page_view", { page: window.location.pathname });
 
+    // ─── Daily login bonus: +2 points if not already claimed today ────────
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!session?.user?.email) return;
+      const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+      const { data: existing } = await supabase
+        .from("analytics_events")
+        .select("id")
+        .eq("event_type", "daily_login")
+        .eq("user_id", session.user.id)
+        .gte("created_at", `${today}T00:00:00.000Z`)
+        .limit(1)
+        .single();
+      if (!existing) {
+        // Insert wallet transaction for +2 points
+        await supabase.from("wallet_transactions").insert({
+          user_email: session.user.email,
+          user_id: session.user.id,
+          type: "points_earned",
+          amount: 2,
+          status: "completed",
+          method: "daily_login",
+          description: "Daily login bonus",
+        });
+        // Mark as claimed to prevent duplicate
+        await supabase.from("analytics_events").insert({
+          event_type: "daily_login",
+          user_id: session.user.id,
+          extra_data: { date: today },
+        });
+      }
+    });
+
     return () => {
       mounted = false;
       subscription.unsubscribe();
