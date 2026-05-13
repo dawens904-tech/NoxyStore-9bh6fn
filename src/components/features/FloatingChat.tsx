@@ -63,3 +63,4 @@ export function FloatingChat() {
     </div>
   );
 }
+remove x button an and fel paret pi anle nn page yo bo dwat 
