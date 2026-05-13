@@ -97,16 +97,16 @@ function getPointsForNextLevel(points: number) {
 
 // ─── Fake benefit photos (replace with real images) ───────────────────────
 const BENEFIT_PHOTOS: Record<string, string> = {
-  birthday:          "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=200&h=200&fit=crop",
-  point_money:       "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=200&h=200&fit=crop",
-  points_coupon:     "https://images.unsplash.com/photo-1493711662062-fa541adb3fc8?w=200&h=200&fit=crop",
-  points_item:       "https://images.unsplash.com/photo-1560419015-7c425b20b244?w=200&h=200&fit=crop",
-  vip_service:       "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?w=200&h=200&fit=crop",
-  fast_delivery:     "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=200&h=200&fit=crop",
-  higher_discount:   "https://images.unsplash.com/photo-1556438064-2d7646166914?w=200&h=200&fit=crop",
-  more_points:       "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=200&h=200&fit=crop",
-  exclusive_service: "https://images.unsplash.com/photo-1614680376408-81e91ffe3db7?w=200&h=200&fit=crop",
-  priority_delivery: "https://images.unsplash.com/photo-1616578492901-befd2b52f6c0?w=200&h=200&fit=crop",
+  birthday:          "https://uzxmmddivzqjhcnnrkns.supabase.co/storage/v1/object/public/hi/WhatsApp%20Image%202026-05-13%20at%2012.03.34%20PM.jpeg",
+  point_money:       "https://uzxmmddivzqjhcnnrkns.supabase.co/storage/v1/object/public/hi/WhatsApp%20Image%202026-05-13%20at%2012.03.34%20PM%20(1).jpeg",
+  points_coupon:     "https://uzxmmddivzqjhcnnrkns.supabase.co/storage/v1/object/public/hi/WhatsApp%20Image%202026-05-13%20at%2012.03.34%20PM%20(2).jpeg",
+  points_item:       "https://uzxmmddivzqjhcnnrkns.supabase.co/storage/v1/object/public/hi/WhatsApp%20Image%202026-05-13%20at%2012.03.35%20PM.jpeg",
+  vip_service:       "https://uzxmmddivzqjhcnnrkns.supabase.co/storage/v1/object/public/hi/WhatsApp%20Image%202026-05-13%20at%2012.03.35%20PM%20(1).jpeg",
+  fast_delivery:     "https://uzxmmddivzqjhcnnrkns.supabase.co/storage/v1/object/public/hi/WhatsApp%20Image%202026-05-13%20at%2012.03.35%20PM%20(2).jpeg",
+  higher_discount:   "https://uzxmmddivzqjhcnnrkns.supabase.co/storage/v1/object/public/hi/WhatsApp%20Image%202026-05-13%20at%2012.03.35%20PM%20(3).jpeg",
+  more_points:       "https://uzxmmddivzqjhcnnrkns.supabase.co/storage/v1/object/public/hi/WhatsApp%20Image%202026-05-13%20at%2012.03.35%20PM%20(4).jpeg",
+  exclusive_service: "https://uzxmmddivzqjhcnnrkns.supabase.co/storage/v1/object/public/hi/WhatsApp%20Image%202026-05-13%20at%2012.03.35%20PM%20(5).jpeg",
+  priority_delivery: "https://uzxmmddivzqjhcnnrkns.supabase.co/storage/v1/object/public/hi/WhatsApp%20Image%202026-05-13%20at%2012.03.35%20PM%20(6).jpeg",
 };
 
 // ─── Benefits data — detailed V1-V5 descriptions ──────────────────────────
