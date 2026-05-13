@@ -27,7 +27,7 @@ export default function AboutUsPage() {
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-60"
           style={{
-            backgroundImage: `url('/mnt/agents/upload/IMG_8724.jpeg')`
+            backgroundImage: `url('/images/IMG_8724.JPG')`
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0a]/80 via-transparent to-[#0a0a0a]" />
