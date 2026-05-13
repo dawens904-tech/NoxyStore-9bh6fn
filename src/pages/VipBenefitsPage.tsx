@@ -576,4 +576,4 @@ export function VipBenefitsPage() {
     </>
   );
 }
-please ai implement the birthday gift system: on AccountPage, when user saves their birthday, check if today matches and automatically issue a VIP-level coupon (5% for V1, 8% for V2, etc.) to their user_coupons table via an edge function triggered at login Fill in the EarnTab on PointsPage with real actionable earn-way cards — each showing the method (order, invite, review, daily login), exact points earned per VIP level, and a direct action button (e.g. 'Go Buy' or 'Invite Now') linking to the relevant page Show the user's VIP level badge (V1-V5 colored pill) next to order entries in the Buy History section on AccountPage desktop and mobile, and display VIP-exclusive discounts applied per order in the price breakdown.
+

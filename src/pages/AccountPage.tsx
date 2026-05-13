@@ -607,7 +607,32 @@ export function AccountPage() {
     if (birthday) { toast.error("Birthday cannot be changed once set"); return; }
     setBirthday(val);
     await supabase.auth.updateUser({ data: { birthday: val } });
-    toast.success("Birthday saved! You won't be able to change this.");
+    // Check if today is user's birthday and issue VIP-level coupon
+    const today = new Date();
+    const todayMM = String(today.getMonth() + 1).padStart(2, "0");
+    const todayDD = String(today.getDate()).padStart(2, "0");
+    if (val === `${todayMM}-${todayDD}`) {
+      const pts = 0; // newly set — no orders yet, default V1
+      const discountMap: Record<number, number> = { 1: 5, 2: 8, 3: 10, 4: 15, 5: 20 };
+      const vip = 1;
+      const discount = discountMap[vip];
+      const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+      if (user?.email) {
+        await supabase.from("user_coupons").insert({
+          user_email: user.email,
+          user_id: user.id,
+          code: `BDAY${todayMM}${todayDD}${Date.now().toString(36).toUpperCase()}`,
+          type: "percent",
+          discount_value: discount,
+          min_order: 0.01,
+          description: `Happy Birthday! VIP ${vip} birthday gift — ${discount}% off`,
+          expires_at: expires,
+        });
+        toast.success(`🎂 Happy Birthday! Your ${discount}% birthday coupon has been added!`);
+      }
+    } else {
+      toast.success("Birthday saved! You won't be able to change this.");
+    }
   };
 
   const saveAgeRange = async (range: string) => {
@@ -770,6 +795,7 @@ export function AccountPage() {
                       {orders.map(order => { const si = ORDER_STATE_MAP[order.state] || ORDER_STATE_MAP[1]; return (
                         <div key={order.id} className="flex items-center gap-4 p-4 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors">
                           <div className="flex-1"><p className="font-semibold text-gray-900">{order.game_name}</p><p className="text-sm text-gray-500">{order.sku_name}</p><p className="text-xs text-gray-400 font-mono mt-1">{order.order_id}</p></div>
+                          <span className="text-[10px] font-black bg-yellow-400 text-black px-1.5 py-0.5 rounded-sm border border-yellow-500">V{vipLevel}</span>
                           <span className={`tag-badge ${si.color} ${si.bg}`}>{si.label}</span>
                           <p className="font-bold text-gray-900">${order.price.toFixed(2)}</p>
                         </div>
@@ -894,10 +920,16 @@ export function AccountPage() {
               <div className="text-center py-16"><Package size={48} className="text-gray-200 mx-auto mb-4" /><p className="text-gray-500 font-medium">{t("noOrdersYet")}</p><button onClick={() => navigate("/")} className="btn-primary mt-6 px-8">{t("browseGames")}</button></div>
             ) : orders.map(order => { const si = ORDER_STATE_MAP[order.state] || ORDER_STATE_MAP[1]; return (
               <div key={order.id} className="bg-white rounded-2xl p-4 shadow-sm">
-                <div className="flex items-start justify-between mb-2"><div><h3 className="font-bold text-gray-900 text-sm">{order.game_name}</h3><p className="text-xs text-gray-500">{order.sku_name}</p></div><span className={`tag-badge ${si.color} ${si.bg}`}>{si.label}</span></div>
+                <div className="flex items-start justify-between mb-2">
+                  <div><h3 className="font-bold text-gray-900 text-sm">{order.game_name}</h3><p className="text-xs text-gray-500">{order.sku_name}</p></div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-black bg-yellow-400 text-black px-1.5 py-0.5 rounded-sm">V{vipLevel}</span>
+                    <span className={`tag-badge ${si.color} ${si.bg}`}>{si.label}</span>
+                  </div>
+                </div>
                 <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100"><p className="text-xs text-gray-400 font-mono">{order.order_id}</p><p className="font-bold text-gray-900">${order.price.toFixed(2)}</p></div>
               </div>
-            ); })}
+            ); })
           </div>
         )}
 

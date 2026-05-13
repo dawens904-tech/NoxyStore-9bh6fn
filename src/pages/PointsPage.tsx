@@ -102,28 +102,111 @@ function DesktopSidebar({ user, points }: { user: any; points: number }) {
 }
 
 // ─── Earn Points Tab ───────────────────────────────────────────────────────
-function EarnTab() {
+function EarnTab({ vipLevel, points }: { vipLevel: number; points: number }) {
+  const navigate = useNavigate();
+
   const earnWays = [
-    { action: "Complete an order", points: "1 point per $1 spent", icon: "🛒" },
-    { action: "Daily login", points: "+2 points", icon: "📅" },
-    { action: "Invite a friend (they complete order)", points: "+50 points", icon: "👥" },
-    { action: "Birthday bonus (VIP members)", points: "+50 points", icon: "🎂" },
-    { action: "Write a review", points: "+10 points", icon: "✍️" },
-    { action: "First top-up bonus", points: "+100 points", icon: "🎉" },
+    {
+      id: "order",
+      title: "Complete a Top-up Order",
+      desc: "Earn points on every successful order. Higher VIP = more points per $1.",
+      perLevel: ["1 pt / $1", "1 pt / $1", "1.2× bonus", "1.5× bonus", "2.0× bonus"],
+      action: "Top Up Now",
+      actionPath: "/",
+      highlight: true,
+    },
+    {
+      id: "invite",
+      title: "Invite Friends",
+      desc: "Earn bonus points when invited friends make their first order.",
+      perLevel: ["+50 pts", "+50 pts", "+60 pts", "+75 pts", "+100 pts"],
+      action: "Invite Now",
+      actionPath: "/invite",
+      highlight: false,
+    },
+    {
+      id: "birthday",
+      title: "Birthday Bonus",
+      desc: "Receive birthday points automatically on your birthday.",
+      perLevel: ["+50 pts", "+80 pts", "+120 pts", "+200 pts", "+500 pts"],
+      action: "Set Birthday",
+      actionPath: "/account",
+      highlight: false,
+    },
+    {
+      id: "review",
+      title: "Write a Review",
+      desc: "Leave a review after completing an order to earn extra points.",
+      perLevel: ["+10 pts", "+10 pts", "+12 pts", "+15 pts", "+20 pts"],
+      action: "View Orders",
+      actionPath: "/account",
+      highlight: false,
+    },
+    {
+      id: "first",
+      title: "First Top-up Bonus",
+      desc: "One-time bonus for completing your very first top-up on NoxyStore.",
+      perLevel: ["+100 pts", "+100 pts", "+120 pts", "+150 pts", "+200 pts"],
+      action: points === 0 ? "Claim Now" : "Claimed",
+      actionPath: "/",
+      highlight: points === 0,
+    },
   ];
+
+  const vipLabels = ["V1", "V2", "V3", "V4", "V5"];
+
   return (
     <div className="py-4">
-      <p className="text-sm text-gray-500 mb-5">Earn points through purchases and activities to unlock exclusive rewards.</p>
+      <p className="text-sm text-gray-500 mb-5">Earn points on every activity. Higher VIP = more rewards per action.</p>
       <div className="space-y-3">
-        {earnWays.map((w) => (
-          <div key={w.action} className="flex items-center justify-between py-4 border-b border-gray-100 last:border-0">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">{w.icon}</span>
-              <p className="font-medium text-gray-900 text-sm">{w.action}</p>
+        {earnWays.map((w) => {
+          const myPts = w.perLevel[vipLevel - 1] || w.perLevel[0];
+          return (
+            <div key={w.id} className={`border rounded-xl p-4 ${w.highlight ? "border-yellow-300 bg-yellow-50" : "border-gray-100 bg-white"}`}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-gray-900 text-sm">{w.title}</p>
+                  <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{w.desc}</p>
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {w.perLevel.map((pts, i) => (
+                      <span
+                        key={i}
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                          i === vipLevel - 1
+                            ? "bg-yellow-400 border-yellow-400 text-black"
+                            : "bg-gray-50 border-gray-200 text-gray-500"
+                        }`}
+                      >
+                        {vipLabels[i]}: {pts}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+                  <span className="text-sm font-black text-yellow-600">{myPts}</span>
+                  <button
+                    onClick={() => navigate(w.actionPath)}
+                    className={`text-xs font-bold px-3 py-1.5 rounded-lg whitespace-nowrap ${
+                      w.highlight ? "bg-yellow-400 text-black" : "bg-gray-900 text-white"
+                    }`}
+                  >
+                    {w.action}
+                  </button>
+                </div>
+              </div>
             </div>
-            <p className="text-sm font-bold text-yellow-600">{w.points}</p>
-          </div>
-        ))}
+          );
+        })}
+      </div>
+      <div className="mt-6 bg-gray-50 border border-gray-100 rounded-xl p-4">
+        <p className="text-xs font-bold text-gray-700 mb-1">Your current multiplier</p>
+        <p className="text-sm text-gray-600">
+          As <span className="font-bold text-yellow-600">VIP {vipLevel}</span>, you earn{" "}
+          <span className="font-bold text-gray-900">{["1x", "1x", "1.2x", "1.5x", "2.0x"][vipLevel - 1]}</span>{" "}
+          points on every qualifying order.{" "}
+          <button onClick={() => navigate("/vip")} className="text-yellow-600 font-semibold underline">Upgrade level</button>{" "}
+          to earn more.
+        </p>
       </div>
     </div>
   );
@@ -370,7 +453,7 @@ export function PointsPage() {
               ))}
             </div>
             <div className="px-6">
-              {tab === "earn" && <EarnTab />}
+              {tab === "earn" && <EarnTab vipLevel={vipLevel} points={points} />}
               {tab === "redeem" && <RedeemTab points={points} vipLevel={vipLevel} />}
               {tab === "details" && <DetailsTab userEmail={user?.email || ""} />}
             </div>
@@ -430,7 +513,7 @@ export function PointsPage() {
         ))}
       </div>
       <div className="px-4">
-        {tab === "earn" && <EarnTab />}
+        {tab === "earn" && <EarnTab vipLevel={vipLevel} points={points} />}
         {tab === "redeem" && <RedeemTab points={points} vipLevel={vipLevel} />}
         {tab === "details" && <DetailsTab userEmail={user?.email || ""} />}
       </div>
