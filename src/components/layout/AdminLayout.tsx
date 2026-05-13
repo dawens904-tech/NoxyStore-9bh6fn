@@ -24,16 +24,26 @@ interface AdminLayoutProps {
 export function AdminLayout({ children, title }: AdminLayoutProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, isAuthenticated, logout } = useAuthStore();
-  const [darkMode, setDarkMode] = useState(true);
+  const { user, isAuthenticated, isLoading, logout } = useAuthStore();
+  const [darkMode, setDarkMode] = useState(() => {
+    try { return localStorage.getItem("admin_theme") !== "light"; } catch { return true; }
+  });
   const [chatBadge, setChatBadge] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  const isAdmin = isAuthenticated && user?.role === "admin";
+
+  // Persist theme choice
   useEffect(() => {
-    if (!isAuthenticated || user?.role !== "admin") {
-      navigate("/login");
+    try { localStorage.setItem("admin_theme", darkMode ? "dark" : "light"); } catch {}
+  }, [darkMode]);
+
+  // Redirect unauthenticated users — /admin routes don't exist for guests
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      navigate("/login", { replace: true });
     }
-  }, [isAuthenticated, user]);
+  }, [isLoading, isAuthenticated]);
 
   useEffect(() => {
     const loadBadge = async () => {
@@ -69,6 +79,51 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
     if (path === "/admin") return location.pathname === "/admin";
     return location.pathname.startsWith(path);
   };
+
+  // Non-admin logged-in user: show blurred placeholder (header only, no content)
+  if (isAuthenticated && !isAdmin) {
+    return (
+      <div className="min-h-screen bg-[#0f0f0f] flex flex-col">
+        {/* Header — same as admin but no nav access */}
+        <div className="bg-[#1a1a1a] border-b border-white/10 px-4 py-3 flex items-center justify-between sticky top-0 z-50">
+          <div className="flex items-center gap-2">
+            <button onClick={() => navigate("/")} className="text-gray-400 hover:text-white p-1">
+              <ChevronLeft size={18} />
+            </button>
+            <div className="w-7 h-7 bg-yellow-400 rounded-lg flex items-center justify-center">
+              <Shield size={14} className="text-black" />
+            </div>
+            <span className="font-black text-white text-sm">NoxyStore <span className="text-yellow-400">Admin</span></span>
+          </div>
+          <div className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-1.5">
+            <div className="w-6 h-6 bg-gradient-to-br from-gray-400 to-gray-600 rounded-full flex items-center justify-center text-white text-xs font-black">
+              {user?.nickname?.[0]?.toUpperCase() || "U"}
+            </div>
+            <span className="text-white text-xs font-medium hidden sm:block">{user?.nickname}</span>
+          </div>
+        </div>
+        {/* Blur overlay — logged in but not admin */}
+        <div className="flex-1 relative flex items-center justify-center p-8" style={{ minHeight: "calc(100vh - 56px)" }}>
+          <div className="absolute inset-0 backdrop-blur-sm bg-[#0f0f0f]/80 z-10" />
+          <div className="relative z-20 text-center max-w-sm">
+            <div className="w-20 h-20 bg-red-500/10 border border-red-500/30 rounded-2xl flex items-center justify-center mx-auto mb-5">
+              <Shield size={36} className="text-red-400" />
+            </div>
+            <h2 className="text-2xl font-black text-white mb-2">Access Denied</h2>
+            <p className="text-gray-400 text-sm leading-relaxed mb-6">
+              You're logged in as <span className="text-yellow-400 font-semibold">{user?.nickname}</span>, but this area is restricted to admin accounts only.
+            </p>
+            <button
+              onClick={() => navigate("/")}
+              className="bg-yellow-400 hover:bg-yellow-300 text-black font-bold px-8 py-3 rounded-xl transition-colors"
+            >
+              Back to Store
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={darkMode ? "dark" : ""}>
