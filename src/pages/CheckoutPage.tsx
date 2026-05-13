@@ -974,3 +974,4 @@ export function CheckoutPage() {
     </>
   );
 }
+on mobile if click mdify its return verify player page to re edit the id anba add payment detail for mobile separel.
