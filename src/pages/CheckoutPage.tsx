@@ -974,3 +974,4 @@ export function CheckoutPage() {
     </>
   );
 }
+remove arrow bakc fucking just import the real mobile header without modified it.
