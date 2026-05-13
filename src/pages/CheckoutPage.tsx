@@ -1026,4 +1026,4 @@ export function CheckoutPage() {
     </>
   );
 }
-
+add mobile header and for card icon remove add fake photo card i will replace it later.
