@@ -722,7 +722,7 @@ export function AccountPage() {
               </div>
               <div className="flex items-center gap-4 py-3 border-y border-gray-100">
                 <button onClick={() => navigate("/balance")} className="hover:opacity-80 transition-opacity">
-                  <p className="text-lg font-bold text-gray-900">${user?.balance?.toFixed(2)}</p>
+                  <p className="text-lg font-bold text-gray-900">${(user?.balance ?? 0).toFixed(2)}</p>
                   <p className="text-xs text-gray-500">{t("balance")}</p>
                 </button>
                 <div className="h-8 w-px bg-gray-200" />
@@ -881,7 +881,7 @@ export function AccountPage() {
               </div>
               <div className="grid grid-cols-3 gap-2 mb-4">
                 {[
-                  { label: t("balance"), value: `$${user?.balance?.toFixed(2)}`, path: "/balance" },
+                  { label: t("balance"), value: `$${(user?.balance ?? 0).toFixed(2)}`, path: "/balance" },
                   { label: t("points"), value: user?.points ?? 0, path: "/points" },
                   { label: t("coupons"), value: `${user?.coupons ?? 0}`, path: "/coupons" },
                 ].map(item => (
@@ -895,7 +895,7 @@ export function AccountPage() {
             <div className="grid grid-cols-2 gap-3">
               {[
                 { icon: Package, label: t("orders"), value: `${orders.length} orders`, path: null },
-                { icon: Wallet, label: t("balance"), value: `$${user?.balance?.toFixed(2)}`, path: "/balance" },
+                { icon: Wallet, label: t("balance"), value: `$${(user?.balance ?? 0).toFixed(2)}`, path: "/balance" },
                 { icon: Key, label: "Passkeys", value: "Manage passkeys", path: null, onTap: handlePasskeyAction },
                 { icon: Users, label: "Referrals", value: "Earn 10%", path: null },
               ].map(item => (
@@ -1096,4 +1096,4 @@ export function AccountPage() {
     </>
   );
 }
-try fix error Cannot read properties of undefined (reading 'topUp').
+
