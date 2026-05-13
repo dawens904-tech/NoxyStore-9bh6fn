@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
-  CheckCircle, XCircle, Loader2, ArrowLeft, Edit2, Shield,
+  CheckCircle, XCircle, Loader2, Edit2, Shield,
   ChevronRight, X, Plus, HelpCircle, Minus
 } from "lucide-react";
 import { lootbarApi } from "@/lib/lootbar-api";
@@ -9,6 +9,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { ORDER_STATE_MAP } from "@/types";
 import type { SkuItem, LootbarGame, Order } from "@/types";
 import { DesktopHeader } from "@/components/layout/DesktopHeader";
+import { Header } from "@/components/layout/Header";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
@@ -676,24 +677,7 @@ export function CheckoutPage() {
   // ─── Mobile Layout ─────────────────────────────────────────────────────────
   const MobileCheckout = () => (
     <div className="lg:hidden min-h-screen bg-gray-50 pb-32">
-      {/* NoxyStore mobile header */}
-      <div className="sticky top-0 z-40 bg-[#0a0a0a]">
-        <div className="px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button onClick={() => navigate(-1)} className="text-white">
-              <ArrowLeft size={20} />
-            </button>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-yellow-400 rounded flex items-center justify-center flex-shrink-0">
-                <svg viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2.5" className="w-4 h-4"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-              </div>
-              <span className="text-white font-black text-sm tracking-tight">Noxy<span className="text-yellow-400">Store</span></span>
-            </div>
-          </div>
-          <span className="text-white font-bold text-sm">Payment</span>
-          <div className="w-16" />
-        </div>
-      </div>
+      <Header showBack title="Payment" />
 
       <div className="bg-white border-b border-gray-100 px-4 py-4">
         <div className="flex items-center gap-3">
@@ -990,4 +974,3 @@ export function CheckoutPage() {
     </>
   );
 }
-remove fake mobile header add the real header from layout mobile like desktop.
