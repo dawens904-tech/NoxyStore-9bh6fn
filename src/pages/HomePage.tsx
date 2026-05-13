@@ -20,6 +20,8 @@ import { useAuthStore } from "@/stores/authStore";
 import { Footer } from "@/components/layout/Footer";
 import { MobileFooter } from "@/components/layout/MobileFooter";
 import gameKeysBg from "@/assets/game-keys-bg.jpg";
+import { useSettingsStore } from "@/stores/settingsStore";
+import { CURRENCY_RATES } from "@/constants/translations";
 
 interface HomeSection {
   id: string;
@@ -77,43 +79,11 @@ function DesktopHeroBanner({ banners }: { banners: typeof BANNER_IMAGES }) {
   );
 }
 
-// Popular Game Key Card (large horizontal card style)
-function GameKeyCard({ game }: { game: LootbarGame }) {
-  const navigate = useNavigate();
-  return (
-    <button onClick={() => navigate(`/game/${game.game_id}`)}
-      className="flex flex-col bg-white rounded-xl border border-gray-200 overflow-hidden text-left hover:shadow-lg transition-all hover:-translate-y-0.5 group">
-      <div className="aspect-[3/4] relative overflow-hidden bg-gray-100">
-        <img
-          src={game.game_image || `https://images.unsplash.com/photo-1538481199705-c710c4e965fc?w=300&h=400&fit=crop&q=80`}
-          alt={game.game_name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          onError={(e) => { (e.target as HTMLImageElement).src = `https://images.unsplash.com/photo-1538481199705-c710c4e965fc?w=300&h=400&fit=crop`; }}
-        />
-        {(game.discount ?? 0) > 0 && (
-          <div className="absolute top-2 right-2 bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-lg">-{game.discount}%</div>
-        )}
-      </div>
-      <div className="p-3">
-        <p className="text-sm font-bold text-gray-900 line-clamp-2 leading-tight mb-1">{game.game_name}</p>
-        <div className="flex items-center gap-1 mb-1">
-          <div className="w-4 h-4 bg-gray-800 rounded-sm flex items-center justify-center flex-shrink-0">
-            <svg viewBox="0 0 24 24" fill="white" className="w-3 h-3"><path d="M3 3h18v18H3V3zm16.525 13.707c-.131-.821-.666-1.511-2.252-2.155-.552-.259-1.165-.438-1.349-.854-.068-.248-.078-.382-.034-.529.113-.484.687-.629 1.137-.495.293.09.563.315.732.676.775-.507.775-.507 1.316-.844-.203-.314-.304-.451-.439-.586-.473-.528-1.103-.798-2.126-.775l-.528.067c-.507.124-.991.395-1.283.754-.855 1.030-.607 2.830.802 3.575 1.12.525 2.519.643 2.715 1.179.18.635-.511.839-1.135.756-.63-.094-.984-.459-1.226-.932l-1.33.793c.259.498.894 1.305 1.946 1.45l.814-.013c.529-.058 1.046-.305 1.350-.683.339-.41.378-.968.299-1.540zM8.556 9h-1.11l-1.86 4.666h1.107l.365-.886h1.836l.353.886h1.133L8.556 9zm-.588 2.742l.571-1.57.571 1.57H7.968z"/></svg>
-          </div>
-          <span className="text-[11px] text-gray-500 font-medium">Steam Key</span>
-        </div>
-        {game.min_price && (
-          <p className="text-orange-500 font-black text-base">${Number(game.min_price).toFixed(2)}</p>
-        )}
-      </div>
-    </button>
-  );
-}
-
 export function HomePage() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { isAuthenticated } = useAuthStore();
+  const { currency } = useSettingsStore();
   const [games, setGames] = useState<LootbarGame[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [sections, setSections] = useState<HomeSection[]>([]);
@@ -124,9 +94,24 @@ export function HomePage() {
   const [discountRows, setDiscountRows] = useState(1);
   const [newRows, setNewRows] = useState(1);
   const [giftRows, setGiftRows] = useState(1);
-  const [keyRows, setKeyRows] = useState(1);
 
   const COLS = 3; // mobile columns per row
+
+  // Currency formatting helper
+  const formatPrice = (usdPrice: number | null | undefined): string => {
+    if (!usdPrice) return "";
+    const rate = CURRENCY_RATES[currency] ?? 1;
+    const converted = usdPrice * rate;
+    const symbols: Record<string, string> = {
+      USD: "$", EUR: "€", GBP: "£", IDR: "Rp", MYR: "RM",
+      SGD: "S$", THB: "฿", VND: "₫", PHP: "₱", BRL: "R$",
+    };
+    const sym = symbols[currency] ?? "$";
+    if (currency === "IDR" || currency === "VND") {
+      return `${sym}${Math.round(converted).toLocaleString()}`;
+    }
+    return `${sym}${converted.toFixed(2)}`;
+  };
 
   useEffect(() => {
     trackEvent("page_view", { page: "/" });
@@ -191,15 +176,20 @@ export function HomePage() {
               <div className="w-14 h-14 rounded-full bg-yellow-400 flex items-center justify-center shadow-md hover:shadow-lg hover:scale-105 transition-all">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-7 h-7 text-black"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
               </div>
-              <span className="text-xs font-semibold text-gray-600">24/7</span>
+              <span className="text-xs font-semibold text-gray-600">{t("support24")}</span>
             </button>
           </div>
 
           {/* Hot Selling Games */}
           <div>
             <div className="flex items-center justify-between mb-4">
-              <div><h2 className="text-xl font-black text-gray-900">{t("hotSellingGames")}</h2><p className="text-sm text-gray-500 mt-0.5">Safe and always at the affordable price</p></div>
-              <button onClick={() => navigate("/categories")} className="flex items-center gap-1 text-sm text-gray-600 font-semibold border border-gray-200 bg-white rounded-xl px-3 py-1.5 hover:bg-gray-50">All ({games.length}) <ChevronRight size={14} /></button>
+              <div>
+                <h2 className="text-xl font-black text-gray-900">{t("hotSellingGames")}</h2>
+                <p className="text-sm text-gray-500 mt-0.5">{t("safeAffordablePrice")}</p>
+              </div>
+              <button onClick={() => navigate("/categories")} className="flex items-center gap-1 text-sm text-gray-600 font-semibold border border-gray-200 bg-white rounded-xl px-3 py-1.5 hover:bg-gray-50">
+                {t("all")} ({games.length}) <ChevronRight size={14} />
+              </button>
             </div>
             <div className="grid grid-cols-7 gap-4">
               {isLoading ? Array.from({ length: 7 }).map((_, i) => <div key={i} className="shimmer rounded-2xl aspect-square" />)
@@ -214,12 +204,12 @@ export function HomePage() {
               <div className="relative z-10 px-8 py-6">
                 <div className="flex items-center justify-between mb-5">
                   <div>
-                    <h2 className="text-xl font-black text-white">Popular Game Key</h2>
-                    <p className="text-sm text-blue-200 mt-0.5">Enjoy playing the most fun games</p>
+                    <h2 className="text-xl font-black text-white">{t("popularGameKey")}</h2>
+                    <p className="text-sm text-blue-200 mt-0.5">{t("enjoyPlayingGames")}</p>
                   </div>
                   <button onClick={() => navigate("/categories?filter=Game+Keys")}
                     className="flex items-center gap-1 text-sm text-white font-semibold bg-white/10 border border-white/20 rounded-xl px-3 py-1.5 hover:bg-white/20">
-                    All ({gameKeyGames.length}) <ChevronRight size={14} />
+                    {t("all")} ({gameKeyGames.length}) <ChevronRight size={14} />
                   </button>
                 </div>
                 <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2">
@@ -237,9 +227,11 @@ export function HomePage() {
                           <p className="text-xs font-bold text-gray-900 line-clamp-2 leading-tight mb-1">{game.game_name}</p>
                           <div className="flex items-center gap-1 mb-1">
                             <svg viewBox="0 0 24 24" fill="currentColor" className="w-3 h-3 text-gray-600"><path d="M3 3h18v18H3V3zm16.525 13.707c-.131-.821-.666-1.511-2.252-2.155-.552-.259-1.165-.438-1.349-.854-.068-.248-.078-.382-.034-.529.113-.484.687-.629 1.137-.495.293.09.563.315.732.676.775-.507.775-.507 1.316-.844-.203-.314-.304-.451-.439-.586-.473-.528-1.103-.798-2.126-.775l-.528.067c-.507.124-.991.395-1.283.754-.855 1.030-.607 2.830.802 3.575 1.12.525 2.519.643 2.715 1.179.18.635-.511.839-1.135.756-.63-.094-.984-.459-1.226-.932l-1.33.793c.259.498.894 1.305 1.946 1.45l.814-.013c.529-.058 1.046-.305 1.350-.683.339-.41.378-.968.299-1.540zM8.556 9h-1.11l-1.86 4.666h1.107l.365-.886h1.836l.353.886h1.133L8.556 9zm-.588 2.742l.571-1.57.571 1.57H7.968z"/></svg>
-                            <span className="text-[10px] text-gray-500">Steam Key</span>
+                            <span className="text-[10px] text-gray-500">{t("steamKey")}</span>
                           </div>
-                          {game.min_price && <p className="text-orange-500 font-black text-sm">${Number(game.min_price).toFixed(2)}</p>}
+                          {game.min_price && (
+                            <p className="text-orange-500 font-black text-sm">{formatPrice(Number(game.min_price))}</p>
+                          )}
                         </div>
                       </button>
                     ))}
@@ -247,9 +239,9 @@ export function HomePage() {
                   <button onClick={() => navigate("/categories?filter=Game+Keys")}
                     className="flex-shrink-0 w-44 flex flex-col items-center justify-center bg-yellow-400/90 rounded-xl p-4 hover:bg-yellow-400 transition-colors text-center">
                     <KeyRound size={36} className="text-black mb-3" />
-                    <p className="font-black text-black text-sm">Game Keys</p>
+                    <p className="font-black text-black text-sm">{t("gameKeys")}</p>
                     <div className="mt-3 border border-black/20 rounded-lg px-4 py-2 text-xs font-bold text-black">
-                      View All ({gameKeyGames.length})
+                      {t("viewAll")} ({gameKeyGames.length})
                     </div>
                   </button>
                 </div>
@@ -260,8 +252,13 @@ export function HomePage() {
           {discountGames.length > 0 && (
             <div>
               <div className="flex items-center justify-between mb-4">
-                <div><h2 className="text-xl font-black text-gray-900">{t("discount")} Deals</h2><p className="text-sm text-gray-500 mt-0.5">Limited time offers</p></div>
-                <button onClick={() => navigate("/categories")} className="text-sm text-gray-500 font-medium hover:text-gray-700">All ({discountGames.length}) →</button>
+                <div>
+                  <h2 className="text-xl font-black text-gray-900">{t("discountDeals")}</h2>
+                  <p className="text-sm text-gray-500 mt-0.5">{t("limitedTimeOffers")}</p>
+                </div>
+                <button onClick={() => navigate("/categories")} className="text-sm text-gray-500 font-medium hover:text-gray-700">
+                  {t("all")} ({discountGames.length}) →
+                </button>
               </div>
               <div className="grid grid-cols-7 gap-4">
                 {discountGames.slice(0, 7).map((game) => <GameCard key={game.game_id} game={game} size="sm" />)}
@@ -272,8 +269,13 @@ export function HomePage() {
           {newGames.length > 0 && (
             <div>
               <div className="flex items-center justify-between mb-4">
-                <div><h2 className="text-xl font-black text-gray-900">New Games</h2><p className="text-sm text-gray-500 mt-0.5">Latest arrivals on NoxyStore</p></div>
-                <button onClick={() => navigate("/categories")} className="flex items-center gap-1 text-sm text-gray-600 font-semibold border border-gray-200 bg-white rounded-xl px-3 py-1.5 hover:bg-gray-50">All <ChevronRight size={14} /></button>
+                <div>
+                  <h2 className="text-xl font-black text-gray-900">{t("newGames")}</h2>
+                  <p className="text-sm text-gray-500 mt-0.5">{t("latestArrivals")}</p>
+                </div>
+                <button onClick={() => navigate("/categories")} className="flex items-center gap-1 text-sm text-gray-600 font-semibold border border-gray-200 bg-white rounded-xl px-3 py-1.5 hover:bg-gray-50">
+                  {t("all")} <ChevronRight size={14} />
+                </button>
               </div>
               <div className="grid grid-cols-7 gap-4">
                 {newGames.slice(0,7).map((game) => <GameCard key={game.game_id} game={game} size="sm" />)}
@@ -284,8 +286,13 @@ export function HomePage() {
           {giftCardGames.length > 0 && (
             <div>
               <div className="flex items-center justify-between mb-4">
-                <div><h2 className="text-xl font-black text-gray-900">Trending Gift Cards</h2><p className="text-sm text-gray-500 mt-0.5">Top gift cards at the best prices</p></div>
-                <button onClick={() => navigate("/categories?filter=Gift+Card")} className="flex items-center gap-1 text-sm text-gray-600 font-semibold border border-gray-200 bg-white rounded-xl px-3 py-1.5 hover:bg-gray-50">All ({giftCardGames.length}) <ChevronRight size={14} /></button>
+                <div>
+                  <h2 className="text-xl font-black text-gray-900">{t("trendingGiftCards")}</h2>
+                  <p className="text-sm text-gray-500 mt-0.5">{t("topGiftCards")}</p>
+                </div>
+                <button onClick={() => navigate("/categories?filter=Gift+Card")} className="flex items-center gap-1 text-sm text-gray-600 font-semibold border border-gray-200 bg-white rounded-xl px-3 py-1.5 hover:bg-gray-50">
+                  {t("all")} ({giftCardGames.length}) <ChevronRight size={14} />
+                </button>
               </div>
               <div className="grid grid-cols-7 gap-4">
                 {giftCardGames.slice(0,7).map((game) => <GameCard key={game.game_id} game={game} size="sm" />)}
@@ -331,9 +338,11 @@ export function HomePage() {
           <div className="flex items-center justify-between mb-3">
             <div>
               <h2 className="section-title">{t("hotSellingGames")}</h2>
-              <p className="text-xs text-gray-500 mt-0.5">Safe and always at the affordable price</p>
+              <p className="text-xs text-gray-500 mt-0.5">{t("safeAffordablePrice")}</p>
             </div>
-            <button onClick={() => navigate("/categories")} className="flex items-center gap-1 text-xs text-gray-500 font-medium">All ({games.length}) <ChevronRight size={14} /></button>
+            <button onClick={() => navigate("/categories")} className="flex items-center gap-1 text-xs text-gray-500 font-medium">
+              {t("all")} ({games.length}) <ChevronRight size={14} />
+            </button>
           </div>
           <div className="grid grid-cols-3 gap-2.5">
             {isLoading
@@ -342,10 +351,10 @@ export function HomePage() {
           </div>
           {hotGames.length > hotRows * COLS ? (
             <button onClick={() => setHotRows((r) => r + 1)} className="w-full mt-3 py-2.5 text-sm font-semibold text-gray-600 bg-white rounded-xl border border-gray-200 flex items-center justify-center gap-1">
-              View more <ChevronRight size={14} />
+              {t("viewMore")} <ChevronRight size={14} />
             </button>
           ) : hotRows > 1 ? (
-            <button onClick={() => setHotRows(1)} className="w-full mt-3 py-2.5 text-sm font-semibold text-gray-600 bg-white rounded-xl border border-gray-200">Show Less ▲</button>
+            <button onClick={() => setHotRows(1)} className="w-full mt-3 py-2.5 text-sm font-semibold text-gray-600 bg-white rounded-xl border border-gray-200">{t("showLess")} ▲</button>
           ) : null}
         </div>
 
@@ -356,11 +365,11 @@ export function HomePage() {
             <div className="relative z-10 px-4 py-5">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h2 className="text-base font-black text-white">Popular Game Key</h2>
-                  <p className="text-xs text-blue-200 mt-0.5">Enjoy playing the most fun games</p>
+                  <h2 className="text-base font-black text-white">{t("popularGameKey")}</h2>
+                  <p className="text-xs text-blue-200 mt-0.5">{t("enjoyPlayingGames")}</p>
                 </div>
                 <button onClick={() => navigate("/categories?filter=Game+Keys")} className="text-xs text-white font-semibold bg-white/10 border border-white/20 rounded-lg px-2.5 py-1.5 flex items-center gap-1">
-                  All ({gameKeyGames.length}) <ChevronRight size={12} />
+                  {t("all")} ({gameKeyGames.length}) <ChevronRight size={12} />
                 </button>
               </div>
               <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
@@ -377,8 +386,10 @@ export function HomePage() {
                       </div>
                       <div className="p-2">
                         <p className="text-[11px] font-bold text-gray-900 line-clamp-2 leading-tight mb-1">{game.game_name}</p>
-                        <p className="text-[10px] text-gray-500">Steam Key</p>
-                        {game.min_price && <p className="text-orange-500 font-black text-xs mt-0.5">${Number(game.min_price).toFixed(2)}</p>}
+                        <p className="text-[10px] text-gray-500">{t("steamKey")}</p>
+                        {game.min_price && (
+                          <p className="text-orange-500 font-black text-xs mt-0.5">{formatPrice(Number(game.min_price))}</p>
+                        )}
                       </div>
                     </button>
                   ))}
@@ -386,7 +397,7 @@ export function HomePage() {
                 <button onClick={() => navigate("/categories?filter=Game+Keys")}
                   className="flex-shrink-0 w-28 flex flex-col items-center justify-center bg-yellow-400/90 rounded-xl p-3 hover:bg-yellow-400 transition-colors text-center h-44">
                   <KeyRound size={24} className="text-black mb-2" />
-                  <p className="font-black text-black text-[11px]">View All</p>
+                  <p className="font-black text-black text-[11px]">{t("viewAll")}</p>
                   <p className="text-black/70 text-[10px] mt-0.5">({gameKeyGames.length})</p>
                 </button>
               </div>
@@ -398,16 +409,23 @@ export function HomePage() {
         {discountGames.length > 0 && (
           <div className="mt-6 px-3">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="section-title">{t("discount")} Deals</h2>
-              <button onClick={() => navigate("/categories")} className="flex items-center gap-1 text-xs text-gray-500 font-medium">All <ChevronRight size={12} /></button>
+              <div>
+                <h2 className="section-title">{t("discountDeals")}</h2>
+                <p className="text-xs text-gray-500 mt-0.5">{t("limitedTimeOffers")}</p>
+              </div>
+              <button onClick={() => navigate("/categories")} className="flex items-center gap-1 text-xs text-gray-500 font-medium">
+                {t("all")} <ChevronRight size={12} />
+              </button>
             </div>
             <div className="grid grid-cols-3 gap-2.5">
               {discountGames.slice(0, discountRows * COLS).map((game) => <GameCard key={game.game_id} game={game} size="sm" />)}
             </div>
             {discountGames.length > discountRows * COLS ? (
-              <button onClick={() => setDiscountRows((r) => r + 1)} className="w-full mt-3 py-2.5 text-sm font-semibold text-gray-600 bg-white rounded-xl border border-gray-200 flex items-center justify-center gap-1">View more <ChevronRight size={14} /></button>
+              <button onClick={() => setDiscountRows((r) => r + 1)} className="w-full mt-3 py-2.5 text-sm font-semibold text-gray-600 bg-white rounded-xl border border-gray-200 flex items-center justify-center gap-1">
+                {t("viewMore")} <ChevronRight size={14} />
+              </button>
             ) : discountRows > 1 ? (
-              <button onClick={() => setDiscountRows(1)} className="w-full mt-3 py-2.5 text-sm font-semibold text-gray-600 bg-white rounded-xl border border-gray-200">Show Less ▲</button>
+              <button onClick={() => setDiscountRows(1)} className="w-full mt-3 py-2.5 text-sm font-semibold text-gray-600 bg-white rounded-xl border border-gray-200">{t("showLess")} ▲</button>
             ) : null}
           </div>
         )}
@@ -416,16 +434,23 @@ export function HomePage() {
         {newGames.length > 0 && (
           <div className="mt-6 px-3">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="section-title">New Games</h2>
-              <button onClick={() => navigate("/categories")} className="flex items-center gap-1 text-xs text-gray-500 font-medium">All <ChevronRight size={12} /></button>
+              <div>
+                <h2 className="section-title">{t("newGames")}</h2>
+                <p className="text-xs text-gray-500 mt-0.5">{t("latestArrivals")}</p>
+              </div>
+              <button onClick={() => navigate("/categories")} className="flex items-center gap-1 text-xs text-gray-500 font-medium">
+                {t("all")} <ChevronRight size={12} />
+              </button>
             </div>
             <div className="grid grid-cols-3 gap-2.5">
               {newGames.slice(0, newRows * COLS).map((game) => <GameCard key={game.game_id} game={game} size="sm" />)}
             </div>
             {newGames.length > newRows * COLS ? (
-              <button onClick={() => setNewRows((r) => r + 1)} className="w-full mt-3 py-2.5 text-sm font-semibold text-gray-600 bg-white rounded-xl border border-gray-200 flex items-center justify-center gap-1">View more <ChevronRight size={14} /></button>
+              <button onClick={() => setNewRows((r) => r + 1)} className="w-full mt-3 py-2.5 text-sm font-semibold text-gray-600 bg-white rounded-xl border border-gray-200 flex items-center justify-center gap-1">
+                {t("viewMore")} <ChevronRight size={14} />
+              </button>
             ) : newRows > 1 ? (
-              <button onClick={() => setNewRows(1)} className="w-full mt-3 py-2.5 text-sm font-semibold text-gray-600 bg-white rounded-xl border border-gray-200">Show Less ▲</button>
+              <button onClick={() => setNewRows(1)} className="w-full mt-3 py-2.5 text-sm font-semibold text-gray-600 bg-white rounded-xl border border-gray-200">{t("showLess")} ▲</button>
             ) : null}
           </div>
         )}
@@ -434,20 +459,26 @@ export function HomePage() {
         {giftCardGames.length > 0 && (
           <div className="mt-6 px-3">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="section-title">Trending Gift Cards</h2>
-              <button onClick={() => navigate("/categories?filter=Gift+Card")} className="flex items-center gap-1 text-xs text-gray-500 font-medium">All <ChevronRight size={12} /></button>
+              <div>
+                <h2 className="section-title">{t("trendingGiftCards")}</h2>
+                <p className="text-xs text-gray-500 mt-0.5">{t("topGiftCards")}</p>
+              </div>
+              <button onClick={() => navigate("/categories?filter=Gift+Card")} className="flex items-center gap-1 text-xs text-gray-500 font-medium">
+                {t("all")} <ChevronRight size={12} />
+              </button>
             </div>
             <div className="grid grid-cols-3 gap-2.5">
               {giftCardGames.slice(0, giftRows * COLS).map((game) => <GameCard key={game.game_id} game={game} size="sm" />)}
             </div>
             {giftCardGames.length > giftRows * COLS ? (
-              <button onClick={() => setGiftRows((r) => r + 1)} className="w-full mt-3 py-2.5 text-sm font-semibold text-gray-600 bg-white rounded-xl border border-gray-200 flex items-center justify-center gap-1">View more <ChevronRight size={14} /></button>
+              <button onClick={() => setGiftRows((r) => r + 1)} className="w-full mt-3 py-2.5 text-sm font-semibold text-gray-600 bg-white rounded-xl border border-gray-200 flex items-center justify-center gap-1">
+                {t("viewMore")} <ChevronRight size={14} />
+              </button>
             ) : giftRows > 1 ? (
-              <button onClick={() => setGiftRows(1)} className="w-full mt-3 py-2.5 text-sm font-semibold text-gray-600 bg-white rounded-xl border border-gray-200">Show Less ▲</button>
+              <button onClick={() => setGiftRows(1)} className="w-full mt-3 py-2.5 text-sm font-semibold text-gray-600 bg-white rounded-xl border border-gray-200">{t("showLess")} ▲</button>
             ) : null}
           </div>
         )}
-
 
         <MobileFooter />
         <FloatingChat />
@@ -456,4 +487,3 @@ export function HomePage() {
     </div>
   );
 }
-please add language on all section and also gategory and add price product on game popula key and add language system on all.

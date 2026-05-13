@@ -52,7 +52,11 @@ export type TranslationKey =
   | "inTransaction" | "success" | "cancelled" | "deleted" | "settlement"
   | "partialSuccess" | "checkoutTitle" | "playerInfo" | "orderSummary"
   | "submitOrder" | "whyChooseUs" | "instantDelivery" | "bestPrice"
-  | "liveSupport" | "trackMyOrder" | "paymentIssue" | "topupNotReceived";
+  | "liveSupport" | "trackMyOrder" | "paymentIssue" | "topupNotReceived"
+  | "popularGameKey" | "enjoyPlayingGames" | "newGames" | "latestArrivals"
+  | "trendingGiftCards" | "topGiftCards" | "safeAffordablePrice"
+  | "limitedTimeOffers" | "discountDeals" | "steamKey" | "viewMore"
+  | "showLess" | "all" | "support24";
 
 type Translations = Record<TranslationKey, string>;
 
@@ -148,6 +152,20 @@ export const T: Record<Language, Translations> = {
     trackMyOrder: "Track my order",
     paymentIssue: "Payment issue",
     topupNotReceived: "Top-up not received",
+    popularGameKey: "Popular Game Key",
+    enjoyPlayingGames: "Enjoy playing the most fun games",
+    newGames: "New Games",
+    latestArrivals: "Latest arrivals on NoxyStore",
+    trendingGiftCards: "Trending Gift Cards",
+    topGiftCards: "Top gift cards at the best prices",
+    safeAffordablePrice: "Safe and always at the affordable price",
+    limitedTimeOffers: "Limited time offers",
+    discountDeals: "Discount Deals",
+    steamKey: "Steam Key",
+    viewMore: "View more",
+    showLess: "Show Less",
+    all: "All",
+    support24: "24/7",
   },
   es: {
     home: "Inicio",
@@ -240,6 +258,20 @@ export const T: Record<Language, Translations> = {
     trackMyOrder: "Rastrear mi pedido",
     paymentIssue: "Problema de pago",
     topupNotReceived: "Recarga no recibida",
+    popularGameKey: "Claves de Juego Populares",
+    enjoyPlayingGames: "Disfruta los juegos más divertidos",
+    newGames: "Juegos Nuevos",
+    latestArrivals: "Últimas novedades en NoxyStore",
+    trendingGiftCards: "Tarjetas Regalo Populares",
+    topGiftCards: "Las mejores tarjetas al mejor precio",
+    safeAffordablePrice: "Seguro y siempre al precio más accesible",
+    limitedTimeOffers: "Ofertas por tiempo limitado",
+    discountDeals: "Ofertas con Descuento",
+    steamKey: "Clave Steam",
+    viewMore: "Ver más",
+    showLess: "Ver menos",
+    all: "Todos",
+    support24: "24/7",
   },
   fr: {
     home: "Accueil",
@@ -332,6 +364,20 @@ export const T: Record<Language, Translations> = {
     trackMyOrder: "Suivre ma commande",
     paymentIssue: "Problème de paiement",
     topupNotReceived: "Recharge non reçue",
+    popularGameKey: "Clés de Jeu Populaires",
+    enjoyPlayingGames: "Profitez des jeux les plus amusants",
+    newGames: "Nouveaux Jeux",
+    latestArrivals: "Dernières arrivées sur NoxyStore",
+    trendingGiftCards: "Cartes Cadeaux Tendance",
+    topGiftCards: "Les meilleures cartes aux meilleurs prix",
+    safeAffordablePrice: "Sécurisé et toujours au prix abordable",
+    limitedTimeOffers: "Offres à durée limitée",
+    discountDeals: "Offres Réduites",
+    steamKey: "Clé Steam",
+    viewMore: "Voir plus",
+    showLess: "Voir moins",
+    all: "Tous",
+    support24: "24/7",
   },
   id: {
     home: "Beranda",
@@ -424,5 +470,19 @@ export const T: Record<Language, Translations> = {
     trackMyOrder: "Lacak pesanan saya",
     paymentIssue: "Masalah pembayaran",
     topupNotReceived: "Top-up belum diterima",
+    popularGameKey: "Kunci Game Populer",
+    enjoyPlayingGames: "Nikmati game-game paling seru",
+    newGames: "Game Baru",
+    latestArrivals: "Terbaru di NoxyStore",
+    trendingGiftCards: "Kartu Hadiah Populer",
+    topGiftCards: "Kartu hadiah terbaik dengan harga terbaik",
+    safeAffordablePrice: "Aman dan selalu dengan harga terjangkau",
+    limitedTimeOffers: "Penawaran waktu terbatas",
+    discountDeals: "Promo Diskon",
+    steamKey: "Kunci Steam",
+    viewMore: "Lihat lebih",
+    showLess: "Tampilkan Lebih Sedikit",
+    all: "Semua",
+    support24: "24/7",
   },
 };
