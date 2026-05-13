@@ -329,14 +329,9 @@ export function GameDetailPage() {
   // Mobile: go to VerifyPlayerPage when extra info is needed, else straight to checkout
   const handleTopUpNow = () => {
     if (!selectedSku) { toast.error("Please select a package first"); return; }
-    for (const field of extraInfoFields) {
-      if (field.required && !extraInfoValues[field.name]?.trim()) {
-        toast.error(`${field.title} is required`);
-        return;
-      }
-    }
     const finalSku = { ...selectedSku, price: applyMarkup(selectedSku.price || 0) };
     if (needsVerification) {
+      // Pass game, sku, quantity to VerifyPlayerPage — extra info collected there
       navigate("/verify-player", { state: { sku: finalSku, game, quantity } });
     } else {
       navigate("/checkout", { state: { sku: finalSku, game, quantity, extraInfo: extraInfoValues } });
@@ -673,28 +668,8 @@ export function GameDetailPage() {
   // ─── Mobile Layout ──────────────────────────────────────────────────────────
   const MobileLayout = () => (
     <div className="lg:hidden bg-white min-h-screen">
-      {/* Mobile Header — real NoxyStore header */}
-      <div className="sticky top-0 z-40 bg-[#0a0a0a]">
-        <div className="px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button onClick={() => navigate(-1)} className="text-white">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 5l-7 7 7 7" /></svg>
-            </button>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-yellow-400 rounded flex items-center justify-center flex-shrink-0">
-                <Zap size={13} className="text-black" />
-              </div>
-              <span className="text-white font-black text-sm tracking-tight">Noxy<span className="text-yellow-400">Store</span></span>
-            </div>
-          </div>
-          <div className="flex items-center gap-1">
-            <a href="https://www.trustpilot.com/review/noxystore.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 bg-white/10 rounded-lg px-2.5 py-1.5">
-              <div className="flex gap-0.5">{Array.from({length:5}).map((_,i) => <div key={i} className="w-3 h-3 bg-green-500 rounded-sm flex items-center justify-center"><Star size={7} fill="white" stroke="none" /></div>)}</div>
-              <span className="text-white text-[11px] font-semibold">4.9</span>
-            </a>
-          </div>
-        </div>
-      </div>
+      {/* Mobile Header — real layout component */}
+      <Header showMenu />
 
       <div className="pb-52">
         {/* Game info */}
@@ -923,4 +898,3 @@ export function GameDetailPage() {
     </>
   );
 }
-add real header desktop and mobile instead of the fake one and fix error mobile when select a game and click continue go to verify page.
