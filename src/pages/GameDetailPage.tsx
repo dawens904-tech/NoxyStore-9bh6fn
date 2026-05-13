@@ -900,4 +900,4 @@ export function GameDetailPage() {
     </>
   );
 }
-
+for mobile when you select a product click continue auto send to verify page and some product dont need it and fix verify page for free fire api check.
