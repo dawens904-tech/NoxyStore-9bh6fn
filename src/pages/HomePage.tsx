@@ -375,30 +375,30 @@ export function HomePage() {
               <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
                 {isLoading
                   ? Array.from({length: 4}).map((_,i) => <div key={i} className="shimmer flex-shrink-0 w-28 h-44 rounded-xl" />)
-                  : gameKeyGames.slice(0, 6).map((game) => (
+                  : gameKeyGames.slice(0, 10).map((game) => (
                     <button key={game.game_id} onClick={() => navigate(`/game/${game.game_id}`)}
-                      className="flex-shrink-0 w-28 flex flex-col bg-white rounded-xl overflow-hidden text-left hover:shadow-md transition-all">
-                      <div className="h-32 bg-gray-200 relative overflow-hidden">
+                      className="flex-shrink-0 w-24 flex flex-col bg-white rounded-xl overflow-hidden text-left hover:shadow-md transition-all">
+                      <div className="h-24 bg-gray-200 relative overflow-hidden">
                         <img src={game.game_image || `https://images.unsplash.com/photo-1538481199705-c710c4e965fc?w=200&h=200&fit=crop`} alt={game.game_name}
                           className="w-full h-full object-cover"
                           onError={(e) => { (e.target as HTMLImageElement).src = `https://images.unsplash.com/photo-1538481199705-c710c4e965fc?w=200&h=200&fit=crop`; }} />
-                        {(game.discount ?? 0) > 0 && <div className="absolute top-1.5 right-1.5 bg-orange-500 text-white text-[9px] font-bold px-1 py-0.5 rounded">-{game.discount}%</div>}
+                        {(game.discount ?? 0) > 0 && <div className="absolute top-1 right-1 bg-orange-500 text-white text-[8px] font-bold px-1 py-0.5 rounded">-{game.discount}%</div>}
                       </div>
-                      <div className="p-2">
-                        <p className="text-[11px] font-bold text-gray-900 line-clamp-2 leading-tight mb-1">{game.game_name}</p>
-                        <p className="text-[10px] text-gray-500">{t("steamKey")}</p>
+                      <div className="p-1.5">
+                        <p className="text-[10px] font-bold text-gray-900 line-clamp-2 leading-tight mb-0.5">{game.game_name}</p>
+                        <p className="text-[9px] text-gray-400">{t("steamKey")}</p>
                         {game.min_price && (
-                          <p className="text-orange-500 font-black text-xs mt-0.5">{formatPrice(Number(game.min_price))}</p>
+                          <p className="text-orange-500 font-black text-[10px] mt-0.5">{formatPrice(Number(game.min_price))}</p>
                         )}
                       </div>
                     </button>
                   ))}
                 {/* View All tile */}
                 <button onClick={() => navigate("/categories?filter=Game+Keys")}
-                  className="flex-shrink-0 w-28 flex flex-col items-center justify-center bg-yellow-400/90 rounded-xl p-3 hover:bg-yellow-400 transition-colors text-center h-44">
-                  <KeyRound size={24} className="text-black mb-2" />
-                  <p className="font-black text-black text-[11px]">{t("viewAll")}</p>
-                  <p className="text-black/70 text-[10px] mt-0.5">({gameKeyGames.length})</p>
+                  className="flex-shrink-0 w-24 flex flex-col items-center justify-center bg-yellow-400/90 rounded-xl p-2 hover:bg-yellow-400 transition-colors text-center h-36">
+                  <KeyRound size={20} className="text-black mb-1.5" />
+                  <p className="font-black text-black text-[10px]">{t("viewAll")}</p>
+                  <p className="text-black/70 text-[9px] mt-0.5">({gameKeyGames.length})</p>
                 </button>
               </div>
             </div>
@@ -487,4 +487,3 @@ export function HomePage() {
     </div>
   );
 }
-add price game on popular game key and for mobile li dwe gen 10 line gamme and make li more size piti yo tro gro make page la pa tro gro.
