@@ -10,6 +10,7 @@ import {
   Lock, Check
 } from "lucide-react";
 import { DesktopHeader } from "@/components/layout/DesktopHeader";
+import { Header } from "@/components/layout/Header";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/stores/authStore";
