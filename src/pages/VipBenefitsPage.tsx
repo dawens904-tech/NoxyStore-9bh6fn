@@ -134,11 +134,11 @@ function getPointsForNextLevel(points: number) {
 // Replace these URLs with your actual colored images
 const BENEFIT_PHOTOS: Record<string, Record<number, string>> = {
   birthday: {
-    1: "https://uzxmmddivzqjhcnnrkns.supabase.co/storage/v1/object/public/hi/v1-birthday-gold.png",
-    2: "https://uzxmmddivzqjhcnnrkns.supabase.co/storage/v1/object/public/hi/v2-birthday-green.png",
-    3: "https://uzxmmddivzqjhcnnrkns.supabase.co/storage/v1/object/public/hi/v3-birthday-blue.png",
-    4: "https://uzxmmddivzqjhcnnrkns.supabase.co/storage/v1/object/public/hi/v4-birthday-purple.png",
-    5: "https://uzxmmddivzqjhcnnrkns.supabase.co/storage/v1/object/public/hi/v5-birthday-gold.png",
+    1: "https://uzxmmddivzqjhcnnrkns.supabase.co/storage/v1/object/public/logo%20card/WhatsApp%20Image%202026-05-13%20at%2012.23.07%20PM.jpeg",
+    2: "https://uzxmmddivzqjhcnnrkns.supabase.co/storage/v1/object/public/logo%20card/WhatsApp%20Image%202026-05-13%20at%2012.23.07%20PM%20(1).jpeg",
+    3: "https://uzxmmddivzqjhcnnrkns.supabase.co/storage/v1/object/public/logo%20card/WhatsApp%20Image%202026-05-13%20at%2012.23.07%20PM%20(2).jpeg",
+    4: "https://uzxmmddivzqjhcnnrkns.supabase.co/storage/v1/object/public/logo%20card/WhatsApp%20Image%202026-05-13%20at%2012.23.07%20PM%20(3).jpeg",
+    5: "https://uzxmmddivzqjhcnnrkns.supabase.co/storage/v1/object/public/logo%20card/WhatsApp%20Image%202026-05-13%20at%2012.23.08%20PM.jpeg",
   },
   point_money: {
     1: "https://uzxmmddivzqjhcnnrkns.supabase.co/storage/v1/object/public/hi/v1-points-gold.png",
