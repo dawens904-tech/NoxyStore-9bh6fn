@@ -29,7 +29,7 @@ const PayCard = ({ src, alt, w = "w-12" }: { src: string; alt: string; w?: strin
 
 const VisaMasterLogo = () => (
   <div className="flex items-center gap-1.5">
-    <PayCard src="/img/pay.png" alt="Visa/Mastercard" w="w-20" />
+    <PayCard src="/images/IMG_8408.webp" alt="Visa/Mastercard" w="w-20" />
   </div>
 );
 
@@ -48,21 +48,18 @@ const PayPalLogo = () => (
 const PayLaterLogo = () => (
   <div className="flex items-center gap-1.5">
     <PayCard src="/images/IMG_8729.webp" alt="Pay Later" />
-    <span className="text-sm font-semibold text-gray-800">Pay Later</span>
   </div>
 );
 
 const CashAppLogo = () => (
   <div className="flex items-center gap-1.5">
     <PayCard src="/images/IMG_8727.webp" alt="Cash App" />
-    <span className="text-sm font-bold text-gray-900">Cash App</span>
   </div>
 );
 
 const MirLogo = () => (
   <div className="flex items-center gap-1.5">
     <PayCard src="/img/pay.png" alt="MIR" />
-    <span className="text-sm font-medium text-gray-700">МИР</span>
   </div>
 );
 
