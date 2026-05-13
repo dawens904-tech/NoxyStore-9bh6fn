@@ -990,3 +990,4 @@ export function CheckoutPage() {
     </>
   );
 }
+remove fake mobile header add the real header from layout mobile like desktop.
