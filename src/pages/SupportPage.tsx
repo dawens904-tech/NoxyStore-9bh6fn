@@ -241,3 +241,4 @@ function MessagesTab({ navigate, user }: { navigate: (path: string) => void; use
     </div>
   );
 }
+make this page more stable fix pi poul djanm and tex yo tro gro make it clear.
