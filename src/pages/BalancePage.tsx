@@ -734,4 +734,4 @@ function AddBankCardModal({ onClose, onSave, userEmail, userId }: {
     </div>
   );
 }
-
+please ai fix Fetch the user's real wallet balance from wallet_transactions table (sum of completed credits minus debits grouped by user_email) and display it in AccountPage balance card and BalancePage instead of the placeholder value Debug the lootbar-proxy edge function returning 500 errors: read the function logs in detail, check if the Lootbar token/session refresh is failing, add better error handling that returns descriptive messages to the client instead of generic errors.
