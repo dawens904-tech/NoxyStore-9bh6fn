@@ -1072,3 +1072,4 @@ export function AccountPage() {
     </>
   );
 }
+fix all error read al file you editing point page,vip page, account.
