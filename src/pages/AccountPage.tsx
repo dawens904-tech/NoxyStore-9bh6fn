@@ -1097,3 +1097,4 @@ export function AccountPage() {
     </>
   );
 }
+desktop version left side fix stay never sroll only right side can scroll and hidden scroll line.
