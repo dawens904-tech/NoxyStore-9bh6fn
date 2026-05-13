@@ -196,3 +196,4 @@ export default function AboutUsPage() {
     </div>
   );
 }
+fix this page pou tex lootbar and about us lan paret pi anle image lan bien paret.
