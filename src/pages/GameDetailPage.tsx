@@ -313,6 +313,20 @@ export function GameDetailPage() {
   // Determine if this product needs player verification (has extra_info fields)
   const needsVerification = extraInfoFields.length > 0;
 
+  // Desktop: always go directly to checkout with inline extra info (never to VerifyPlayerPage)
+  const handleDesktopTopUp = () => {
+    if (!selectedSku) { toast.error("Please select a package first"); return; }
+    for (const field of extraInfoFields) {
+      if (field.required && !extraInfoValues[field.name]?.trim()) {
+        toast.error(`${field.title} is required`);
+        return;
+      }
+    }
+    const finalSku = { ...selectedSku, price: applyMarkup(selectedSku.price || 0) };
+    navigate("/checkout", { state: { sku: finalSku, game, quantity, extraInfo: extraInfoValues } });
+  };
+
+  // Mobile: go to VerifyPlayerPage when extra info is needed, else straight to checkout
   const handleTopUpNow = () => {
     if (!selectedSku) { toast.error("Please select a package first"); return; }
     for (const field of extraInfoFields) {
@@ -640,7 +654,7 @@ export function GameDetailPage() {
                     <p className="text-xs text-orange-500 text-right mb-2 font-semibold">Savings ${totalSavings.toFixed(2)}</p>
                   )}
                   <button
-                    onClick={handleTopUpNow}
+                    onClick={handleDesktopTopUp}
                     disabled={!selectedSku}
                     className={`w-full py-3.5 font-bold text-base transition-all mt-3 rounded-xl ${selectedSku ? "bg-yellow-400 hover:bg-yellow-300 text-black" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}
                   >
@@ -915,4 +929,4 @@ export function GameDetailPage() {
     </>
   );
 }
-for desktop never go to verify page auto setup the lookup in Order Information enter uid for desktop use lootbar never use edg and verify player page and fix edg for mobile request better.
+
