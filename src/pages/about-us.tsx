@@ -23,31 +23,31 @@ export default function AboutUsPage() {
       <div className="hidden lg:block"><DesktopHeader /></div>
 
       {/* Hero Section with Background */}
-      <div className="relative overflow-hidden">
-        {/* Background Image - takes full height */}
-        <div 
-          className="absolute inset-0 bg-cover bg-top bg-no-repeat"
-          style={{
-            backgroundImage: `url('/images/IMG_8724.JPG')`
-          }}
+      <div className="relative overflow-hidden" style={{ minHeight: '420px' }}>
+        {/* Background Image */}
+        <img
+          src="/images/IMG_8724.JPG"
+          alt="NoxyStore background"
+          className="absolute inset-0 w-full h-full object-cover object-top"
         />
-        {/* Dark overlay for text readability */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0a]/70 via-[#0a0a0a]/40 to-[#0a0a0a]" />
+        {/* Gradient overlay — lighter at top so image shows, dark at bottom */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0a]/30 via-[#0a0a0a]/20 to-[#0a0a0a]" />
 
-        <div className="relative z-10 px-4 pt-6 pb-4 text-center">
+        {/* Content — pushed to top */}
+        <div className="relative z-10 px-4 pt-5 pb-32 text-center">
           {/* Logo */}
-          <div className="flex justify-center mb-4">
+          <div className="flex justify-center mb-3">
             <div className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-yellow-400 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-yellow-400 rounded-lg flex items-center justify-center shadow-lg">
                 <Gamepad2 className="w-6 h-6 text-black" />
               </div>
-              <span className="text-2xl font-bold italic text-yellow-400">NOXYSTORE</span>
+              <span className="text-2xl font-bold italic text-yellow-400 drop-shadow-lg">NOXYSTORE</span>
             </div>
           </div>
 
-          {/* About Text - pushed up */}
-          <h2 className="text-base font-semibold mb-1">About us:</h2>
-          <p className="text-gray-300 text-sm max-w-sm mx-auto leading-relaxed mb-3">
+          {/* About Text */}
+          <h2 className="text-base font-semibold mb-1 drop-shadow">About us:</h2>
+          <p className="text-gray-200 text-sm max-w-sm mx-auto leading-relaxed drop-shadow">
             NoxyStore is a Secure and Trusted Game Store Chosen by Millions of Players, 
             offering game top up, item trading, and game currency trading services and more.
           </p>
@@ -196,4 +196,4 @@ export default function AboutUsPage() {
     </div>
   );
 }
-fix this page pou tex lootbar and about us lan paret pi anle image lan bien paret.
+
