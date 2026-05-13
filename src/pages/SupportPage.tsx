@@ -1,4 +1,3 @@
-
 /**
  * Support Page — Home tab (FAQ + Send message) and Messages tab (AI support + VIP service)
  */
@@ -6,6 +5,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { X, ChevronRight, Send, MessageSquare, Home, Users } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
+import { useTranslation } from "@/hooks/useTranslation";
 
 const FAQ_ITEMS = [
   {
@@ -33,6 +33,7 @@ const FAQ_ITEMS = [
 export function SupportPage() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<"home" | "messages">("home");
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
 
@@ -44,7 +45,7 @@ export function SupportPage() {
           <button onClick={() => navigate(-1)} className="p-1">
             <X size={22} className="text-gray-700" />
           </button>
-          <span className="font-bold text-base">{activeTab === "messages" ? "Messages" : ""}</span>
+          <span className="font-bold text-base">{activeTab === "messages" ? t("messages") : ""}</span>
           <div className="w-8" />
         </div>
       </div>
@@ -56,9 +57,10 @@ export function SupportPage() {
             expandedFaq={expandedFaq}
             setExpandedFaq={setExpandedFaq}
             navigate={navigate}
+            t={t}
           />
         ) : (
-          <MessagesTab navigate={navigate} user={user} />
+          <MessagesTab navigate={navigate} user={user} t={t} />
         )}
       </div>
 
@@ -72,7 +74,7 @@ export function SupportPage() {
             <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${activeTab === "home" ? "bg-yellow-400" : "bg-transparent"}`}>
               <Home size={17} className={activeTab === "home" ? "text-black" : "text-gray-400"} />
             </div>
-            <span className="text-[11px] font-semibold">Home</span>
+            <span className="text-[11px] font-semibold">{t("home")}</span>
           </button>
           <button
             onClick={() => setActiveTab("messages")}
@@ -81,7 +83,7 @@ export function SupportPage() {
             <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${activeTab === "messages" ? "bg-yellow-400" : "bg-transparent"}`}>
               <MessageSquare size={17} className={activeTab === "messages" ? "text-black" : "text-gray-400"} />
             </div>
-            <span className="text-[11px] font-semibold">Messages</span>
+            <span className="text-[11px] font-semibold">{t("messages")}</span>
           </button>
         </div>
       </div>
@@ -89,11 +91,12 @@ export function SupportPage() {
   );
 }
 
-function HomeTab({ faqItems, expandedFaq, setExpandedFaq, navigate }: {
+function HomeTab({ faqItems, expandedFaq, setExpandedFaq, navigate, t }: {
   faqItems: typeof FAQ_ITEMS;
   expandedFaq: number | null;
   setExpandedFaq: (i: number | null) => void;
   navigate: (path: string) => void;
+  t: (key: any) => string;
 }) {
   return (
     <div>
@@ -123,23 +126,23 @@ function HomeTab({ faqItems, expandedFaq, setExpandedFaq, navigate }: {
           ))}
         </div>
 
-        <h1 className="text-xl font-black text-black mb-1">Welcome!</h1>
-        <p className="text-sm font-semibold text-black/80">What can we do for you?</p>
+        <h1 className="text-xl font-black text-black mb-1">{t("supportWelcome")}</h1>
+        <p className="text-sm font-semibold text-black/80">{t("supportSubtitle")}</p>
       </div>
 
       <div className="px-4 -mt-4 space-y-3 pb-6">
         {/* Send message card */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex items-center justify-between">
           <div>
-            <p className="text-sm font-bold text-gray-900">Send a message to us</p>
-            <p className="text-xs text-gray-500 mt-0.5">We usually respond within a few minutes.</p>
+            <p className="text-sm font-bold text-gray-900">{t("sendMessageToUs")}</p>
+            <p className="text-xs text-gray-500 mt-0.5">{t("respondInMinutes")}</p>
           </div>
           <button
             onClick={() => navigate("/support/vip")}
             className="flex items-center gap-1.5 bg-yellow-400 text-black font-bold px-3 py-2 rounded-lg text-sm hover:bg-yellow-300 transition-colors flex-shrink-0 ml-3"
           >
             <Send size={14} />
-            Send
+            {t("send")}
           </button>
         </div>
 
@@ -149,7 +152,7 @@ function HomeTab({ faqItems, expandedFaq, setExpandedFaq, navigate }: {
             <div className="w-7 h-7 bg-gray-900 rounded-full flex items-center justify-center flex-shrink-0">
               <span className="text-white font-black text-xs">?</span>
             </div>
-            <span className="font-bold text-gray-900">Help Center</span>
+            <span className="font-bold text-gray-900">{t("helpCenter")}</span>
           </div>
           {faqItems.slice(0, 3).map((item, i) => (
             <div key={i} className="border-b border-gray-100 last:border-0">
@@ -176,7 +179,7 @@ function HomeTab({ faqItems, expandedFaq, setExpandedFaq, navigate }: {
   );
 }
 
-function MessagesTab({ navigate, user }: { navigate: (path: string) => void; user: any }) {
+function MessagesTab({ navigate, user, t }: { navigate: (path: string) => void; user: any; t: (key: any) => string }) {
   const vipLastMessage = "Greetings! Welcome to NoxyStore. How can I assist you today?";
   const vipTime = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
@@ -189,14 +192,13 @@ function MessagesTab({ navigate, user }: { navigate: (path: string) => void; use
       >
         <div className="w-14 h-14 bg-yellow-400 rounded-full flex items-center justify-center flex-shrink-0">
           <svg viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.5" className="w-7 h-7">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" fill="black" stroke="none"/>
             <rect x="3" y="3" width="18" height="18" rx="4" stroke="black" strokeWidth="1.5" fill="none"/>
             <path d="M8 9h8M8 12h5" stroke="black" strokeWidth="1.5" strokeLinecap="round"/>
           </svg>
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold text-gray-900">AI support</p>
-          <p className="text-xs text-gray-500 truncate">AI Support is at your service around the cl...</p>
+          <p className="text-sm font-bold text-gray-900">{t("aiSupport")}</p>
+          <p className="text-xs text-gray-500 truncate">{t("aiSupportDesc")}</p>
         </div>
       </button>
 
@@ -214,7 +216,7 @@ function MessagesTab({ navigate, user }: { navigate: (path: string) => void; use
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between mb-0.5">
-            <p className="text-sm font-bold text-gray-900">NoxyStore VIP Service</p>
+            <p className="text-sm font-bold text-gray-900">{t("vipService")}</p>
             <span className="text-[11px] text-gray-400">{vipTime}</span>
           </div>
           <p className="text-xs text-gray-500 truncate">{vipLastMessage.slice(0, 40)}...</p>
@@ -232,13 +234,12 @@ function MessagesTab({ navigate, user }: { navigate: (path: string) => void; use
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-0.5">
-            <p className="text-sm font-bold text-gray-900">Community Chat</p>
+            <p className="text-sm font-bold text-gray-900">{t("communityChat")}</p>
             <span className="bg-yellow-400 text-black text-[9px] font-black px-1.5 py-0.5 leading-none">LIVE</span>
           </div>
-          <p className="text-xs text-gray-500 truncate">Chat with all NoxyStore members — photos &amp; voice</p>
+          <p className="text-xs text-gray-500 truncate">{t("communityChatDesc")}</p>
         </div>
       </button>
     </div>
   );
 }
-add language support and also settings account coupons all page.

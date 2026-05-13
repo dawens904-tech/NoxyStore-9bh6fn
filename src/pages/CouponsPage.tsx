@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { DesktopHeader } from "@/components/layout/DesktopHeader";
 import { Header } from "@/components/layout/Header";
 import { BottomNav } from "@/components/layout/BottomNav";
+import { useTranslation } from "@/hooks/useTranslation";
 import coupon10off from "@/assets/coupon-10off.png";
 import coupon6off from "@/assets/coupon-6off.png";
 import { toast } from "sonner";
@@ -28,7 +29,7 @@ function daysUntil(dateStr: string) {
   return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
 }
 
-function CouponCard({ coupon, onUse }: { coupon: Coupon; onUse: (c: Coupon) => void }) {
+function CouponCard({ coupon, onUse, t }: { coupon: Coupon; onUse: (c: Coupon) => void; t: (key: any) => string }) {
   const days = daysUntil(coupon.expires_at);
   const isExpired = days === 0;
   const img = coupon.discount_value >= 10 ? coupon10off : coupon6off;
@@ -46,12 +47,12 @@ function CouponCard({ coupon, onUse }: { coupon: Coupon; onUse: (c: Coupon) => v
               <span className="text-gray-500 text-sm font-medium">(Up to ${coupon.max_discount.toFixed(2)})</span>
             )}
           </div>
-          <p className="text-gray-500 text-xs mt-1">Valid for orders over ${coupon.min_order.toFixed(2)}</p>
+          <p className="text-gray-500 text-xs mt-1">{t("validForOrders")} ${coupon.min_order.toFixed(2)}</p>
           <p className="text-gray-900 font-bold text-sm mt-0.5">
             {coupon.description || `New User ${coupon.discount_value}% OFF Coupon`}
           </p>
           <button className="flex items-center gap-0.5 mt-0.5">
-            <span className="text-xs text-gray-400">Coupon rules</span>
+            <span className="text-xs text-gray-400">{t("couponRules")}</span>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-gray-400"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
           </button>
         </div>
@@ -59,19 +60,23 @@ function CouponCard({ coupon, onUse }: { coupon: Coupon; onUse: (c: Coupon) => v
       <div className="border-t border-dashed border-orange-100 mx-4" />
       <div className="px-4 py-3 flex items-center justify-between">
         <p className={`text-sm font-medium ${isExpired ? "text-red-400" : days <= 3 ? "text-orange-500" : "text-gray-500"}`}>
-          {coupon.is_used ? "Used" : isExpired ? "Expired" : `Expires in ${days} day${days !== 1 ? "s" : ""}`}
+          {coupon.is_used
+            ? t("used")
+            : isExpired
+            ? t("expired")
+            : `${t("expiresIn")} ${days} day${days !== 1 ? "s" : ""}`}
         </p>
         {!coupon.is_used && !isExpired && (
           <button
             onClick={() => onUse(coupon)}
             className="bg-yellow-400 hover:bg-yellow-300 text-black font-bold text-sm px-5 py-2 rounded-xl transition-colors"
           >
-            Use
+            {t("use")}
           </button>
         )}
         {coupon.is_used && (
           <span className="flex items-center gap-1 text-green-600 text-sm font-semibold">
-            <Check size={14} /> Used
+            <Check size={14} /> {t("used")}
           </span>
         )}
       </div>
@@ -82,6 +87,7 @@ function CouponCard({ coupon, onUse }: { coupon: Coupon; onUse: (c: Coupon) => v
 export function CouponsPage() {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuthStore();
+  const { t } = useTranslation();
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [redeemCode, setRedeemCode] = useState("");
@@ -90,7 +96,6 @@ export function CouponsPage() {
   useEffect(() => {
     if (!isAuthenticated) { navigate("/login"); return; }
     loadCoupons();
-    // Auto-grant new user coupons if they have none
     checkAndGrantNewUserCoupons();
   }, [isAuthenticated]);
 
@@ -112,7 +117,6 @@ export function CouponsPage() {
       .select("id", { count: "exact", head: true })
       .eq("user_email", user.email);
     if (count === 0) {
-      // Grant new user coupons
       const expires14 = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
       await supabase.from("user_coupons").insert([
         {
@@ -141,7 +145,6 @@ export function CouponsPage() {
   };
 
   const handleUseCoupon = (coupon: Coupon) => {
-    // Store selected coupon in sessionStorage and navigate to home
     sessionStorage.setItem("pending_coupon", JSON.stringify(coupon));
     toast.success("Coupon selected! It will be applied at checkout.");
     navigate("/");
@@ -169,7 +172,6 @@ export function CouponsPage() {
       return;
     }
 
-    // Check if user already used this code
     const { count } = await supabase
       .from("user_coupons")
       .select("id", { count: "exact", head: true })
@@ -207,7 +209,7 @@ export function CouponsPage() {
   return (
     <div className="min-h-screen bg-[#f5f5f5]">
       <div className="hidden lg:block"><DesktopHeader /></div>
-      <div className="lg:hidden"><Header showBack title="Coupon" /></div>
+      <div className="lg:hidden"><Header showBack title={t("coupons")} /></div>
 
       <div className="max-w-2xl mx-auto px-4 pt-4 pb-24 lg:pb-8">
         {/* Redeem code */}
@@ -216,7 +218,7 @@ export function CouponsPage() {
             type="text"
             value={redeemCode}
             onChange={(e) => setRedeemCode(e.target.value.toUpperCase())}
-            placeholder="Please enter the redeem code."
+            placeholder={t("redeemCodePlaceholder")}
             className="flex-1 bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 outline-none focus:border-yellow-400"
           />
           <button
@@ -224,7 +226,7 @@ export function CouponsPage() {
             disabled={!redeemCode.trim() || isRedeeming}
             className="bg-yellow-400 hover:bg-yellow-300 text-black font-bold px-5 py-3 rounded-xl transition-colors disabled:opacity-50"
           >
-            {isRedeeming ? <Loader2 size={16} className="animate-spin" /> : "Redeem"}
+            {isRedeeming ? <Loader2 size={16} className="animate-spin" /> : t("redeem")}
           </button>
         </div>
 
@@ -237,19 +239,19 @@ export function CouponsPage() {
             {activeCoupons.length === 0 && usedExpired.length === 0 ? (
               <div className="bg-white rounded-2xl p-12 text-center shadow-sm">
                 <Tag size={48} className="text-gray-200 mx-auto mb-4" />
-                <p className="text-gray-500 font-medium">No coupons yet</p>
-                <p className="text-gray-400 text-sm mt-1">Register to receive new user coupons</p>
+                <p className="text-gray-500 font-medium">{t("noCoupons")}</p>
+                <p className="text-gray-400 text-sm mt-1">{t("registerForCoupons")}</p>
               </div>
             ) : (
               <div className="space-y-4">
                 {activeCoupons.map((c) => (
-                  <CouponCard key={c.id} coupon={c} onUse={handleUseCoupon} />
+                  <CouponCard key={c.id} coupon={c} onUse={handleUseCoupon} t={t} />
                 ))}
                 {usedExpired.length > 0 && (
                   <>
-                    <p className="text-sm font-semibold text-gray-400 mt-6 mb-2">Used / Expired</p>
+                    <p className="text-sm font-semibold text-gray-400 mt-6 mb-2">{t("usedExpired")}</p>
                     {usedExpired.map((c) => (
-                      <CouponCard key={c.id} coupon={c} onUse={handleUseCoupon} />
+                      <CouponCard key={c.id} coupon={c} onUse={handleUseCoupon} t={t} />
                     ))}
                   </>
                 )}

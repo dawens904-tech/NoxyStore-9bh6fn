@@ -56,7 +56,15 @@ export type TranslationKey =
   | "popularGameKey" | "enjoyPlayingGames" | "newGames" | "latestArrivals"
   | "trendingGiftCards" | "topGiftCards" | "safeAffordablePrice"
   | "limitedTimeOffers" | "discountDeals" | "steamKey" | "viewMore"
-  | "showLess" | "all" | "support24";
+  | "showLess" | "all" | "support24"
+  // Support page
+  | "supportWelcome" | "supportSubtitle" | "sendMessageToUs" | "respondInMinutes"
+  | "send" | "aiSupport" | "aiSupportDesc" | "vipService" | "communityChat"
+  | "communityChatDesc" | "messages" | "noRecords"
+  // Coupons page
+  | "coupon" | "redeemCode" | "redeemCodePlaceholder" | "redeem" | "noCoupons"
+  | "registerForCoupons" | "usedExpired" | "couponRules" | "use"
+  | "used" | "expired" | "expiresIn" | "validForOrders";
 
 type Translations = Record<TranslationKey, string>;
 
@@ -166,6 +174,33 @@ export const T: Record<Language, Translations> = {
     showLess: "Show Less",
     all: "All",
     support24: "24/7",
+    // Support page
+    supportWelcome: "Welcome!",
+    supportSubtitle: "What can we do for you?",
+    sendMessageToUs: "Send a message to us",
+    respondInMinutes: "We usually respond within a few minutes.",
+    send: "Send",
+    aiSupport: "AI Support",
+    aiSupportDesc: "AI Support is at your service around the clock",
+    vipService: "NoxyStore VIP Service",
+    communityChat: "Community Chat",
+    communityChatDesc: "Chat with all NoxyStore members — photos & voice",
+    messages: "Messages",
+    noRecords: "No records",
+    // Coupons page
+    coupon: "Coupon",
+    redeemCode: "Redeem Code",
+    redeemCodePlaceholder: "Please enter the redeem code.",
+    redeem: "Redeem",
+    noCoupons: "No coupons yet",
+    registerForCoupons: "Register to receive new user coupons",
+    usedExpired: "Used / Expired",
+    couponRules: "Coupon rules",
+    use: "Use",
+    used: "Used",
+    expired: "Expired",
+    expiresIn: "Expires in",
+    validForOrders: "Valid for orders over",
   },
   es: {
     home: "Inicio",
@@ -272,6 +307,33 @@ export const T: Record<Language, Translations> = {
     showLess: "Ver menos",
     all: "Todos",
     support24: "24/7",
+    // Support page
+    supportWelcome: "¡Bienvenido!",
+    supportSubtitle: "¿En qué podemos ayudarte?",
+    sendMessageToUs: "Envíanos un mensaje",
+    respondInMinutes: "Generalmente respondemos en minutos.",
+    send: "Enviar",
+    aiSupport: "Soporte IA",
+    aiSupportDesc: "Soporte IA disponible las 24 horas",
+    vipService: "Servicio VIP de NoxyStore",
+    communityChat: "Chat Comunitario",
+    communityChatDesc: "Chatea con todos los miembros — fotos y voz",
+    messages: "Mensajes",
+    noRecords: "Sin registros",
+    // Coupons page
+    coupon: "Cupón",
+    redeemCode: "Código de Canje",
+    redeemCodePlaceholder: "Ingresa el código de canje.",
+    redeem: "Canjear",
+    noCoupons: "Sin cupones aún",
+    registerForCoupons: "Regístrate para recibir cupones de nuevo usuario",
+    usedExpired: "Usado / Expirado",
+    couponRules: "Reglas del cupón",
+    use: "Usar",
+    used: "Usado",
+    expired: "Expirado",
+    expiresIn: "Expira en",
+    validForOrders: "Válido para pedidos mayores de",
   },
   fr: {
     home: "Accueil",
@@ -378,6 +440,33 @@ export const T: Record<Language, Translations> = {
     showLess: "Voir moins",
     all: "Tous",
     support24: "24/7",
+    // Support page
+    supportWelcome: "Bienvenue!",
+    supportSubtitle: "Comment pouvons-nous vous aider?",
+    sendMessageToUs: "Envoyez-nous un message",
+    respondInMinutes: "Nous répondons généralement en quelques minutes.",
+    send: "Envoyer",
+    aiSupport: "Support IA",
+    aiSupportDesc: "Support IA disponible à toute heure",
+    vipService: "Service VIP NoxyStore",
+    communityChat: "Chat Communautaire",
+    communityChatDesc: "Chattez avec tous les membres — photos & voix",
+    messages: "Messages",
+    noRecords: "Aucun enregistrement",
+    // Coupons page
+    coupon: "Coupon",
+    redeemCode: "Code de Réduction",
+    redeemCodePlaceholder: "Entrez le code de réduction.",
+    redeem: "Échanger",
+    noCoupons: "Pas encore de coupons",
+    registerForCoupons: "Inscrivez-vous pour des coupons nouveaux utilisateurs",
+    usedExpired: "Utilisé / Expiré",
+    couponRules: "Règles du coupon",
+    use: "Utiliser",
+    used: "Utilisé",
+    expired: "Expiré",
+    expiresIn: "Expire dans",
+    validForOrders: "Valable pour les commandes de plus de",
   },
   id: {
     home: "Beranda",
@@ -484,5 +573,32 @@ export const T: Record<Language, Translations> = {
     showLess: "Tampilkan Lebih Sedikit",
     all: "Semua",
     support24: "24/7",
+    // Support page
+    supportWelcome: "Selamat Datang!",
+    supportSubtitle: "Apa yang bisa kami bantu?",
+    sendMessageToUs: "Kirim pesan kepada kami",
+    respondInMinutes: "Kami biasanya merespons dalam beberapa menit.",
+    send: "Kirim",
+    aiSupport: "Dukungan AI",
+    aiSupportDesc: "Dukungan AI siap melayani sepanjang waktu",
+    vipService: "Layanan VIP NoxyStore",
+    communityChat: "Chat Komunitas",
+    communityChatDesc: "Chat dengan semua anggota NoxyStore — foto & suara",
+    messages: "Pesan",
+    noRecords: "Tidak ada catatan",
+    // Coupons page
+    coupon: "Kupon",
+    redeemCode: "Kode Penukaran",
+    redeemCodePlaceholder: "Masukkan kode penukaran.",
+    redeem: "Tukarkan",
+    noCoupons: "Belum ada kupon",
+    registerForCoupons: "Daftar untuk mendapatkan kupon pengguna baru",
+    usedExpired: "Digunakan / Kadaluarsa",
+    couponRules: "Aturan kupon",
+    use: "Gunakan",
+    used: "Digunakan",
+    expired: "Kadaluarsa",
+    expiresIn: "Berakhir dalam",
+    validForOrders: "Berlaku untuk pesanan di atas",
   },
 };
