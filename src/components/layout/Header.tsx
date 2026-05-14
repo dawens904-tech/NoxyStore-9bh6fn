@@ -65,19 +65,6 @@ export function Header({ showMenu, title, showBack }: HeaderProps) {
             <button onClick={() => navigate("/cart")} className="relative text-white p-2">
               <ShoppingCart size={19} />
               {items.length > 0 && (
-                <span className="absolute top-0.5 right-0.5 bg-yellow-400 text-black text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center leading-none">
-                  {items.length > 9 ? "9+" : items.length}
-                </span>
-              )}
-            </button>
-
-            {/* Notification bell (authenticated) */}
-            {isAuthenticated && (
-              <button onClick={() => navigate("/messages")} className="relative text-white p-2">
-                <Bell size={19} />
-                <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-yellow-400 rounded-full" />
-              </button>
-            )}
 
             {/* Lang/Currency or login */}
             {isAuthenticated ? (
