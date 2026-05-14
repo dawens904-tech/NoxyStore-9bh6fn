@@ -192,4 +192,4 @@ function DesktopFooter() {
     </footer>
   );
 }
-logo card yo small yo tro gro.
+
