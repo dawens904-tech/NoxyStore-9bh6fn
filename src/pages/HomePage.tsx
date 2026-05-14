@@ -647,3 +647,25 @@ export function HomePage() {
     </div>
   );
 }
+hello ai please also add this 2 fallback more 2. Secondary Source (Advanced / High Accuracy)
+
+Use IGDB
+
+* Use only if RAWG fails
+* Fetch game cover image and metadata
+* Cache result in database for future use
+* Requires proper authentication (Twitch developer setup)
+
+API docs: https://api-docs.igdb.com
+
+⸻
+
+3. Fallback Source (Last Resort)
+
+Use Google Image results via scraping API such as SerpApi
+
+* Search query: “{game name} game cover”
+* Extract first clean image result
+* Store image URL in database
+
+Docs: https://serpapi.com/images-results.
