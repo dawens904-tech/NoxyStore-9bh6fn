@@ -18,10 +18,14 @@ export function LanguageCurrencyModal({ isOpen, onClose }: LanguageCurrencyModal
   const [selectedCurrency, setSelectedCurrency] = useState(currency);
 
   const handleConfirm = () => {
+    const langChanged = selectedLang !== language;
     setLanguage(selectedLang);
     setCurrency(selectedCurrency);
     toast.success("Settings updated!");
     onClose();
+    if (langChanged) {
+      setTimeout(() => window.location.reload(), 300);
+    }
   };
 
   if (!isOpen) return null;

@@ -149,7 +149,7 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
           {/* Language/Currency toggle */}
           <button
             onClick={() => setShowLangModal(true)}
-            className="hidden lg:flex items-center gap-1.5 bg-white/10 hover:bg-white/15 text-white text-sm font-semibold px-3 py-1.5 rounded-lg transition-colors"
+            className="hidden lg:flex items-center gap-1.5 bg-white/10 hover:bg-white/15 text-white text-sm font-semibold px-3 py-2 rounded transition-colors"
           >
             {langDisplay} / {currDisplay}
           </button>
@@ -247,4 +247,4 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
     </>
   );
 }
-fix modal currency an square and when change language auto reload the website for aply.
+
