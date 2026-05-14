@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { ArrowLeft, X, Search, Star, Trash2, Check, Plus, Copy, ChevronRight, Info } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { supabase } from "@/lib/supabase";
-import { MOCK_GAMES, CATEGORIES } from "@/constants/mockData";
 import { DesktopHeader } from "@/components/layout/DesktopHeader";
 import { Header } from "@/components/layout/Header";
 import { BottomNav } from "@/components/layout/BottomNav";
@@ -794,3 +793,4 @@ export function AffiliatePage() {
     </div>
   );
 }
+remove import mockdata in all page that have mock data.
