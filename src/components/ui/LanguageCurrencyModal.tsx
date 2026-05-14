@@ -103,3 +103,4 @@ export function LanguageCurrencyModal({ isOpen, onClose }: LanguageCurrencyModal
     </div>
   );
 }
+make the modal square instead of border.
