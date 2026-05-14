@@ -214,3 +214,4 @@ export function generateReferenceId(): string {
 }
 
 export const tokenManager = { isAuthenticated: () => true, getToken: () => "server-side", logout: () => {} };
+add real rating fetch remove demo add real fetch.
