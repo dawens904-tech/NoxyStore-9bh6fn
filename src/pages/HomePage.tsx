@@ -653,3 +653,5 @@ export function HomePage() {
     </div>
   );
 }
+
+please fix banner error loading never load when u enter to the website auto set banner only game must fetch banner stay alive never loading.
