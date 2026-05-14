@@ -164,3 +164,4 @@ export function Header({ showMenu, title, showBack }: HeaderProps) {
   );
 }
 
+make the name ‘Noxy’ a bit closer to the side menu, not centered, and keep the layout clean
