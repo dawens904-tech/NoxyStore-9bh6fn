@@ -660,4 +660,64 @@ export function HomePage() {
     </div>
   );
 }
+Hello,  
+
+I am working on a project where I display game listings from a reseller API (Lootbar). However, the API does not provide game images or detailed game assets, so I need to implement an automatic image-fetching system inside the website.
+
+Please integrate a fallback image system that works in this priority order:
+
+---
+
+## 🔥 Image Fetching Strategy (IMPORTANT)
+
+### 1. Primary Source (Best Quality)
+Use the RAWG Video Games Database  
+- Search game by name  
+- Retrieve official background_image  
+- Save it in my database for caching  
+- Do NOT call API every time (only if image is missing)
+
+API docs: https://rawg.io/apidocs
+
+---
+
+### 2. Secondary Source (Advanced / High Accuracy)
+Use IGDB  
+- Use only if RAWG fails  
+- Fetch game cover image and metadata  
+- Cache result in database for future use  
+- Requires proper authentication (Twitch developer setup)
+
+API docs: https://api-docs.igdb.com
+
+---
+
+### 3. Fallback Source (Last Resort)
+Use Google Image results via scraping API such as SerpApi  
+- Search query: “{game name} game cover”  
+- Extract first clean image result  
+- Store image URL in database
+
+Docs: https://serpapi.com/images-results
+
+---
+
+## ⚙️ Important Requirements
+
+- Images must be saved in database (do not fetch repeatedly)
+- If a game already has an image → do not call APIs again
+- Add a default placeholder image if all sources fail
+- Normalize game names before searching (remove extra text like “UC”, “Top Up”, etc.)
+- Implement caching system to reduce API calls and improve speed
+- Prioritize performance and minimize latency
+
+---
+
+## 🚀 Goal
+
+The goal is to fully automate game image assignment so that when Lootbar API returns a game, the system automatically finds and stores a real image without manual work.
+
+This should work in the background and be fully scalable.
+
+Thank you.
 
