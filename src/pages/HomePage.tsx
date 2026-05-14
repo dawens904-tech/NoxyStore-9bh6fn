@@ -648,3 +648,4 @@ export function HomePage() {
     </div>
   );
 }
+please on desktop even if you scroll still header must still stay.
