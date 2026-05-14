@@ -247,3 +247,4 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
     </>
   );
 }
+fix modal currency an square and when change language auto reload the website for aply.
