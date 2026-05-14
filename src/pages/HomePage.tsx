@@ -649,4 +649,3 @@ export function HomePage() {
     </div>
   );
 }
-add a bulk redeem code generator in AdminCouponsPage that lets admin specify a quantity (e.g. 50 codes), prefix, and reward value, then generates and inserts all codes at once into admin_redeem_codes table with a single click.

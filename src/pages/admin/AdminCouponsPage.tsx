@@ -42,6 +42,10 @@ const EMPTY_REDEEM_FORM = {
   code: "", type: "coupon", value: "10", max_uses: "1", expires_days: "30", has_expiry: true,
 };
 
+const EMPTY_BULK_FORM = {
+  prefix: "NOXY", quantity: "10", type: "coupon", value: "10", max_uses: "1", expires_days: "30", has_expiry: true,
+};
+
 function generateCode(prefix = "NOXY") {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let code = prefix;
@@ -64,6 +68,10 @@ export function AdminCouponsPage() {
   const [showRedeemForm, setShowRedeemForm] = useState(false);
   const [redeemForm, setRedeemForm] = useState(EMPTY_REDEEM_FORM);
   const [saving, setSaving] = useState(false);
+  const [showBulkForm, setShowBulkForm] = useState(false);
+  const [bulkForm, setBulkForm] = useState(EMPTY_BULK_FORM);
+  const [bulkGenerating, setBulkGenerating] = useState(false);
+  const [bulkResult, setBulkResult] = useState<{ generated: number; codes: string[] } | null>(null);
 
   useEffect(() => {
     loadCoupons();
@@ -158,6 +166,78 @@ export function AdminCouponsPage() {
     toast.success(`Copied: ${code}`);
   }
 
+  async function bulkGenerateCodes() {
+    const qty = parseInt(bulkForm.quantity);
+    if (!bulkForm.prefix.trim()) { toast.error("Prefix is required"); return; }
+    if (isNaN(qty) || qty < 1 || qty > 500) { toast.error("Quantity must be 1–500"); return; }
+    if (!bulkForm.value || parseFloat(bulkForm.value) <= 0) { toast.error("Value must be > 0"); return; }
+    setBulkGenerating(true);
+    setBulkResult(null);
+
+    let expires_at: string | null = null;
+    if (bulkForm.has_expiry && bulkForm.expires_days) {
+      const d = new Date();
+      d.setDate(d.getDate() + parseInt(bulkForm.expires_days));
+      expires_at = d.toISOString();
+    }
+
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    const prefix = bulkForm.prefix.toUpperCase().replace(/[^A-Z0-9]/g, "");
+    const generated: string[] = [];
+    const failed: string[] = [];
+
+    // Generate unique codes
+    const existingSet = new Set(redeemCodes.map(r => r.code));
+    let attempts = 0;
+    while (generated.length < qty && attempts < qty * 5) {
+      attempts++;
+      let suffix = "";
+      for (let i = 0; i < 6; i++) suffix += chars[Math.floor(Math.random() * chars.length)];
+      const code = `${prefix}${suffix}`;
+      if (!existingSet.has(code) && !generated.includes(code)) {
+        generated.push(code);
+      }
+    }
+
+    if (generated.length === 0) {
+      toast.error("Failed to generate unique codes");
+      setBulkGenerating(false);
+      return;
+    }
+
+    // Batch insert in chunks of 50
+    const chunkSize = 50;
+    let totalInserted = 0;
+    for (let i = 0; i < generated.length; i += chunkSize) {
+      const chunk = generated.slice(i, i + chunkSize).map(code => ({
+        code,
+        type: bulkForm.type,
+        value: parseFloat(bulkForm.value),
+        max_uses: parseInt(bulkForm.max_uses) || 1,
+        expires_at,
+        is_active: true,
+      }));
+      const { error } = await supabase.from("admin_redeem_codes").insert(chunk);
+      if (!error) totalInserted += chunk.length;
+    }
+
+    setBulkResult({ generated: totalInserted, codes: generated.slice(0, totalInserted) });
+    toast.success(`${totalInserted} codes generated!`);
+    setBulkGenerating(false);
+    loadRedeemCodes();
+  }
+
+  function downloadCodesCSV(codes: string[]) {
+    const csv = ["Code", ...codes].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `redeem-codes-${Date.now()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   // ─── Render ───────────────────────────────────────────────────────────────
 
   const isExpired = (expires_at: string | null) => expires_at ? new Date(expires_at) < new Date() : false;
@@ -199,13 +279,166 @@ export function AdminCouponsPage() {
               <div>
                 <p className="text-sm text-gray-500">Create shareable codes users can redeem for coupon rewards.</p>
               </div>
-              <button
-                onClick={() => setShowRedeemForm(!showRedeemForm)}
-                className="flex items-center gap-2 bg-yellow-400 text-black font-bold px-4 py-2 rounded-xl text-sm hover:bg-yellow-300"
-              >
-                <Plus size={15} /> New Code
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => { setShowBulkForm(!showBulkForm); setShowRedeemForm(false); setBulkResult(null); }}
+                  className="flex items-center gap-2 bg-gray-100 text-gray-700 font-bold px-4 py-2 rounded-xl text-sm hover:bg-gray-200"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 2v20M2 12h20"/></svg>
+                  Bulk Generate
+                </button>
+                <button
+                  onClick={() => { setShowRedeemForm(!showRedeemForm); setShowBulkForm(false); }}
+                  className="flex items-center gap-2 bg-yellow-400 text-black font-bold px-4 py-2 rounded-xl text-sm hover:bg-yellow-300"
+                >
+                  <Plus size={15} /> New Code
+                </button>
+              </div>
             </div>
+
+            {/* Bulk Generator Form */}
+            {showBulkForm && (
+              <div className="bg-white rounded-xl border border-gray-200 p-5 mb-5">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="font-bold text-gray-900">Bulk Code Generator</h3>
+                    <p className="text-xs text-gray-400 mt-0.5">Generate multiple unique codes at once and insert them all into the database.</p>
+                  </div>
+                  <button onClick={() => { setShowBulkForm(false); setBulkResult(null); }}>
+                    <X size={15} className="text-gray-400" />
+                  </button>
+                </div>
+                <div className="grid grid-cols-3 gap-3 mb-3">
+                  <div>
+                    <label className="text-xs font-bold text-gray-600 mb-1 block">Prefix</label>
+                    <input
+                      value={bulkForm.prefix}
+                      onChange={e => setBulkForm(f => ({ ...f, prefix: e.target.value.toUpperCase().slice(0, 8) }))}
+                      placeholder="NOXY"
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-yellow-400 font-mono"
+                    />
+                    <p className="text-[10px] text-gray-400 mt-0.5">Max 8 chars, letters/numbers</p>
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-gray-600 mb-1 block">Quantity</label>
+                    <input
+                      type="number" min="1" max="500"
+                      value={bulkForm.quantity}
+                      onChange={e => setBulkForm(f => ({ ...f, quantity: e.target.value }))}
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-yellow-400"
+                    />
+                    <p className="text-[10px] text-gray-400 mt-0.5">Max 500 per batch</p>
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-gray-600 mb-1 block">Max Uses / Code</label>
+                    <input
+                      type="number" min="1"
+                      value={bulkForm.max_uses}
+                      onChange={e => setBulkForm(f => ({ ...f, max_uses: e.target.value }))}
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-yellow-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-gray-600 mb-1 block">Reward Type</label>
+                    <select
+                      value={bulkForm.type}
+                      onChange={e => setBulkForm(f => ({ ...f, type: e.target.value }))}
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none bg-white"
+                    >
+                      <option value="coupon">Coupon (% discount)</option>
+                      <option value="percent">Percent Off</option>
+                      <option value="fixed">Fixed Amount ($)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-gray-600 mb-1 block">
+                      Value {bulkForm.type === "fixed" ? "($)" : "(%)"}
+                    </label>
+                    <input
+                      type="number" min="0"
+                      value={bulkForm.value}
+                      onChange={e => setBulkForm(f => ({ ...f, value: e.target.value }))}
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-yellow-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-gray-600 mb-1 block">Expiry</label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div
+                        onClick={() => setBulkForm(f => ({ ...f, has_expiry: !f.has_expiry }))}
+                        className={`w-10 h-6 rounded-full transition-colors flex items-center px-1 cursor-pointer flex-shrink-0 ${ bulkForm.has_expiry ? "bg-yellow-400" : "bg-gray-200"}`}
+                      >
+                        <div className={`w-4 h-4 bg-white rounded-full shadow transition-transform ${bulkForm.has_expiry ? "translate-x-4" : "translate-x-0"}`} />
+                      </div>
+                      {bulkForm.has_expiry && (
+                        <input
+                          type="number" min="1"
+                          value={bulkForm.expires_days}
+                          onChange={e => setBulkForm(f => ({ ...f, expires_days: e.target.value }))}
+                          className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-yellow-400"
+                          placeholder="days"
+                        />
+                      )}
+                    </div>
+                    {bulkForm.has_expiry && <p className="text-[10px] text-gray-400 mt-0.5">days from now</p>}
+                  </div>
+                </div>
+
+                {/* Preview */}
+                <div className="bg-gray-50 rounded-xl p-3 mb-4 flex items-center gap-4 text-sm">
+                  <div className="flex-1">
+                    <span className="text-gray-500">Sample codes: </span>
+                    <span className="font-mono font-bold text-gray-900">
+                      {bulkForm.prefix.toUpperCase() || "NOXY"}XXXXXX, {bulkForm.prefix.toUpperCase() || "NOXY"}YYYYYY, …
+                    </span>
+                  </div>
+                  <span className="text-gray-400 text-xs">{bulkForm.quantity} codes × {bulkForm.value}{bulkForm.type === "fixed" ? "$" : "%"}</span>
+                </div>
+
+                <div className="flex gap-2">
+                  <button
+                    onClick={bulkGenerateCodes}
+                    disabled={bulkGenerating}
+                    className="flex items-center gap-2 bg-yellow-400 text-black font-bold px-6 py-2.5 rounded-xl text-sm hover:bg-yellow-300 disabled:opacity-50"
+                  >
+                    {bulkGenerating ? (
+                      <><RefreshCw size={14} className="animate-spin" /> Generating…</>
+                    ) : (
+                      <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 2v20M2 12h20"/></svg> Generate {bulkForm.quantity} Codes</>
+                    )}
+                  </button>
+                  <button onClick={() => { setShowBulkForm(false); setBulkResult(null); }} className="border border-gray-200 text-gray-600 font-semibold px-5 py-2.5 rounded-xl text-sm">
+                    Cancel
+                  </button>
+                </div>
+
+                {/* Result */}
+                {bulkResult && (
+                  <div className="mt-4 bg-green-50 border border-green-200 rounded-xl p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-sm font-bold text-green-700">
+                        ✓ {bulkResult.generated} codes generated successfully!
+                      </p>
+                      <button
+                        onClick={() => downloadCodesCSV(bulkResult.codes)}
+                        className="flex items-center gap-1.5 text-xs font-bold text-green-700 bg-green-100 hover:bg-green-200 px-3 py-1.5 rounded-lg"
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        Download CSV
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
+                      {bulkResult.codes.slice(0, 20).map(code => (
+                        <span key={code} className="font-mono text-[11px] bg-white border border-green-200 text-green-800 px-2 py-0.5 rounded">{code}</span>
+                      ))}
+                      {bulkResult.codes.length > 20 && (
+                        <span className="text-[11px] text-green-600 font-semibold px-2 py-0.5">+{bulkResult.codes.length - 20} more (see table below or download CSV)</span>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {showRedeemForm && (
               <div className="bg-white rounded-xl border border-gray-200 p-5 mb-5">
