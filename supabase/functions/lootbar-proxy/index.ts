@@ -377,6 +377,28 @@ async function getGamesWithCache(pageNum: number, pageSize: number): Promise<Loo
     await batchUpsert("games_cache", upsertData);
     console.log(`[LootbarProxy] Cached ${upsertData.length} games`);
 
+    // Fire-and-forget: auto-fetch images for games that have no game_image
+    const missingImageIds = upsertData
+      .filter((g) => !g.game_image)
+      .map((g) => g.game_id);
+
+    if (missingImageIds.length > 0) {
+      console.log(`[LootbarProxy] Auto-triggering image fetch for ${missingImageIds.length} games without images`);
+      const fetchImagesUrl = `${SUPABASE_URL}/functions/v1/fetch-game-images`;
+      fetch(fetchImagesUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+        },
+        body: JSON.stringify({ game_ids: missingImageIds, use_fallback: true, skip_unsplash: false }),
+      }).then((r) => {
+        console.log(`[LootbarProxy] Auto image fetch triggered: HTTP ${r.status}`);
+      }).catch((e) => {
+        console.warn("[LootbarProxy] Auto image fetch trigger failed:", e);
+      });
+    }
+
     return {
       status: "ok",
       data: { 
