@@ -3,7 +3,6 @@ import { RefreshCw, Edit2, Upload, Save, EyeOff, Eye, Star, Camera } from "lucid
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { supabase } from "@/lib/supabase";
 import { lootbarApi } from "@/lib/lootbar-api";
-import { CATEGORIES } from "@/constants/mockData";
 import { toast } from "sonner";
 
 interface GameOverride {
