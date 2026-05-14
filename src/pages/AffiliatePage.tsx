@@ -161,7 +161,8 @@ export function AffiliatePage() {
   const { user, isAuthenticated } = useAuthStore();
   const [step, setStep] = useState<AffiliateStep>("agreement");
   const [gameType, setGameType] = useState("Top Up");
-  const [featuredGame, setFeaturedGame] = useState<typeof MOCK_GAMES[0] | null>(null);
+  const [featuredGame, setFeaturedGame] = useState<any | null>(null);
+  const [cachedGames, setCachedGames] = useState<Array<{ game_id: string; game_name: string; game_image: string | null; category: string | null; rating: number | null; sold_count: string | null; discount: number | null }>>([]);
   const [selectedGameIds, setSelectedGameIds] = useState<string[]>([]);
   const [selectedSocials, setSelectedSocials] = useState<string[]>([]);
   const [socialLinks, setSocialLinks] = useState<Record<string, string>>({});
@@ -192,6 +193,9 @@ export function AffiliatePage() {
     if (!isAuthenticated) { navigate("/login"); return; }
     checkExistingStore();
     loadReferralCode();
+    supabase.from("games_cache").select("game_id, game_name, game_image, category, rating, sold_count, discount").limit(120).then(({ data }) => {
+      if (data) setCachedGames(data);
+    });
   }, [isAuthenticated]);
 
   const checkExistingStore = async () => {
@@ -215,7 +219,7 @@ export function AffiliatePage() {
     if (created) { setReferralCode(created.code); setShortCode(created.short_code); }
   };
 
-  const filteredGames = MOCK_GAMES.filter(g => g.game_name.toLowerCase().includes(gameSearch.toLowerCase()) && (gameType === "All" || g.category === gameType));
+  const filteredGames = cachedGames.filter(g => g.game_name.toLowerCase().includes(gameSearch.toLowerCase()) && (gameType === "All" || g.category === gameType));
 
   const handleShopNameChange = (name: string) => {
     setShopName(name);
@@ -613,7 +617,7 @@ export function AffiliatePage() {
             <h1 className="text-xl font-black text-gray-900 mb-1 text-center">Besides {featuredGame?.game_name || "your featured game"}, what other games would you like to sell?</h1>
             <div className="mt-5 space-y-3 mb-4">
               {selectedGameIds.map(id => {
-                const game = MOCK_GAMES.find(g => g.game_id === id);
+                const game = cachedGames.find(g => g.game_id === id);
                 if (!game) return null;
                 return (
                   <div key={id} className="flex items-center gap-3 border border-gray-200 rounded-2xl p-4">
@@ -746,7 +750,7 @@ export function AffiliatePage() {
               <div className="px-4 pb-4">
                 <p className="font-bold text-gray-900 mb-2 text-sm">Best Sellers</p>
                 <div className="grid grid-cols-3 gap-2">
-                  {[featuredGame, ...MOCK_GAMES.filter(g => selectedGameIds.includes(g.game_id))].filter(Boolean).slice(0, 3).map(game => game && (
+                  {[featuredGame, ...cachedGames.filter(g => selectedGameIds.includes(g.game_id))].filter(Boolean).slice(0, 3).map(game => game && (
                     <div key={game.game_id} className="relative">
                       {game.discount ? <span className="absolute top-1 right-1 bg-orange-500 text-white text-[9px] font-bold px-1 py-0.5 rounded z-10">-{game.discount}%</span> : null}
                       <img src={game.game_image} alt={game.game_name} className="w-full aspect-square rounded-xl object-cover" onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=100&h=100&fit=crop"; }} />
@@ -773,7 +777,7 @@ export function AffiliatePage() {
             </div>
             <div className="px-4 py-3 border-b border-gray-100"><div className="flex items-center gap-2 bg-gray-100 rounded-xl px-3 py-2"><Search size={16} className="text-gray-400" /><input type="text" value={gameSearch} onChange={(e) => setGameSearch(e.target.value)} placeholder="Search Games" className="flex-1 bg-transparent text-sm text-gray-700 outline-none" /></div></div>
             <div className="flex-1 overflow-y-auto divide-y divide-gray-100">
-              {MOCK_GAMES.filter(g => g.game_name.toLowerCase().includes(gameSearch.toLowerCase())).map(game => {
+              {cachedGames.filter(g => g.game_name.toLowerCase().includes(gameSearch.toLowerCase())).map(game => {
                 const selected = tempSelectedIds.includes(game.game_id);
                 return (
                   <button key={game.game_id} onClick={() => setTempSelectedIds(prev => prev.includes(game.game_id) ? prev.filter(id => id !== game.game_id) : [...prev, game.game_id])} className="w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-gray-50">
@@ -793,4 +797,3 @@ export function AffiliatePage() {
     </div>
   );
 }
-remove import mockdata in all page that have mock data.
