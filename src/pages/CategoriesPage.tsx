@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { Search, MessageCircle } from "lucide-react";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { DesktopHeader } from "@/components/layout/DesktopHeader";
+import { Header } from "@/components/layout/Header";
 import { lootbarApi } from "@/lib/lootbar-api";
 import { useTranslation } from "@/hooks/useTranslation";
 import type { LootbarGame } from "@/types";
@@ -48,36 +49,28 @@ export function CategoriesPage() {
   }, {});
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gray-50">
+      {/* Mobile Header */}
+      <div className="lg:hidden">
+        <Header showMenu />
+      </div>
+
       {/* Desktop Header */}
       <div className="hidden lg:block">
         <DesktopHeader />
       </div>
 
-      {/* Mobile + Desktop inner container */}
       <div className="max-w-2xl lg:max-w-[1280px] mx-auto">
-      {/* Header */}
-      <div className="bg-white sticky top-0 z-40 border-b border-gray-100 lg:top-0">
-        {/* Mobile back */}
-        <div className="lg:hidden flex items-center gap-3 px-4 py-3">
-          <button onClick={() => navigate(-1)} className="text-gray-700">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M19 12H5M12 5l-7 7 7 7" />
-            </svg>
-          </button>
-          <h1 className="font-bold text-gray-900 text-base flex items-center gap-1">
-            {activeCategory}
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z" /></svg>
-          </h1>
-        </div>
-        {/* Desktop title */}
-        <div className="hidden lg:flex items-center gap-4 px-6 py-4">
-          <h1 className="text-2xl font-black text-gray-900">{t("categories")}</h1>
-          <span className="text-gray-400 font-medium">/ {activeCategory}</span>
-        </div>
+        {/* Filter Bar */}
+        <div className="bg-white sticky top-[56px] lg:top-[72px] z-30 border-b border-gray-100">
+          {/* Desktop title */}
+          <div className="hidden lg:flex items-center gap-4 px-6 py-4">
+            <h1 className="text-2xl font-black text-gray-900">{t("categories")}</h1>
+            <span className="text-gray-400 font-medium">/ {activeCategory}</span>
+          </div>
 
-        {/* Search */}
-        <div className="px-4 lg:px-6 pb-3">
+          {/* Search */}
+          <div className="px-4 lg:px-6 pb-3 pt-3 lg:pt-0">
           <div className="flex items-center gap-2 bg-gray-100 rounded-2xl px-4 py-2.5">
             <Search size={16} className="text-gray-400 flex-shrink-0" />
             <input
@@ -95,26 +88,26 @@ export function CategoriesPage() {
           </div>
         </div>
 
-        {/* Category Filter Pills */}
-        <div className="flex gap-2 px-4 lg:px-6 pb-3 overflow-x-auto scrollbar-hide">
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold transition-all ${
-                activeCategory === cat
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
-            >
-              {cat} ({categoryCounts[cat] || 0})
-            </button>
-          ))}
+          {/* Category Filter Pills */}
+          <div className="flex gap-2 px-4 lg:px-6 pb-3 overflow-x-auto scrollbar-hide">
+            {CATEGORIES.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold transition-all ${
+                  activeCategory === cat
+                    ? "bg-blue-500 text-white"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                }`}
+              >
+                {cat} ({categoryCounts[cat] || 0})
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
 
-      {/* Sort + Total */}
-      <div className="flex items-center justify-between px-4 lg:px-6 py-2.5 border-b border-gray-50">
+        {/* Sort + Total */}
+        <div className="flex items-center justify-between px-4 lg:px-6 py-2.5 bg-white border-b border-gray-100">
         <p className="text-sm text-gray-500">Total {sorted.length} items</p>
         <div className="flex items-center gap-3">
           <button
@@ -132,8 +125,8 @@ export function CategoriesPage() {
         </div>
       </div>
 
-      {/* Games Grid */}
-      <div className="px-4 lg:px-6 pt-3">
+        {/* Games Grid */}
+        <div className="px-4 lg:px-6 pt-4 pb-24">
         {isLoading ? (
           <div className="grid grid-cols-2 gap-3">
             {Array.from({ length: 6 }).map((_, i) => (
@@ -190,17 +183,16 @@ export function CategoriesPage() {
         )}
       </div>
 
-      {/* Floating Chat */}
-      <div className="fixed bottom-20 right-4 z-40">
-        <button className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center shadow-lg relative">
-          <MessageCircle size={22} className="text-white" />
-          <span className="absolute top-0 right-0 w-3 h-3 bg-green-400 rounded-full border-2 border-white" />
-        </button>
+        {/* Floating Chat */}
+        <div className="fixed bottom-20 right-4 z-40">
+          <button onClick={() => navigate("/group-chat")} className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center shadow-lg relative">
+            <MessageCircle size={22} className="text-white" />
+            <span className="absolute top-0 right-0 w-3 h-3 bg-green-400 rounded-full border-2 border-white" />
+          </button>
+        </div>
       </div>
 
       <BottomNav />
-      </div>
     </div>
   );
 }
-add real mobile header and make this page more stable more clean
