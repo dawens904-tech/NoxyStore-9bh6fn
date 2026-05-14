@@ -14,10 +14,10 @@ const logos = [
   "/images/IMG_8734.png",
   "/images/IMG_8735.png",
   "/images/IMG_8726.webp",
-  "/img/fpx.png",
+  "/images/IMG_8729.webp",
   "/images/IMG_8736.jpeg",
   "/images/IMG_8738.jpeg",
-  "/img/secoma.png",
+  "/images/IMG_8727.webp",
   "/images/IMG_8728.webp",
   "/images/IMG_8737.png"
 ];
