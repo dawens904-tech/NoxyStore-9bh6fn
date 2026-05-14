@@ -147,7 +147,11 @@ export function CheckoutPage() {
     game: LootbarGame;
     quantity: number;
     extraInfo: Record<string, string>;
+    region?: string;
   };
+
+  // Manual products have UUID-format game_id
+  const isManualProduct = /^[0-9a-f]{8}-[0-9a-f]{4}-/i.test(state?.game?.game_id ?? "");
 
   const [checkoutState, setCheckoutState] = useState<CheckoutState>("review");
   const [orderId, setOrderId] = useState("");
@@ -224,7 +228,7 @@ export function CheckoutPage() {
     );
   }
 
-  const { sku, game, extraInfo } = state;
+  const { sku, game, extraInfo, region } = state;
   const basePrice = (sku.price || 0) * quantity;
 
   const PAYMENT_METHODS: PaymentMethod[] = [
@@ -320,27 +324,67 @@ export function CheckoutPage() {
     const refId = `NOXY-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
     setReferenceId(refId);
     try {
-      const result = await lootbarApi.createOrder(
-        game.game_id, game.game_name, sku.sku_id, sku.sku_name,
-        quantity, totalPrice, extraInfo, user?.email, user?.id
-      );
-      setOrderId(result.order_id);
-      const order: Order = {
-        id: `local_${Date.now()}`,
-        reference_id: result.reference_id || refId,
-        order_id: result.order_id,
-        game_id: game.game_id,
-        game_name: game.game_name,
-        sku_name: sku.sku_name,
-        price: totalPrice,
-        state: 1,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        extra_info: extraInfo,
-      };
-      addOrder(order);
-      setCheckoutState("success");
-      toast.success("Order created successfully!");
+      if (isManualProduct) {
+        // Manual product: insert directly to orders table — no Lootbar API
+        const extraInfoFull = region ? { ...extraInfo, server: region } : { ...extraInfo };
+        const { error } = await supabase.from("orders").insert({
+          reference_id: refId,
+          game_id: game.game_id,
+          game_name: game.game_name,
+          sku_id: sku.sku_id,
+          sku_name: sku.sku_name,
+          quantity,
+          price: totalPrice,
+          state: 1,
+          extra_info: extraInfoFull,
+          user_email: user?.email,
+          user_id: user?.id,
+          base_price: sku.price || 0,
+          markup_percent: 0,
+          profit_amount: 0,
+        });
+        if (error) throw new Error(error.message);
+        setOrderId(refId);
+        const order: Order = {
+          id: `local_${Date.now()}`,
+          reference_id: refId,
+          order_id: refId,
+          game_id: game.game_id,
+          game_name: game.game_name,
+          sku_name: sku.sku_name,
+          price: totalPrice,
+          state: 1,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          extra_info: extraInfoFull,
+        };
+        addOrder(order);
+        setCheckoutState("success");
+        toast.success("Order placed successfully!");
+      } else {
+        // Lootbar product
+        const result = await lootbarApi.createOrder(
+          game.game_id, game.game_name, sku.sku_id, sku.sku_name,
+          quantity, totalPrice, extraInfo, user?.email, user?.id
+        );
+        setOrderId(result.order_id);
+        const order: Order = {
+          id: `local_${Date.now()}`,
+          reference_id: result.reference_id || refId,
+          order_id: result.order_id,
+          game_id: game.game_id,
+          game_name: game.game_name,
+          sku_name: sku.sku_name,
+          price: totalPrice,
+          state: 1,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          extra_info: extraInfo,
+        };
+        addOrder(order);
+        setCheckoutState("success");
+        toast.success("Order created successfully!");
+      }
     } catch {
       setCheckoutState("failed");
       toast.error("Order failed. Please try again.");
@@ -359,10 +403,11 @@ export function CheckoutPage() {
             <CheckCircle size={40} className="text-green-500" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Order Created!</h1>
-          <p className="text-gray-500 mb-1">{sku.sku_name} — {game.game_name}</p>
+          <p className="text-gray-500 mb-1">{sku.sku_name} — {game.game_name}{region ? ` · ${region}` : ""}</p>
           <div className="w-full max-w-sm bg-gray-50 p-4 mb-6 text-left space-y-2.5 mt-4">
             <div className="flex justify-between text-sm"><span className="text-gray-500">Order ID</span><span className="font-mono font-semibold text-xs">{orderId}</span></div>
             <div className="flex justify-between text-sm"><span className="text-gray-500">Amount</span><span className="font-bold text-green-600">${totalPrice.toFixed(2)}</span></div>
+            {region && <div className="flex justify-between text-sm"><span className="text-gray-500">Server</span><span className="font-semibold">{region}</span></div>}
             {Object.entries(extraInfo).map(([k, v]) => (
               <div key={k} className="flex justify-between text-sm"><span className="text-gray-500 capitalize">{k}</span><span className="font-semibold">{v}</span></div>
             ))}
