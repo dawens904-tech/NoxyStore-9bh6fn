@@ -647,3 +647,4 @@ export function HomePage() {
     </div>
   );
 }
+banner pa dwe depan de lootbar function banner dwe always visible with no check auto stay never  unsaved.
