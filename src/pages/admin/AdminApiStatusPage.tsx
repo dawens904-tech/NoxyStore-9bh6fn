@@ -143,7 +143,10 @@ export function AdminApiStatusPage() {
               {imageFetchResult.not_found > 0 && <p className="text-gray-500 text-xs mt-0.5">{imageFetchResult.not_found} games not found on RAWG</p>}
             </div>
           )}
-          <p className="text-xs text-gray-600 mt-3">Requires RAWG_API_KEY secret. Get a free key at rawg.io/apidocs</p>
+          <div className="mt-3 text-xs text-gray-600 space-y-1">
+            <p>Source priority: <span className="text-yellow-400 font-mono">RAWG</span> → <span className="text-purple-400 font-mono">IGDB</span> → <span className="text-blue-400 font-mono">SerpApi</span> → Unsplash fallback</p>
+            <p>RAWG: free key at <span className="font-mono">rawg.io/apidocs</span> · IGDB: Twitch dev account at <span className="font-mono">dev.twitch.tv</span> · SerpApi: <span className="font-mono">serpapi.com</span></p>
+          </div>
         </div>
 
         <div className="bg-[#1a1a1a] border border-white/10 rounded-2xl p-5">

@@ -2,12 +2,12 @@
  * fetch-game-images Edge Function
  *
  * Automatically finds and stores game cover images for games missing images.
- * Priority: RAWG Video Games DB → Unsplash fallback → skip
+ * Priority order:
+ *   1. RAWG Video Games DB  (RAWG_API_KEY)
+ *   2. IGDB                 (TWITCH_CLIENT_ID + TWITCH_CLIENT_SECRET)
+ *   3. SerpApi Google Images (SERPAPI_KEY)
  *
- * Endpoint: POST /functions/v1/fetch-game-images
- * Body: { game_ids?: string[] }  — omit to process ALL missing-image games (max 50)
- *
- * Only fetches when game_image is null or empty string — never overwrites existing images.
+ * Only fetches when game_image is null/empty — never overwrites existing images.
  * Results are saved directly to games_cache.game_image.
  */
 import { corsHeaders } from "../_shared/cors.ts";
@@ -18,10 +18,15 @@ const supabase = createClient(
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
 );
 
-const RAWG_API_KEY = Deno.env.get("RAWG_API_KEY") ?? "";
-const RAWG_BASE = "https://api.rawg.io/api";
+const RAWG_API_KEY     = Deno.env.get("RAWG_API_KEY") ?? "";
+const TWITCH_CLIENT_ID = Deno.env.get("TWITCH_CLIENT_ID") ?? "";
+const TWITCH_SECRET    = Deno.env.get("TWITCH_CLIENT_SECRET") ?? "";
+const SERPAPI_KEY      = Deno.env.get("SERPAPI_KEY") ?? "";
 
-// Noise words to strip before searching
+const RAWG_BASE  = "https://api.rawg.io/api";
+const IGDB_BASE  = "https://api.igdb.com/v4";
+
+// ─── Noise word filter ────────────────────────────────────────────────────────
 const NOISE_WORDS = [
   "top up", "topup", "top-up", "uc", "diamonds", "gems", "coins", "credits",
   "points", "tokens", "gold", "silver", "voucher", "gift card", "key",
@@ -30,22 +35,18 @@ const NOISE_WORDS = [
   "pc", "console", "online", "card", "code", "pin",
 ];
 
-/** Remove noise words and clean up game name for search */
 function normalizeGameName(name: string): string {
   let clean = name.toLowerCase();
   for (const noise of NOISE_WORDS) {
     clean = clean.replace(new RegExp(`\\b${noise}\\b`, "gi"), "");
   }
-  // Remove parenthetical region tags like (SEA), (Global)
-  clean = clean.replace(/\([^)]*\)/g, "");
-  // Remove trailing numbers that look like amounts (e.g. "570 UC" → "")
-  clean = clean.replace(/\b\d+\b/g, "");
-  // Collapse whitespace
+  clean = clean.replace(/\([^)]*\)/g, ""); // Remove (SEA), (Global) etc.
+  clean = clean.replace(/\b\d+\b/g, "");   // Remove standalone numbers
   clean = clean.replace(/\s+/g, " ").trim();
-  return clean || name; // fallback to original if everything was stripped
+  return clean || name;
 }
 
-/** Search RAWG by normalized game name, return best image URL */
+// ─── 1. RAWG ─────────────────────────────────────────────────────────────────
 async function fetchFromRAWG(gameName: string): Promise<string | null> {
   if (!RAWG_API_KEY) {
     console.warn("[FetchImages] RAWG_API_KEY not set, skipping RAWG");
@@ -60,46 +61,132 @@ async function fetchFromRAWG(gameName: string): Promise<string | null> {
       headers: { "Accept": "application/json" },
       signal: AbortSignal.timeout(8000),
     });
+    if (!resp.ok) { console.warn(`[FetchImages] RAWG ${resp.status} for "${query}"`); return null; }
 
-    if (!resp.ok) {
-      console.warn(`[FetchImages] RAWG ${resp.status} for "${query}"`);
-      return null;
-    }
-
-    const data = await resp.json() as {
-      results?: Array<{
-        name: string;
-        background_image: string | null;
-        rating: number;
-      }>;
-    };
-
+    const data = await resp.json() as { results?: Array<{ name: string; background_image: string | null; rating: number }> };
     if (!data.results?.length) return null;
 
-    // Pick the result with highest rating that has an image
     const best = data.results
       .filter((r) => r.background_image)
       .sort((a, b) => b.rating - a.rating)[0];
 
     if (!best?.background_image) return null;
-
-    console.log(`[FetchImages] RAWG found "${best.name}" for "${gameName}"`);
+    console.log(`[FetchImages] RAWG: "${best.name}" for "${gameName}"`);
     return best.background_image;
-
   } catch (e) {
     console.warn(`[FetchImages] RAWG error for "${gameName}":`, e);
     return null;
   }
 }
 
-/** Unsplash free CDN fallback — returns a gaming-themed image */
-function getUnsplashFallback(gameName: string): string {
-  const keywords = normalizeGameName(gameName);
-  // Use Unsplash Source API with game-related search
-  const searchTerm = encodeURIComponent(`${keywords} video game`);
-  return `https://source.unsplash.com/featured/400x400?${searchTerm}`;
+// ─── 2. IGDB (Twitch OAuth) ────────────────────────────────────────────────────
+let _igdbToken: string | null = null;
+let _igdbTokenExpiry = 0;
+
+async function getIGDBToken(): Promise<string | null> {
+  if (!TWITCH_CLIENT_ID || !TWITCH_SECRET) return null;
+
+  const now = Date.now() / 1000;
+  if (_igdbToken && _igdbTokenExpiry > now + 60) return _igdbToken;
+
+  try {
+    const resp = await fetch(
+      `https://id.twitch.tv/oauth2/token?client_id=${TWITCH_CLIENT_ID}&client_secret=${TWITCH_SECRET}&grant_type=client_credentials`,
+      { method: "POST", signal: AbortSignal.timeout(8000) }
+    );
+    if (!resp.ok) { console.warn(`[FetchImages] IGDB token fetch failed: ${resp.status}`); return null; }
+    const data = await resp.json() as { access_token: string; expires_in: number };
+    _igdbToken = data.access_token;
+    _igdbTokenExpiry = now + data.expires_in;
+    console.log("[FetchImages] IGDB: Obtained access token");
+    return _igdbToken;
+  } catch (e) {
+    console.warn("[FetchImages] IGDB token error:", e);
+    return null;
+  }
 }
 
+async function fetchFromIGDB(gameName: string): Promise<string | null> {
+  const token = await getIGDBToken();
+  if (!token) return null;
+
+  const query = normalizeGameName(gameName);
+
+  try {
+    const resp = await fetch(`${IGDB_BASE}/games`, {
+      method: "POST",
+      headers: {
+        "Client-ID": TWITCH_CLIENT_ID,
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "text/plain",
+        "Accept": "application/json",
+      },
+      body: `search "${query}"; fields name,cover.url,rating; limit 5; where cover != null;`,
+      signal: AbortSignal.timeout(8000),
+    });
+
+    if (!resp.ok) { console.warn(`[FetchImages] IGDB ${resp.status} for "${query}"`); return null; }
+
+    const data = await resp.json() as Array<{ name: string; rating?: number; cover?: { url: string } }>;
+    if (!data?.length) return null;
+
+    // Pick highest rated result with a cover
+    const best = data
+      .filter((g) => g.cover?.url)
+      .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0))[0];
+
+    if (!best?.cover?.url) return null;
+
+    // IGDB returns //images.igdb.com/... — upgrade to https + high-res
+    const imageUrl = best.cover.url
+      .replace("//", "https://")
+      .replace("t_thumb", "t_cover_big");
+
+    console.log(`[FetchImages] IGDB: "${best.name}" for "${gameName}"`);
+    return imageUrl;
+  } catch (e) {
+    console.warn(`[FetchImages] IGDB error for "${gameName}":`, e);
+    return null;
+  }
+}
+
+// ─── 3. SerpApi Google Images ────────────────────────────────────────────────
+async function fetchFromSerpApi(gameName: string): Promise<string | null> {
+  if (!SERPAPI_KEY) {
+    console.warn("[FetchImages] SERPAPI_KEY not set, skipping SerpApi");
+    return null;
+  }
+
+  const q = encodeURIComponent(`${normalizeGameName(gameName)} game cover art`);
+  const url = `https://serpapi.com/search.json?engine=google_images&q=${q}&api_key=${SERPAPI_KEY}&num=5&safe=active`;
+
+  try {
+    const resp = await fetch(url, { signal: AbortSignal.timeout(10000) });
+    if (!resp.ok) { console.warn(`[FetchImages] SerpApi ${resp.status} for "${gameName}"`); return null; }
+
+    const data = await resp.json() as { images_results?: Array<{ original: string; thumbnail: string }> };
+    const results = data.images_results;
+    if (!results?.length) return null;
+
+    // Use original URL of the first result
+    const first = results.find((r) => r.original && r.original.startsWith("http"));
+    if (!first) return null;
+
+    console.log(`[FetchImages] SerpApi: image found for "${gameName}"`);
+    return first.original;
+  } catch (e) {
+    console.warn(`[FetchImages] SerpApi error for "${gameName}":`, e);
+    return null;
+  }
+}
+
+// ─── Unsplash generic fallback ────────────────────────────────────────────────
+function getUnsplashFallback(gameName: string): string {
+  const keywords = encodeURIComponent(`${normalizeGameName(gameName)} video game`);
+  return `https://source.unsplash.com/featured/400x400?${keywords}`;
+}
+
+// ─── Main handler ─────────────────────────────────────────────────────────────
 interface GameRow {
   game_id: string;
   game_name: string;
@@ -112,31 +199,19 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    let body: { game_ids?: string[]; use_fallback?: boolean } = {};
-    try {
-      body = await req.json();
-    } catch {
-      // empty body OK
-    }
+    let body: { game_ids?: string[]; use_fallback?: boolean; skip_unsplash?: boolean } = {};
+    try { body = await req.json(); } catch { /* empty body OK */ }
 
-    const { game_ids, use_fallback = true } = body;
+    const { game_ids, use_fallback = true, skip_unsplash = false } = body;
 
-    // Fetch games that need images
-    let query = supabase
-      .from("games_cache")
-      .select("game_id, game_name, game_image");
+    // Fetch games missing images
+    let query = supabase.from("games_cache").select("game_id, game_name, game_image");
+    if (game_ids?.length) query = query.in("game_id", game_ids);
 
-    if (game_ids?.length) {
-      query = query.in("game_id", game_ids);
-    }
-
-    // Only process games missing images
     const { data: games, error: fetchErr } = await query.limit(50);
-
     if (fetchErr) {
       return new Response(JSON.stringify({ status: "error", msg: fetchErr.message }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -145,23 +220,38 @@ Deno.serve(async (req: Request) => {
     );
 
     console.log(`[FetchImages] Processing ${missing.length} games with missing images`);
+    console.log(`[FetchImages] Sources: RAWG=${!!RAWG_API_KEY}, IGDB=${!!TWITCH_CLIENT_ID}, SerpApi=${!!SERPAPI_KEY}`);
 
-    const results: Array<{ game_id: string; game_name: string; status: string; image?: string }> = [];
+    const results: Array<{ game_id: string; game_name: string; status: string; source?: string; image?: string }> = [];
 
     for (const game of missing) {
       let imageUrl: string | null = null;
+      let source = "";
 
-      // 1. Try RAWG
+      // 1. RAWG
       imageUrl = await fetchFromRAWG(game.game_name);
+      if (imageUrl) source = "rawg";
 
-      // 2. Fallback to Unsplash
-      if (!imageUrl && use_fallback) {
+      // 2. IGDB
+      if (!imageUrl) {
+        imageUrl = await fetchFromIGDB(game.game_name);
+        if (imageUrl) source = "igdb";
+      }
+
+      // 3. SerpApi
+      if (!imageUrl) {
+        imageUrl = await fetchFromSerpApi(game.game_name);
+        if (imageUrl) source = "serpapi";
+      }
+
+      // 4. Unsplash generic fallback
+      if (!imageUrl && use_fallback && !skip_unsplash) {
         imageUrl = getUnsplashFallback(game.game_name);
-        console.log(`[FetchImages] Using Unsplash fallback for "${game.game_name}"`);
+        source = "unsplash";
+        console.log(`[FetchImages] Unsplash fallback for "${game.game_name}"`);
       }
 
       if (imageUrl) {
-        // Save to database
         const { error: updateErr } = await supabase
           .from("games_cache")
           .update({ game_image: imageUrl })
@@ -171,29 +261,29 @@ Deno.serve(async (req: Request) => {
           console.error(`[FetchImages] DB update failed for ${game.game_id}:`, updateErr);
           results.push({ game_id: game.game_id, game_name: game.game_name, status: "db_error" });
         } else {
-          results.push({ game_id: game.game_id, game_name: game.game_name, status: "updated", image: imageUrl });
+          results.push({ game_id: game.game_id, game_name: game.game_name, status: "updated", source, image: imageUrl });
         }
       } else {
         results.push({ game_id: game.game_id, game_name: game.game_name, status: "not_found" });
       }
 
-      // Small delay to respect rate limits
+      // Respect rate limits
       await new Promise((r) => setTimeout(r, 150));
     }
 
-    const updated = results.filter((r) => r.status === "updated").length;
+    const updated  = results.filter((r) => r.status === "updated").length;
     const notFound = results.filter((r) => r.status === "not_found").length;
 
-    console.log(`[FetchImages] Done: ${updated} updated, ${notFound} not found`);
+    // Source breakdown
+    const bySource: Record<string, number> = {};
+    results.filter((r) => r.source).forEach((r) => {
+      bySource[r.source!] = (bySource[r.source!] ?? 0) + 1;
+    });
+
+    console.log(`[FetchImages] Done: ${updated} updated, ${notFound} not found`, bySource);
 
     return new Response(
-      JSON.stringify({
-        status: "ok",
-        total_processed: missing.length,
-        updated,
-        not_found: notFound,
-        results,
-      }),
+      JSON.stringify({ status: "ok", total_processed: missing.length, updated, not_found: notFound, by_source: bySource, results }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
