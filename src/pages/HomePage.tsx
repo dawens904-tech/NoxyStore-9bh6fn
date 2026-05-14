@@ -126,15 +126,19 @@ function MobileGameCard({ game }: { game: LootbarGame }) {
         {game.game_name}
       </h3>
 
-      {/* Rating & Sold */}
-      <div className="flex items-center gap-1.5">
-        <div className="flex items-center gap-0.5">
-          <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-          <span className="text-[11px] font-bold text-yellow-500">{game.rating?.toFixed(1) || "5.0"}</span>
+      {/* Rating & Sold — real data only */}
+      {(game.rating != null || game.sold_count) && (
+        <div className="flex items-center gap-1.5">
+          {game.rating != null && (
+            <div className="flex items-center gap-0.5">
+              <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+              <span className="text-[11px] font-bold text-yellow-500">{game.rating.toFixed(1)}</span>
+            </div>
+          )}
+          {game.rating != null && game.sold_count && <span className="text-[10px] text-gray-400">|</span>}
+          {game.sold_count && <span className="text-[10px] text-gray-400">{game.sold_count}</span>}
         </div>
-        <span className="text-[10px] text-gray-400">|</span>
-        <span className="text-[10px] text-gray-400">{game.sold_count || "100k+ Sold"}</span>
-      </div>
+      )}
     </button>
   );
 }
@@ -149,16 +153,22 @@ export function HomePage() {
   const [sections, setSections] = useState<HomeSection[]>([]);
   const [dynamicBanners, setDynamicBanners] = useState<Array<{ id: string; title: string; subtitle: string; image_url: string; link: string; sort_order: number }>>([]);
 
-  // Row expansion state — each section shows 3 lines (9 items), +3 lines per "View more"
+  // Mobile row expansion state — 3 cols, 3 lines initially
   const [hotRows, setHotRows] = useState(3);
   const [discountRows, setDiscountRows] = useState(3);
   const [newRows, setNewRows] = useState(3);
   const [giftRows, setGiftRows] = useState(3);
 
-  const COLS = 3; // 3 columns per row
-  const ITEMS_PER_ROW = 3;
-  const INITIAL_LINES = 3; // 3 lines initially
-  const LINES_PER_CLICK = 3; // add 3 lines per click
+  // Desktop row expansion state — 7 cols, 2 rows initially
+  const [hotDesktopRows, setHotDesktopRows] = useState(2);
+  const [discountDesktopRows, setDiscountDesktopRows] = useState(2);
+  const [newDesktopRows, setNewDesktopRows] = useState(2);
+  const [giftDesktopRows, setGiftDesktopRows] = useState(2);
+  const DESKTOP_COLS = 7;
+
+  const COLS = 3;
+  const INITIAL_LINES = 3;
+  const LINES_PER_CLICK = 3;
 
   // Currency formatting helper
   const formatPrice = (usdPrice: number | null | undefined): string => {
@@ -255,9 +265,18 @@ export function HomePage() {
               </button>
             </div>
             <div className="grid grid-cols-7 gap-4">
-              {isLoading ? Array.from({ length: 14 }).map((_, i) => <div key={i} className="shimmer rounded-2xl aspect-square" />)
-                : hotGames.concat(games.filter(g => !g.is_hot)).slice(0, 14).map((game) => <GameCard key={game.game_id} game={game} size="sm" />)}
+              {isLoading ? Array.from({ length: hotDesktopRows * DESKTOP_COLS }).map((_, i) => <div key={i} className="shimmer rounded-2xl aspect-square" />)
+                : hotGames.concat(games.filter(g => !g.is_hot)).slice(0, hotDesktopRows * DESKTOP_COLS).map((game) => <GameCard key={game.game_id} game={game} size="sm" />)}
             </div>
+            {!isLoading && hotGames.concat(games.filter(g => !g.is_hot)).length > hotDesktopRows * DESKTOP_COLS ? (
+              <button onClick={() => setHotDesktopRows(r => r + 2)} className="w-full mt-4 py-2 text-sm font-semibold text-gray-400 flex items-center justify-center gap-1 hover:text-gray-700 transition-colors">
+                View More <ChevronRight size={14} />
+              </button>
+            ) : !isLoading && hotDesktopRows > 2 ? (
+              <button onClick={() => setHotDesktopRows(2)} className="w-full mt-4 py-2 text-sm font-semibold text-gray-400 flex items-center justify-center gap-1 hover:text-gray-700 transition-colors">
+                Show Less <ChevronRight size={14} className="rotate-180" />
+              </button>
+            ) : null}
           </div>
 
           {/* Popular Game Key — desktop */}
@@ -324,8 +343,17 @@ export function HomePage() {
                 </button>
               </div>
               <div className="grid grid-cols-7 gap-4">
-                {discountGames.slice(0, 14).map((game) => <GameCard key={game.game_id} game={game} size="sm" />)}
+                {discountGames.slice(0, discountDesktopRows * DESKTOP_COLS).map((game) => <GameCard key={game.game_id} game={game} size="sm" />)}
               </div>
+              {discountGames.length > discountDesktopRows * DESKTOP_COLS ? (
+                <button onClick={() => setDiscountDesktopRows(r => r + 2)} className="w-full mt-4 py-2 text-sm font-semibold text-gray-400 flex items-center justify-center gap-1 hover:text-gray-700 transition-colors">
+                  View More <ChevronRight size={14} />
+                </button>
+              ) : discountDesktopRows > 2 ? (
+                <button onClick={() => setDiscountDesktopRows(2)} className="w-full mt-4 py-2 text-sm font-semibold text-gray-400 flex items-center justify-center gap-1 hover:text-gray-700 transition-colors">
+                  Show Less <ChevronRight size={14} className="rotate-180" />
+                </button>
+              ) : null}
             </div>
           )}
 
@@ -341,8 +369,17 @@ export function HomePage() {
                 </button>
               </div>
               <div className="grid grid-cols-7 gap-4">
-                {newGames.slice(0,14).map((game) => <GameCard key={game.game_id} game={game} size="sm" />)}
+                {newGames.slice(0, newDesktopRows * DESKTOP_COLS).map((game) => <GameCard key={game.game_id} game={game} size="sm" />)}
               </div>
+              {newGames.length > newDesktopRows * DESKTOP_COLS ? (
+                <button onClick={() => setNewDesktopRows(r => r + 2)} className="w-full mt-4 py-2 text-sm font-semibold text-gray-400 flex items-center justify-center gap-1 hover:text-gray-700 transition-colors">
+                  View More <ChevronRight size={14} />
+                </button>
+              ) : newDesktopRows > 2 ? (
+                <button onClick={() => setNewDesktopRows(2)} className="w-full mt-4 py-2 text-sm font-semibold text-gray-400 flex items-center justify-center gap-1 hover:text-gray-700 transition-colors">
+                  Show Less <ChevronRight size={14} className="rotate-180" />
+                </button>
+              ) : null}
             </div>
           )}
 
@@ -358,8 +395,17 @@ export function HomePage() {
                 </button>
               </div>
               <div className="grid grid-cols-7 gap-4">
-                {giftCardGames.slice(0,14).map((game) => <GameCard key={game.game_id} game={game} size="sm" />)}
+                {giftCardGames.slice(0, giftDesktopRows * DESKTOP_COLS).map((game) => <GameCard key={game.game_id} game={game} size="sm" />)}
               </div>
+              {giftCardGames.length > giftDesktopRows * DESKTOP_COLS ? (
+                <button onClick={() => setGiftDesktopRows(r => r + 2)} className="w-full mt-4 py-2 text-sm font-semibold text-gray-400 flex items-center justify-center gap-1 hover:text-gray-700 transition-colors">
+                  View More <ChevronRight size={14} />
+                </button>
+              ) : giftDesktopRows > 2 ? (
+                <button onClick={() => setGiftDesktopRows(2)} className="w-full mt-4 py-2 text-sm font-semibold text-gray-400 flex items-center justify-center gap-1 hover:text-gray-700 transition-colors">
+                  Show Less <ChevronRight size={14} className="rotate-180" />
+                </button>
+              ) : null}
             </div>
           )}
 
@@ -427,14 +473,14 @@ export function HomePage() {
           {hotGames.concat(games.filter(g => !g.is_hot)).length > hotRows * COLS ? (
             <button 
               onClick={() => setHotRows((r) => r + LINES_PER_CLICK)} 
-              className="w-full mt-4 py-3 text-sm font-semibold text-gray-600 bg-white rounded-xl border border-gray-200 flex items-center justify-center gap-1 hover:bg-gray-50 transition-colors"
+              className="w-full mt-4 py-2 text-sm font-semibold text-gray-400 flex items-center justify-center gap-1 hover:text-gray-700 transition-colors"
             >
               {t("viewMore")} <ChevronRight size={14} />
             </button>
           ) : hotRows > INITIAL_LINES ? (
             <button 
               onClick={() => setHotRows(INITIAL_LINES)} 
-              className="w-full mt-4 py-3 text-sm font-semibold text-gray-600 bg-white rounded-xl border border-gray-200 flex items-center justify-center gap-1 hover:bg-gray-50 transition-colors"
+              className="w-full mt-4 py-2 text-sm font-semibold text-gray-400 flex items-center justify-center gap-1 hover:text-gray-700 transition-colors"
             >
               {t("showLess")} <ChevronRight size={14} className="rotate-180" />
             </button>
@@ -510,14 +556,14 @@ export function HomePage() {
             {discountGames.length > discountRows * COLS ? (
               <button 
                 onClick={() => setDiscountRows((r) => r + LINES_PER_CLICK)} 
-                className="w-full mt-4 py-3 text-sm font-semibold text-gray-600 bg-white rounded-xl border border-gray-200 flex items-center justify-center gap-1 hover:bg-gray-50 transition-colors"
+                className="w-full mt-4 py-2 text-sm font-semibold text-gray-400 flex items-center justify-center gap-1 hover:text-gray-700 transition-colors"
               >
                 {t("viewMore")} <ChevronRight size={14} />
               </button>
             ) : discountRows > INITIAL_LINES ? (
               <button 
                 onClick={() => setDiscountRows(INITIAL_LINES)} 
-                className="w-full mt-4 py-3 text-sm font-semibold text-gray-600 bg-white rounded-xl border border-gray-200 flex items-center justify-center gap-1 hover:bg-gray-50 transition-colors"
+                className="w-full mt-4 py-2 text-sm font-semibold text-gray-400 flex items-center justify-center gap-1 hover:text-gray-700 transition-colors"
               >
                 {t("showLess")} <ChevronRight size={14} className="rotate-180" />
               </button>
@@ -545,14 +591,14 @@ export function HomePage() {
             {newGames.length > newRows * COLS ? (
               <button 
                 onClick={() => setNewRows((r) => r + LINES_PER_CLICK)} 
-                className="w-full mt-4 py-3 text-sm font-semibold text-gray-600 bg-white rounded-xl border border-gray-200 flex items-center justify-center gap-1 hover:bg-gray-50 transition-colors"
+                className="w-full mt-4 py-2 text-sm font-semibold text-gray-400 flex items-center justify-center gap-1 hover:text-gray-700 transition-colors"
               >
                 {t("viewMore")} <ChevronRight size={14} />
               </button>
             ) : newRows > INITIAL_LINES ? (
               <button 
                 onClick={() => setNewRows(INITIAL_LINES)} 
-                className="w-full mt-4 py-3 text-sm font-semibold text-gray-600 bg-white rounded-xl border border-gray-200 flex items-center justify-center gap-1 hover:bg-gray-50 transition-colors"
+                className="w-full mt-4 py-2 text-sm font-semibold text-gray-400 flex items-center justify-center gap-1 hover:text-gray-700 transition-colors"
               >
                 {t("showLess")} <ChevronRight size={14} className="rotate-180" />
               </button>
@@ -580,14 +626,14 @@ export function HomePage() {
             {giftCardGames.length > giftRows * COLS ? (
               <button 
                 onClick={() => setGiftRows((r) => r + LINES_PER_CLICK)} 
-                className="w-full mt-4 py-3 text-sm font-semibold text-gray-600 bg-white rounded-xl border border-gray-200 flex items-center justify-center gap-1 hover:bg-gray-50 transition-colors"
+                className="w-full mt-4 py-2 text-sm font-semibold text-gray-400 flex items-center justify-center gap-1 hover:text-gray-700 transition-colors"
               >
                 {t("viewMore")} <ChevronRight size={14} />
               </button>
             ) : giftRows > INITIAL_LINES ? (
               <button 
                 onClick={() => setGiftRows(INITIAL_LINES)} 
-                className="w-full mt-4 py-3 text-sm font-semibold text-gray-600 bg-white rounded-xl border border-gray-200 flex items-center justify-center gap-1 hover:bg-gray-50 transition-colors"
+                className="w-full mt-4 py-2 text-sm font-semibold text-gray-400 flex items-center justify-center gap-1 hover:text-gray-700 transition-colors"
               >
                 {t("showLess")} <ChevronRight size={14} className="rotate-180" />
               </button>
@@ -602,4 +648,3 @@ export function HomePage() {
     </div>
   );
 }
-also add view more for desktop and remove background in view more kitel simple also for mobile and fix rating to real rating never demo or fake.
