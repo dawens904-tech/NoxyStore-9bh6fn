@@ -602,3 +602,4 @@ export function HomePage() {
     </div>
   );
 }
+also add view more for desktop and remove background in view more kitel simple also for mobile and fix rating to real rating never demo or fake.
