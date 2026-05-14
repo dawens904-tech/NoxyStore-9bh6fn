@@ -560,6 +560,114 @@ function DesktopCoupons({ user }: { user: any }) {
   );
 }
 
+// ─── Desktop Inline Affiliate ───────────────────────────────────────────────
+function DesktopAffiliate({ user }: { user: any }) {
+  const navigate = useNavigate();
+  const [store, setStore] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user?.email) return;
+    supabase.from("affiliate_stores").select("*").eq("user_email", user.email).single().then(({ data }) => {
+      if (data) setStore(data);
+      setIsLoading(false);
+    });
+  }, [user]);
+
+  const commission = store ? (store.income_30d || 0) : 0;
+  const orders30d = store ? (store.orders_30d || 0) : 0;
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-xl font-bold text-gray-900">Affiliate Program</h2>
+        <button onClick={() => navigate("/affiliate")} className="bg-yellow-400 hover:bg-yellow-300 text-black font-bold text-sm px-5 py-2.5 rounded-xl">
+          Manage Store
+        </button>
+      </div>
+
+      {/* Hero banner */}
+      <div className="bg-gradient-to-r from-yellow-400 to-orange-400 rounded-2xl p-6 mb-5 relative overflow-hidden">
+        <div className="absolute right-0 top-0 bottom-0 w-40 opacity-10">
+          <DollarSign size={160} className="text-black" />
+        </div>
+        <h3 className="font-black text-gray-900 text-lg mb-1">Earn up to 10% Commission</h3>
+        <p className="text-gray-800 text-sm mb-4">Create your affiliate store, share your link, and earn money every time someone buys through your store.</p>
+        <button onClick={() => navigate("/affiliate")} className="bg-black text-yellow-400 font-bold text-sm px-5 py-2.5 rounded-xl hover:bg-gray-900 transition-colors">
+          Open My Store
+        </button>
+      </div>
+
+      {/* Stats */}
+      {isLoading ? (
+        <div className="grid grid-cols-3 gap-4 mb-5">
+          {[1,2,3].map(i => <div key={i} className="bg-gray-100 rounded-2xl h-24 animate-pulse" />)}
+        </div>
+      ) : (
+        <div className="grid grid-cols-3 gap-4 mb-5">
+          {[
+            { label: "30-Day Orders", value: orders30d, suffix: "" },
+            { label: "30-Day Income", value: `$${commission.toFixed(2)}`, suffix: "" },
+            { label: "Commission Rate", value: "Up to 10", suffix: "%" },
+          ].map((stat) => (
+            <div key={stat.label} className="bg-gray-50 rounded-2xl p-5 text-center border border-gray-100">
+              <p className="text-2xl font-black text-orange-500">{stat.value}<span className="text-lg">{stat.suffix}</span></p>
+              <p className="text-xs text-gray-500 mt-1">{stat.label}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* How it works */}
+      <div className="bg-gray-50 rounded-2xl p-5 mb-5">
+        <div className="flex items-center gap-2 mb-4"><div className="w-1 h-5 bg-yellow-400 rounded-full" /><h3 className="font-bold text-gray-900">How it works</h3></div>
+        <div className="grid grid-cols-3 gap-4">
+          {[
+            { step: "1", title: "Create Your Store", desc: "Set up your affiliate store with your branding and featured games." },
+            { step: "2", title: "Share Your Link", desc: "Share your store link on social media, Discord, YouTube, or anywhere." },
+            { step: "3", title: "Earn Commission", desc: "Earn up to 10% on every order placed through your affiliate store." },
+          ].map((item) => (
+            <div key={item.step} className="text-center">
+              <div className="w-10 h-10 rounded-full bg-yellow-400 flex items-center justify-center mx-auto mb-3 font-black text-black text-lg">{item.step}</div>
+              <p className="font-bold text-gray-900 text-sm mb-1">{item.title}</p>
+              <p className="text-xs text-gray-500 leading-relaxed">{item.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Store info if exists */}
+      {store && (
+        <div className="bg-white border border-gray-100 rounded-2xl p-5">
+          <div className="flex items-center gap-3 mb-3">
+            {store.avatar_url ? (
+              <img src={store.avatar_url} alt="store" className="w-12 h-12 rounded-full object-cover" />
+            ) : (
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center text-black font-black text-lg">{store.store_name?.[0]?.toUpperCase()}</div>
+            )}
+            <div>
+              <p className="font-bold text-gray-900">{store.store_name}</p>
+              <p className="text-xs text-gray-500 font-mono">{store.store_link}</p>
+            </div>
+          </div>
+          <button onClick={() => navigate("/affiliate")} className="w-full bg-gray-50 hover:bg-gray-100 text-gray-700 font-semibold text-sm py-3 rounded-xl border border-gray-200 transition-colors">
+            Edit Store Settings
+          </button>
+        </div>
+      )}
+
+      {!store && !isLoading && (
+        <div className="text-center py-8">
+          <p className="text-gray-500 mb-4">You don't have an affiliate store yet.</p>
+          <button onClick={() => navigate("/affiliate")} className="bg-yellow-400 hover:bg-yellow-300 text-black font-bold px-8 py-3 rounded-xl">
+            Create My Store
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 export function AccountPage() {
   const navigate = useNavigate();
@@ -691,7 +799,7 @@ export function AccountPage() {
     { key: "helpCenter", icon: HelpCircle, label: t("helpCenter") },
     { key: "feedback", icon: MessageSquare, label: "Feedback" },
     { key: "invite", icon: Gift, label: t("inviteForCoupons"), dot: true },
-    { key: "earn", icon: DollarSign, label: t("affiliateProgram"), highlight: true },
+    { key: "earn", icon: DollarSign, label: t("affiliateProgram"), highlight: true, inline: true },
   ];
 
   // ─── Desktop Layout ───────────────────────────────────────────────────────
@@ -707,8 +815,8 @@ export function AccountPage() {
       </div>
       <div className="max-w-[1280px] mx-auto px-6" style={{ height: "calc(100vh - 110px)" }}>
         <div className="flex gap-6 h-full">
-          {/* Sidebar — fixed, never scrolls */}
-          <div className="w-72 flex-shrink-0 overflow-hidden">
+          {/* Sidebar — fixed height, no scroll */}
+          <div className="w-72 flex-shrink-0 overflow-hidden" style={{ position: "sticky", top: 0, alignSelf: "flex-start", maxHeight: "calc(100vh - 110px)", overflowY: "auto", scrollbarWidth: "none" } as React.CSSProperties}>
             <div className="bg-white rounded-2xl shadow-sm p-5 mb-4">
               <div className="flex items-center gap-3 mb-4">
                 <div className="relative">
@@ -736,7 +844,7 @@ export function AccountPage() {
               {sidebarItems.map((item) => (
                 <button key={item.key} onClick={() => {
                   if (item.key === "helpCenter") { navigate("/support"); return; }
-                  if (item.key === "earn") { navigate("/affiliate"); return; }
+                  if (item.key === "earn") { setDesktopSection("earn"); return; }
                   setDesktopSection(item.key);
                 }} className={`w-full flex items-center justify-between px-4 py-3.5 text-sm font-medium transition-colors border-b border-gray-50 last:border-0 ${desktopSection === item.key ? "bg-yellow-50 text-yellow-700 border-l-4 border-l-yellow-400" : item.highlight ? "text-yellow-500 hover:bg-yellow-50" : "text-gray-700 hover:bg-gray-50"}`}>
                   <span className="flex items-center gap-3">
@@ -833,6 +941,7 @@ export function AccountPage() {
               {desktopSection === "coupon" && <DesktopCoupons user={user} />}
               {desktopSection === "feedback" && <DesktopFeedback userEmail={user?.email || ""} />}
               {desktopSection === "invite" && <DesktopInvite user={user} />}
+              {desktopSection === "earn" && <DesktopAffiliate user={user} />}
             </div>
 
             <div className="flex gap-4 mt-4">
@@ -1096,4 +1205,3 @@ export function AccountPage() {
     </>
   );
 }
-fix affiliate page display in desktop like other coupons etc and on coupon settings all page the left panel stay fixed only right can scroll.
