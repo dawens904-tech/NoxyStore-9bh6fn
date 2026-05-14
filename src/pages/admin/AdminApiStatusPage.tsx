@@ -170,3 +170,4 @@ export function AdminApiStatusPage() {
     </AdminLayout>
   );
 }
+please Create a scheduled edge function (cron) that calls lootbar-proxy get_games every hour to keep games_cache fresh automatically without admin intervention Add a real-time indicator in AdminApiStatusPage showing how many games currently have missing images (null game_image in games_cache), updating on page load with a Supabase count query.
