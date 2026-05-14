@@ -192,4 +192,4 @@ function DesktopFooter() {
     </footer>
   );
 }
-
+fix carousel image yo smaller fucking diw mete yo paret piti femen and also mobile and mete yo kouri more fast.
