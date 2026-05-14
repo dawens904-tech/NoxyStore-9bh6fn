@@ -33,6 +33,7 @@ import { PointsPage } from "@/pages/PointsPage";
 import { VipBenefitsPage } from "@/pages/VipBenefitsPage";
 import { LanguageCurrencyPage } from "@/pages/LanguageCurrencyPage";
 import { ContactPage } from "@/pages/ContactPage";
+import { MessagesPage } from "@/pages/MessagesPage";
 // Admin pages — each is its own dedicated page
 import { AdminDashboardPage } from "@/pages/admin/AdminDashboardPage";
 import { AdminOrdersPage } from "@/pages/admin/AdminOrdersPage";
@@ -227,6 +228,7 @@ function App() {
           <Route path="/about-us" element={<AboutUsPage />} />
           <Route path="/language-currency" element={<LanguageCurrencyPage />} />
           <Route path="/contact" element={<ContactPage />} />
+          <Route path="/messages" element={<MessagesPage />} />
 
           {/* Admin routes — each section is its own page */}
           <Route path="/admin" element={<AdminDashboardPage />} />
