@@ -278,7 +278,7 @@ export function HomePage() {
                 {t("all")} ({games.length}) <ChevronRight size={14} />
               </button>
             </div>
-            <div className="grid grid-cols-7 gap-4">
+            <div className="grid grid-cols-5 lg:grid-cols-7 gap-4">
               {isLoading ? Array.from({ length: hotDesktopRows * DESKTOP_COLS }).map((_, i) => <div key={i} className="shimmer rounded-2xl aspect-square" />)
                 : hotGames.concat(games.filter(g => !g.is_hot)).slice(0, hotDesktopRows * DESKTOP_COLS).map((game) => <GameCard key={game.game_id} game={game} size="sm" />)}
             </div>
@@ -356,7 +356,7 @@ export function HomePage() {
                   {t("all")} ({discountGames.length}) →
                 </button>
               </div>
-              <div className="grid grid-cols-7 gap-4">
+              <div className="grid grid-cols-5 lg:grid-cols-7 gap-4">
                 {discountGames.slice(0, discountDesktopRows * DESKTOP_COLS).map((game) => <GameCard key={game.game_id} game={game} size="sm" />)}
               </div>
               {discountGames.length > discountDesktopRows * DESKTOP_COLS ? (
@@ -382,7 +382,7 @@ export function HomePage() {
                   {t("all")} <ChevronRight size={14} />
                 </button>
               </div>
-              <div className="grid grid-cols-7 gap-4">
+              <div className="grid grid-cols-5 lg:grid-cols-7 gap-4">
                 {newGames.slice(0, newDesktopRows * DESKTOP_COLS).map((game) => <GameCard key={game.game_id} game={game} size="sm" />)}
               </div>
               {newGames.length > newDesktopRows * DESKTOP_COLS ? (
@@ -408,7 +408,7 @@ export function HomePage() {
                   {t("all")} ({giftCardGames.length}) <ChevronRight size={14} />
                 </button>
               </div>
-              <div className="grid grid-cols-7 gap-4">
+              <div className="grid grid-cols-5 lg:grid-cols-7 gap-4">
                 {giftCardGames.slice(0, giftDesktopRows * DESKTOP_COLS).map((game) => <GameCard key={game.game_id} game={game} size="sm" />)}
               </div>
               {giftCardGames.length > giftDesktopRows * DESKTOP_COLS ? (
@@ -431,7 +431,7 @@ export function HomePage() {
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-black text-gray-900">{sec.section_name}</h2>
                 </div>
-                <div className="grid grid-cols-7 gap-4">
+                <div className="grid grid-cols-5 lg:grid-cols-7 gap-4">
                   {secGames.slice(0, 7).map((game) => <GameCard key={game.game_id} game={game} size="sm" />)}
                 </div>
               </div>
@@ -649,4 +649,3 @@ export function HomePage() {
     </div>
   );
 }
-for ipad/tablet the home page product must be 5fr.
