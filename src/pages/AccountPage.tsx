@@ -668,6 +668,156 @@ function DesktopAffiliate({ user }: { user: any }) {
   );
 }
 
+// ─── Activity Feed ───────────────────────────────────────────────────────────
+function ActivityFeed({ userId, userEmail }: { userId?: string; userEmail?: string }) {
+  const navigate = useNavigate();
+  const [activities, setActivities] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!userId && !userEmail) { setLoading(false); return; }
+    loadActivity();
+  }, [userId, userEmail]);
+
+  async function loadActivity() {
+    setLoading(true);
+    const [analyticsRes, walletRes, ordersRes, couponsRes] = await Promise.all([
+      supabase.from("analytics_events").select("*").eq("user_id", userId || "").order("created_at", { ascending: false }).limit(20),
+      supabase.from("wallet_transactions").select("*").eq("user_email", userEmail || "").order("created_at", { ascending: false }).limit(10),
+      supabase.from("orders").select("*").eq("user_email", userEmail || "").order("created_at", { ascending: false }).limit(10),
+      supabase.from("user_coupons").select("*").eq("user_email", userEmail || "").order("created_at", { ascending: false }).limit(5),
+    ]);
+
+    const merged: any[] = [];
+
+    // Analytics events → login, page_view, etc.
+    for (const ev of analyticsRes.data || []) {
+      const typeMap: Record<string, { label: string; icon: string; color: string }> = {
+        daily_login: { label: "Daily login bonus earned (+2 pts)", icon: "🎯", color: "text-green-600 bg-green-50" },
+        page_view: { label: `Visited ${ev.page || "a page"}`, icon: "👁️", color: "text-gray-500 bg-gray-50" },
+        search: { label: `Searched for "${ev.extra_data?.query || ""}"", icon: "🔍", color: "text-blue-600 bg-blue-50" },
+        game_view: { label: `Viewed game${ev.game_id ? " #" + ev.game_id : ""}`, icon: "🎮", color: "text-purple-600 bg-purple-50" },
+        checkout_started: { label: "Started checkout", icon: "🛒", color: "text-orange-600 bg-orange-50" },
+        order_placed: { label: "Order placed", icon: "✅", color: "text-green-600 bg-green-50" },
+        coupon_redeemed: { label: "Coupon code redeemed", icon: "🎟️", color: "text-yellow-600 bg-yellow-50" },
+        profile_updated: { label: "Profile information updated", icon: "✏️", color: "text-blue-600 bg-blue-50" },
+      };
+      const meta = typeMap[ev.event_type];
+      if (!meta) continue;
+      merged.push({ id: "ev_" + ev.id, ts: ev.created_at, label: meta.label, icon: meta.icon, color: meta.color, type: "event" });
+    }
+
+    // Wallet transactions
+    for (const tx of walletRes.data || []) {
+      const isCredit = ["points_earned", "top_up", "refund", "bonus"].includes(tx.type);
+      merged.push({
+        id: "tx_" + tx.id,
+        ts: tx.created_at,
+        label: tx.description || (isCredit ? "Wallet credited" : "Wallet debited"),
+        icon: isCredit ? "💰" : "💸",
+        color: isCredit ? "text-green-700 bg-green-50" : "text-red-600 bg-red-50",
+        sub: `${isCredit ? "+" : "-"}$${Math.abs(Number(tx.amount)).toFixed(2)}`,
+        type: "wallet",
+      });
+    }
+
+    // Orders
+    for (const order of ordersRes.data || []) {
+      merged.push({
+        id: "ord_" + order.id,
+        ts: order.created_at,
+        label: `Purchased: ${order.game_name} — ${order.sku_name}`,
+        icon: "🛍️",
+        color: "text-purple-700 bg-purple-50",
+        sub: `$${Number(order.price).toFixed(2)}`,
+        type: "order",
+        path: `/orders/${order.reference_id}`,
+      });
+    }
+
+    // Coupon events
+    for (const c of couponsRes.data || []) {
+      merged.push({
+        id: "cp_" + c.id,
+        ts: c.created_at,
+        label: `Coupon received: ${c.code} (${c.discount_value}% off)`,
+        icon: "🎟️",
+        color: "text-yellow-700 bg-yellow-50",
+        type: "coupon",
+      });
+    }
+
+    // Sort all by timestamp descending
+    merged.sort((a, b) => new Date(b.ts).getTime() - new Date(a.ts).getTime());
+    setActivities(merged.slice(0, 30));
+    setLoading(false);
+  }
+
+  function timeAgo(ts: string) {
+    const diff = Math.floor((Date.now() - new Date(ts).getTime()) / 1000);
+    if (diff < 60) return `${diff}s ago`;
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    return `${Math.floor(diff / 86400)}d ago`;
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-3">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="bg-white rounded-2xl p-4 flex items-center gap-3 animate-pulse shadow-sm">
+            <div className="w-10 h-10 bg-gray-100 rounded-full flex-shrink-0" />
+            <div className="flex-1"><div className="h-3 bg-gray-100 rounded w-3/4 mb-2" /><div className="h-2.5 bg-gray-100 rounded w-1/3" /></div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (activities.length === 0) {
+    return (
+      <div className="text-center py-16">
+        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">📋</div>
+        <p className="text-gray-500 font-medium">No activity yet</p>
+        <p className="text-gray-400 text-sm mt-1">Your actions like logins, orders, and wallet changes will appear here.</p>
+        <button onClick={() => navigate("/")} className="mt-5 bg-yellow-400 hover:bg-yellow-300 text-black font-bold px-6 py-2.5 rounded-xl text-sm">Browse Games</button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2.5">
+      <div className="flex items-center justify-between mb-1">
+        <h2 className="text-base font-bold text-gray-900">Recent Activity</h2>
+        <span className="text-xs text-gray-400">{activities.length} events</span>
+      </div>
+      {activities.map(act => (
+        <button
+          key={act.id}
+          onClick={() => act.path && navigate(act.path)}
+          className={`w-full bg-white rounded-2xl p-3.5 flex items-center gap-3 shadow-sm text-left ${
+            act.path ? "hover:shadow-md transition-shadow cursor-pointer" : "cursor-default"
+          }`}
+        >
+          <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg flex-shrink-0 ${act.color}`}>
+            {act.icon}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-gray-900 leading-tight line-clamp-1">{act.label}</p>
+            <p className="text-xs text-gray-400 mt-0.5">{timeAgo(act.ts)} · {new Date(act.ts).toLocaleDateString()}</p>
+          </div>
+          {act.sub && (
+            <span className={`text-sm font-black flex-shrink-0 ${
+              act.sub.startsWith("+") ? "text-green-600" : "text-red-500"
+            }`}>{act.sub}</span>
+          )}
+          {act.path && <ChevronRight size={14} className="text-gray-300 flex-shrink-0" />}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 export function AccountPage() {
   const navigate = useNavigate();
@@ -1182,7 +1332,7 @@ export function AccountPage() {
         )}
 
         {activeTab === "activity" && (
-          <div className="text-center py-16"><Package size={48} className="text-gray-200 mx-auto mb-4" /><p className="text-gray-500 font-medium">Activity tracking coming soon</p></div>
+          <ActivityFeed userId={user?.id} userEmail={user?.email} />
         )}
 
         {activeTab === "overview" && <MoreGamesSection />}
@@ -1205,4 +1355,3 @@ export function AccountPage() {
     </>
   );
 }
-in section activiti add real track example new login etc and more activity track.
