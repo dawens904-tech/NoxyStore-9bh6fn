@@ -204,3 +204,4 @@ export function AdminApiStatusPage() {
     </AdminLayout>
   );
 }
+use srapi first and search all game logo from lootbar example free fire lootbar and give the lootbar free fire logo also the other.
