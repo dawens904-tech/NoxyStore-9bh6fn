@@ -1079,3 +1079,4 @@ export function AdminProductsPage() {
     </AdminLayout>
   );
 }
+in onspace cloud-data-GamesCache allow for all product require only put photo url and auto set lootbar function to have this producr remove other function kite shema for product photo url only and please add this for free fire all never delete this photo for this ff https://uzxmmddivzqjhcnnrkns.supabase.co/storage/v1/object/public/logo/WhatsApp%20Image%202026-05-10%20at%2012.15.07%20AM.jpeg.
