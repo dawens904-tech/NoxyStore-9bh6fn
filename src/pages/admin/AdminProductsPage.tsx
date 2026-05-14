@@ -1079,4 +1079,3 @@ export function AdminProductsPage() {
     </AdminLayout>
   );
 }
-fix game cache photo upload only in cloud data never allow other only photo access pou mete and add this photo https://uzxmmddivzqjhcnnrkns.supabase.co/storage/v1/object/public/logo/WhatsApp%20Image%202026-05-10%20at%2012.15.07%20AM.jpeg for free fire.
