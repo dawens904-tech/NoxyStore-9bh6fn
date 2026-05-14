@@ -1354,5 +1354,4 @@ export function AccountPage() {
       {showPasskeyModal && <PasskeyModal onClose={() => setShowPasskeyModal(false)} onNavigate={() => { setShowPasskeyModal(false); navigate("/passkeys"); }} />}
     </>
   );
-}
-  fix all error in this page.
+} fix all error in this page.
