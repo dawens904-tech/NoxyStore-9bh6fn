@@ -649,4 +649,3 @@ export function HomePage() {
     </div>
   );
 }
-its give banner fake add real banner from banner page yo.

@@ -2,23 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { useNavigate } from "react-router-dom";
 
-// Fallback static banners if DB returns nothing
-const FALLBACK_BANNERS = [
-  {
-    id: "f1",
-    title: "Top Up Instantly",
-    subtitle: "Fast · Safe · 24/7",
-    image_url: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&h=350&fit=crop&sig=1",
-    link: "/categories",
-  },
-  {
-    id: "f2",
-    title: "Best Game Prices",
-    subtitle: "Up to 30% OFF",
-    image_url: "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=800&h=350&fit=crop&sig=2",
-    link: "/categories",
-  },
-];
+
 
 interface DBBanner {
   id: string;
@@ -32,6 +16,7 @@ export function HeroBanner() {
   const navigate = useNavigate();
   const [current, setCurrent] = useState(0);
   const [banners, setBanners] = useState<DBBanner[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
   const [imgErrors, setImgErrors] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
@@ -42,10 +27,11 @@ export function HeroBanner() {
       .order("sort_order")
       .then(({ data }) => {
         if (data && data.length > 0) setBanners(data as DBBanner[]);
+        setIsLoaded(true);
       });
   }, []);
 
-  const items = banners.length > 0 ? banners : FALLBACK_BANNERS;
+  const items = banners;
 
   const next = useCallback(() => {
     setCurrent((c) => (c + 1) % items.length);
@@ -56,13 +42,17 @@ export function HeroBanner() {
     return () => clearInterval(timer);
   }, [next]);
 
+  // Don't render until loaded; hide if no banners in DB
+  if (!isLoaded) {
+    return <div className="mx-3 rounded-2xl h-44 bg-gray-200 animate-pulse" />;
+  }
+  if (items.length === 0) return null;
+
   return (
     <div className="relative mx-3 rounded-2xl overflow-hidden h-44 bg-gray-900">
       {items.map((banner, idx) => {
         const hasError = imgErrors[banner.id];
-        const src = hasError
-          ? `https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&h=350&fit=crop&sig=${banner.id}`
-          : banner.image_url;
+        const src = hasError ? banner.image_url : banner.image_url;
 
         return (
           <div
