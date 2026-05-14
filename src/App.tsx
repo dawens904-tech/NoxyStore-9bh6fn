@@ -23,7 +23,6 @@ import { AboutPage } from "@/pages/AboutPage";
 import { CouponsPage } from "@/pages/CouponsPage";
 import { InvitePage } from "@/pages/InvitePage";
 import { AffiliatePage } from "@/pages/AffiliatePage";
-import { ShopPage } from "@/pages/ShopPage";
 import AboutUsPage from "@/pages/about-us";
 import { SearchPage } from "@/pages/SearchPage";
 import { PrivacyPage } from "@/pages/PrivacyPage";
@@ -217,7 +216,6 @@ function App() {
           <Route path="/coupons" element={<CouponsPage />} />
           <Route path="/invite" element={<InvitePage />} />
           <Route path="/affiliate" element={<AffiliatePage />} />
-          <Route path="/shop/:storeName" element={<ShopPage />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />

@@ -426,4 +426,3 @@ export const BANNER_IMAGES = [
     fallback: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800&h=400&fit=crop&q=80",
   },
 ];
-remove this page no demo service in my store remove all this page delete it.
