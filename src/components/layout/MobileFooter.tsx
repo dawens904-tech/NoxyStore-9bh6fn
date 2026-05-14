@@ -1,4 +1,38 @@
 import { Shield, Award, Clock, Plus, Minus } from 'lucide-react';
+
+const carouselLogos = [
+  "/images/IMG_8408.webp",
+  "/images/IMG_8730.png",
+  "/images/IMG_8731.png",
+  "/images/IMG_8732.jpeg",
+  "/images/IMG_8733.png",
+  "/images/IMG_8734.png",
+  "/images/IMG_8735.png",
+  "/images/IMG_8726.webp",
+  "/images/IMG_8729.webp",
+  "/images/IMG_8736.jpeg",
+  "/images/IMG_8738.jpeg",
+  "/images/IMG_8727.webp",
+  "/images/IMG_8728.webp",
+  "/images/IMG_8737.png"
+];
+
+function MobileCarousel() {
+  return (
+    <div className="overflow-hidden w-full py-3 bg-white">
+      <div className="flex animate-scroll gap-8">
+        {carouselLogos.concat(carouselLogos).map((logo, i) => (
+          <img
+            key={i}
+            src={logo}
+            className="h-8 w-auto object-contain opacity-80 hover:opacity-100 transition flex-shrink-0"
+            alt=""
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import TrustpilotReviews from '@/components/features/TrustpilotReviews';
@@ -85,15 +119,9 @@ export function MobileFooter() {
         <TrustpilotReviews />
       </div>
 
-      {/* Payment Methods */}
-      <div className="px-4 py-6 border-b">
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Accepted Payments</p>
-        <div className="flex flex-wrap gap-3 items-center opacity-70">
-          <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" alt="Visa" className="h-5" />
-          <img src="https://upload.wikimedia.org/wikipedia/commons/b/b7/MasterCard_Logo.svg" alt="Mastercard" className="h-5" />
-          <span className="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-1 rounded">PayPal</span>
-          <span className="text-xs font-bold text-gray-800 bg-gray-100 px-2 py-1 rounded">Crypto</span>
-        </div>
+      {/* Payment Methods Carousel */}
+      <div className="border-y">
+        <MobileCarousel />
       </div>
 
       {/* Collapsible sections */}

@@ -30,7 +30,7 @@ function Carousel() {
           <img
             key={i}
             src={logo}
-            className="h-12 w-auto object-contain opacity-90 hover:opacity-100 hover:drop-shadow-md transition"
+            className="h-8 w-auto object-contain opacity-90 hover:opacity-100 hover:drop-shadow-md transition"
           />
         ))}
       </div>
@@ -192,4 +192,4 @@ function DesktopFooter() {
     </footer>
   );
 }
-please ai make the logo more small and also add it for mobile footer.
+
