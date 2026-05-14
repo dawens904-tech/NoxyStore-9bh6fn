@@ -454,9 +454,7 @@ export function HomePage() {
         <HeroBanner />
         <div className="mt-5 mb-2"><CategoryIcons /></div>
 
-        {/* ═══════════════════════════════════════════════════════════
-            HOT SELLING TOP-UP GAMES — 3 cols, 3 lines (9 items), +3 lines per click
-            ═══════════════════════════════════════════════════════════ */}
+        {/* HOT SELLING TOP-UP GAMES */}
         <div className="mt-5 px-3">
           <div className="flex items-center justify-between mb-3">
             <div>
@@ -468,7 +466,6 @@ export function HomePage() {
             </button>
           </div>
 
-          {/* Game Grid — 3 columns, dynamic rows */}
           <div className="grid grid-cols-3 gap-2.5">
             {isLoading
               ? Array.from({ length: hotRows * COLS }).map((_, i) => (
@@ -481,7 +478,6 @@ export function HomePage() {
             }
           </div>
 
-          {/* View More / Show Less Button */}
           {hotGames.concat(games.filter(g => !g.is_hot)).length > hotRows * COLS ? (
             <button 
               onClick={() => setHotRows((r) => r + LINES_PER_CLICK)} 
@@ -499,9 +495,7 @@ export function HomePage() {
           ) : null}
         </div>
 
-        {/* ═══════════════════════════════════════════════════════════
-            POPULAR GAME KEY — KEEP EXACTLY AS IS (DON'T TOUCH)
-            ═══════════════════════════════════════════════════════════ */}
+        {/* POPULAR GAME KEY */}
         {(gameKeyGames.length > 0 || !isLoading) && (
           <div className="mt-6 mx-3 rounded-2xl overflow-hidden relative" style={{ background: `url(${gameKeysBg}) center/cover no-repeat` }}>
             <div className="absolute inset-0 bg-blue-900/80" />
@@ -536,7 +530,6 @@ export function HomePage() {
                       </div>
                     </button>
                   ))}
-                {/* View All tile */}
                 <button onClick={() => navigate("/categories?filter=Game+Keys")}
                   className="flex-shrink-0 w-24 flex flex-col items-center justify-center bg-yellow-400/90 rounded-xl p-2 hover:bg-yellow-400 transition-colors text-center h-36">
                   <KeyRound size={20} className="text-black mb-1.5" />
@@ -548,9 +541,7 @@ export function HomePage() {
           </div>
         )}
 
-        {/* ═══════════════════════════════════════════════════════════
-            DISCOUNT DEALS — 3 cols, 3 lines (9 items), +3 lines per click
-            ═══════════════════════════════════════════════════════════ */}
+        {/* DISCOUNT DEALS */}
         {discountGames.length > 0 && (
           <div className="mt-6 px-3">
             <div className="flex items-center justify-between mb-3">
@@ -583,9 +574,7 @@ export function HomePage() {
           </div>
         )}
 
-        {/* ═══════════════════════════════════════════════════════════
-            NEW GAMES — 3 cols, 3 lines (9 items), +3 lines per click
-            ═══════════════════════════════════════════════════════════ */}
+        {/* NEW GAMES */}
         {newGames.length > 0 && (
           <div className="mt-6 px-3">
             <div className="flex items-center justify-between mb-3">
@@ -618,9 +607,7 @@ export function HomePage() {
           </div>
         )}
 
-        {/* ═══════════════════════════════════════════════════════════
-            TRENDING GIFT CARDS — 3 cols, 3 lines (9 items), +3 lines per click
-            ═══════════════════════════════════════════════════════════ */}
+        {/* TRENDING GIFT CARDS */}
         {giftCardGames.length > 0 && (
           <div className="mt-6 px-3">
             <div className="flex items-center justify-between mb-3">
@@ -660,64 +647,3 @@ export function HomePage() {
     </div>
   );
 }
-Hello,  
-
-I am working on a project where I display game listings from a reseller API (Lootbar). However, the API does not provide game images or detailed game assets, so I need to implement an automatic image-fetching system inside the website.
-
-Please integrate a fallback image system that works in this priority order:
-
----
-
-## 🔥 Image Fetching Strategy (IMPORTANT)
-
-### 1. Primary Source (Best Quality)
-Use the RAWG Video Games Database  
-- Search game by name  
-- Retrieve official background_image  
-- Save it in my database for caching  
-- Do NOT call API every time (only if image is missing)
-
-API docs: https://rawg.io/apidocs
-
----
-
-### 2. Secondary Source (Advanced / High Accuracy)
-Use IGDB  
-- Use only if RAWG fails  
-- Fetch game cover image and metadata  
-- Cache result in database for future use  
-- Requires proper authentication (Twitch developer setup)
-
-API docs: https://api-docs.igdb.com
-
----
-
-### 3. Fallback Source (Last Resort)
-Use Google Image results via scraping API such as SerpApi  
-- Search query: “{game name} game cover”  
-- Extract first clean image result  
-- Store image URL in database
-
-Docs: https://serpapi.com/images-results
-
----
-
-## ⚙️ Important Requirements
-
-- Images must be saved in database (do not fetch repeatedly)
-- If a game already has an image → do not call APIs again
-- Add a default placeholder image if all sources fail
-- Normalize game names before searching (remove extra text like “UC”, “Top Up”, etc.)
-- Implement caching system to reduce API calls and improve speed
-- Prioritize performance and minimize latency
-
----
-
-## 🚀 Goal
-
-The goal is to fully automate game image assignment so that when Lootbar API returns a game, the system automatically finds and stores a real image without manual work.
-
-This should work in the background and be fully scalable.
-
-Thank you.
-

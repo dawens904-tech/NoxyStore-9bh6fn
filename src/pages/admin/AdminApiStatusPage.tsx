@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { RefreshCw, Zap } from "lucide-react";
+import { RefreshCw, Zap, Image } from "lucide-react";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { lootbarApi } from "@/lib/lootbar-api";
 import { supabase } from "@/lib/supabase";
@@ -41,6 +41,22 @@ export function AdminApiStatusPage() {
   const loadTokenInfo = async () => {
     const { data } = await supabase.from("lootbar_tokens").select("expire_at, created_at").order("created_at", { ascending: false }).limit(1).single();
     if (data) setTokenInfo(data);
+  };
+
+  const [isFetchingImages, setIsFetchingImages] = useState(false);
+  const [imageFetchResult, setImageFetchResult] = useState<{ updated: number; not_found: number } | null>(null);
+
+  const fetchMissingImages = async () => {
+    setIsFetchingImages(true);
+    setImageFetchResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("fetch-game-images", {
+        body: { use_fallback: true },
+      });
+      if (error) { toast.error("Image fetch failed"); }
+      else { setImageFetchResult({ updated: data.updated ?? 0, not_found: data.not_found ?? 0 }); toast.success(`Updated ${data.updated} game images`); }
+    } catch { toast.error("Image fetch error"); }
+    setIsFetchingImages(false);
   };
 
   const tokenExpiry = tokenInfo?.expire_at ? new Date(tokenInfo.expire_at * 1000) : null;
@@ -107,6 +123,27 @@ export function AdminApiStatusPage() {
               </div>
             ))}
           </div>
+        </div>
+
+        {/* Auto Image Fetcher */}
+        <div className="bg-[#1a1a1a] border border-white/10 rounded-2xl p-5">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h3 className="font-bold text-white">Auto Game Images</h3>
+              <p className="text-xs text-gray-500 mt-0.5">Fetch missing images from RAWG database (up to 50 games)</p>
+            </div>
+            <button onClick={fetchMissingImages} disabled={isFetchingImages} className="flex items-center gap-1.5 bg-purple-500 text-white font-bold text-xs px-3 py-2 rounded-xl hover:bg-purple-400 disabled:opacity-50">
+              <Image size={12} className={isFetchingImages ? "animate-pulse" : ""} />
+              {isFetchingImages ? "Fetching…" : "Fetch Images"}
+            </button>
+          </div>
+          {imageFetchResult && (
+            <div className="bg-white/5 rounded-xl p-3 text-sm">
+              <p className="text-green-400 font-semibold">{imageFetchResult.updated} images updated</p>
+              {imageFetchResult.not_found > 0 && <p className="text-gray-500 text-xs mt-0.5">{imageFetchResult.not_found} games not found on RAWG</p>}
+            </div>
+          )}
+          <p className="text-xs text-gray-600 mt-3">Requires RAWG_API_KEY secret. Get a free key at rawg.io/apidocs</p>
         </div>
 
         <div className="bg-[#1a1a1a] border border-white/10 rounded-2xl p-5">
