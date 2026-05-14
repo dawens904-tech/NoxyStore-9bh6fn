@@ -1061,3 +1061,4 @@ export function AdminProductsPage() {
     </AdminLayout>
   );
 }
+fix error when i saved a photo product its must stay never unsave or when app refresh its disappear no fix product saved and also in lootbar functionmto know this product change ever and show on home page game detail categories.
