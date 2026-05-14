@@ -5,7 +5,6 @@
  */
 import { supabase } from "@/lib/supabase";
 import type { LootbarGame, SkuItem } from "@/types";
-import { MOCK_GAMES, MOCK_SKUS, getGenericSkus } from "@/constants/mockData";
 
 // ─── Call Edge Function Helper ────────────────────────────────────────────────
 async function callProxy<T>(action: string, params?: Record<string, unknown>): Promise<T> {
