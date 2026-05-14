@@ -649,3 +649,4 @@ export function HomePage() {
     </div>
   );
 }
+for ipad/tablet the home page product must be 5fr.
