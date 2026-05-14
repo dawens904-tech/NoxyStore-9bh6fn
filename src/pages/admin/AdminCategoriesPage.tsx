@@ -3,7 +3,7 @@ import { Search } from "lucide-react";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { supabase } from "@/lib/supabase";
 import { lootbarApi } from "@/lib/lootbar-api";
-import { CATEGORIES } from "@/constants/mockData";
+const CATEGORIES = ["All", "Top Up", "Game Coins", "Gift Card", "Game Keys", "Game Items"];
 import { toast } from "sonner";
 
 export function AdminCategoriesPage() {
