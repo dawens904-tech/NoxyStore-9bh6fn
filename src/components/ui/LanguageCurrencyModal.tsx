@@ -36,7 +36,7 @@ export function LanguageCurrencyModal({ isOpen, onClose }: LanguageCurrencyModal
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-sm mx-4 p-6 animate-in fade-in slide-in-from-bottom-4 duration-200">
+      <div className="relative bg-white rounded-lg shadow-2xl w-full max-w-sm mx-4 p-6 animate-in fade-in slide-in-from-bottom-4 duration-200">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <button onClick={onClose} className="p-1 text-gray-500 hover:text-gray-700">
@@ -95,7 +95,7 @@ export function LanguageCurrencyModal({ isOpen, onClose }: LanguageCurrencyModal
         {/* Confirm Button */}
         <button
           onClick={handleConfirm}
-          className="w-full bg-yellow-400 hover:bg-yellow-300 active:bg-yellow-500 text-black font-bold text-base rounded-2xl py-4 transition-colors"
+          className="w-full bg-yellow-400 hover:bg-yellow-300 active:bg-yellow-500 text-black font-bold text-base rounded-lg py-4 transition-colors"
         >
           {t("confirm")}
         </button>
@@ -103,4 +103,4 @@ export function LanguageCurrencyModal({ isOpen, onClose }: LanguageCurrencyModal
     </div>
   );
 }
-make the modal square instead of border.
+
