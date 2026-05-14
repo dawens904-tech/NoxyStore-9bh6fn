@@ -602,3 +602,4 @@ export function HomePage() {
     </div>
   );
 }
+for desktop add 2 line and for rating add real fetch lootbar rating sold.
