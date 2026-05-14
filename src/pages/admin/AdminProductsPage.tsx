@@ -1079,4 +1079,3 @@ export function AdminProductsPage() {
     </AdminLayout>
   );
 }
-when product have image also update game detail to have the imge.
