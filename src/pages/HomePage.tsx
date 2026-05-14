@@ -649,4 +649,3 @@ export function HomePage() {
     </div>
   );
 }
-add this Build a redeem code feature in AdminCouponsPage: admin can create single-use redeem codes (stored in admin_redeem_codes table), users can enter codes in their account page to receive wallet balance or coupon rewards, with proper validation of max_uses and expiry.

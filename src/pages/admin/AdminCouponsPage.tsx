@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
-import { Plus, Trash2, RefreshCw, Tag } from "lucide-react";
+import { Plus, Trash2, RefreshCw, Tag, KeyRound, Copy, ToggleLeft, ToggleRight } from "lucide-react";
 
 interface Coupon {
   id: string;
@@ -18,154 +18,513 @@ interface Coupon {
   created_at: string;
 }
 
-export function AdminCouponsPage() {
-  const [coupons, setCoupons] = useState<Coupon[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({
-    user_email: "", code: "", type: "percent", discount_value: "10",
-    max_discount: "", min_order: "0.01", description: "", expires_days: "30",
-  });
+interface RedeemCode {
+  id: string;
+  code: string;
+  type: string;
+  value: number;
+  max_uses: number | null;
+  used_count: number;
+  expires_at: string | null;
+  is_active: boolean;
+  created_by: string | null;
+  created_at: string;
+}
 
-  useEffect(() => { loadCoupons(); }, []);
+type ActiveTab = "coupons" | "redeem";
+
+const EMPTY_COUPON_FORM = {
+  user_email: "", code: "", type: "percent", discount_value: "10",
+  max_discount: "", min_order: "0.01", description: "", expires_days: "30",
+};
+
+const EMPTY_REDEEM_FORM = {
+  code: "", type: "coupon", value: "10", max_uses: "1", expires_days: "30", has_expiry: true,
+};
+
+function generateCode(prefix = "NOXY") {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let code = prefix;
+  for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  return code;
+}
+
+export function AdminCouponsPage() {
+  const [activeTab, setActiveTab] = useState<ActiveTab>("redeem");
+
+  // --- Coupon state ---
+  const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [couponsLoading, setCouponsLoading] = useState(true);
+  const [showCouponForm, setShowCouponForm] = useState(false);
+  const [couponForm, setCouponForm] = useState(EMPTY_COUPON_FORM);
+
+  // --- Redeem code state ---
+  const [redeemCodes, setRedeemCodes] = useState<RedeemCode[]>([]);
+  const [redeemLoading, setRedeemLoading] = useState(true);
+  const [showRedeemForm, setShowRedeemForm] = useState(false);
+  const [redeemForm, setRedeemForm] = useState(EMPTY_REDEEM_FORM);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    loadCoupons();
+    loadRedeemCodes();
+  }, []);
+
+  // ─── Coupons ───────────────────────────────────────────────────────────────
 
   async function loadCoupons() {
-    setLoading(true);
+    setCouponsLoading(true);
     const { data } = await supabase.from("user_coupons").select("*").order("created_at", { ascending: false }).limit(100);
     setCoupons(data || []);
-    setLoading(false);
+    setCouponsLoading(false);
   }
 
   async function createCoupon() {
-    if (!form.user_email || !form.code) { toast.error("Email and code are required"); return; }
+    if (!couponForm.user_email || !couponForm.code) { toast.error("Email and code are required"); return; }
     const expires = new Date();
-    expires.setDate(expires.getDate() + parseInt(form.expires_days || "30"));
-
-    const { data: profile } = await supabase.from("user_profiles").select("id").eq("email", form.user_email).single();
-
+    expires.setDate(expires.getDate() + parseInt(couponForm.expires_days || "30"));
+    const { data: profile } = await supabase.from("user_profiles").select("id").eq("email", couponForm.user_email).single();
     const { error } = await supabase.from("user_coupons").insert({
       user_id: profile?.id,
-      user_email: form.user_email,
-      code: form.code.toUpperCase(),
-      type: form.type,
-      discount_value: parseFloat(form.discount_value),
-      max_discount: form.max_discount ? parseFloat(form.max_discount) : null,
-      min_order: parseFloat(form.min_order || "0.01"),
-      description: form.description || null,
+      user_email: couponForm.user_email,
+      code: couponForm.code.toUpperCase(),
+      type: couponForm.type,
+      discount_value: parseFloat(couponForm.discount_value),
+      max_discount: couponForm.max_discount ? parseFloat(couponForm.max_discount) : null,
+      min_order: parseFloat(couponForm.min_order || "0.01"),
+      description: couponForm.description || null,
       expires_at: expires.toISOString(),
     });
     if (error) { toast.error(error.message); return; }
-    toast.success("Coupon created!");
-    setShowForm(false);
-    setForm({ user_email: "", code: "", type: "percent", discount_value: "10", max_discount: "", min_order: "0.01", description: "", expires_days: "30" });
+    toast.success("Coupon issued!");
+    setShowCouponForm(false);
+    setCouponForm(EMPTY_COUPON_FORM);
     loadCoupons();
   }
+
+  // ─── Redeem Codes ─────────────────────────────────────────────────────────
+
+  async function loadRedeemCodes() {
+    setRedeemLoading(true);
+    const { data } = await supabase.from("admin_redeem_codes").select("*").order("created_at", { ascending: false });
+    setRedeemCodes(data || []);
+    setRedeemLoading(false);
+  }
+
+  async function createRedeemCode() {
+    if (!redeemForm.code) { toast.error("Code is required"); return; }
+    if (!redeemForm.value || parseFloat(redeemForm.value) <= 0) { toast.error("Value must be > 0"); return; }
+    setSaving(true);
+    let expires_at: string | null = null;
+    if (redeemForm.has_expiry && redeemForm.expires_days) {
+      const d = new Date();
+      d.setDate(d.getDate() + parseInt(redeemForm.expires_days));
+      expires_at = d.toISOString();
+    }
+    const { error } = await supabase.from("admin_redeem_codes").insert({
+      code: redeemForm.code.toUpperCase(),
+      type: redeemForm.type,
+      value: parseFloat(redeemForm.value),
+      max_uses: redeemForm.max_uses ? parseInt(redeemForm.max_uses) : 1,
+      expires_at,
+      is_active: true,
+    });
+    if (error) {
+      toast.error(error.message.includes("unique") ? "Code already exists" : error.message);
+      setSaving(false);
+      return;
+    }
+    toast.success("Redeem code created!");
+    setShowRedeemForm(false);
+    setRedeemForm(EMPTY_REDEEM_FORM);
+    loadRedeemCodes();
+    setSaving(false);
+  }
+
+  async function toggleRedeemCode(id: string, current: boolean) {
+    await supabase.from("admin_redeem_codes").update({ is_active: !current }).eq("id", id);
+    setRedeemCodes(prev => prev.map(r => r.id === id ? { ...r, is_active: !current } : r));
+  }
+
+  async function deleteRedeemCode(id: string) {
+    if (!confirm("Delete this redeem code?")) return;
+    await supabase.from("admin_redeem_codes").delete().eq("id", id);
+    setRedeemCodes(prev => prev.filter(r => r.id !== id));
+    toast.success("Code deleted");
+  }
+
+  function copyCode(code: string) {
+    navigator.clipboard.writeText(code);
+    toast.success(`Copied: ${code}`);
+  }
+
+  // ─── Render ───────────────────────────────────────────────────────────────
+
+  const isExpired = (expires_at: string | null) => expires_at ? new Date(expires_at) < new Date() : false;
 
   return (
     <AdminLayout>
       <div className="p-6">
+        {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-black text-gray-900">Coupons</h1>
-          <div className="flex gap-2">
-            <button onClick={loadCoupons} className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-800 px-3 py-2 rounded-lg border border-gray-200">
-              <RefreshCw size={14} />
-            </button>
-            <button onClick={() => setShowForm(!showForm)}
-              className="flex items-center gap-2 bg-yellow-400 text-black font-bold px-4 py-2 rounded-xl text-sm hover:bg-yellow-300">
-              <Plus size={15} /> New Coupon
-            </button>
-          </div>
+          <h1 className="text-2xl font-black text-gray-900">Coupons & Redeem Codes</h1>
+          <button
+            onClick={activeTab === "redeem" ? loadRedeemCodes : loadCoupons}
+            className="border border-gray-200 text-gray-500 px-3 py-2 rounded-lg hover:text-gray-800"
+          >
+            <RefreshCw size={14} />
+          </button>
         </div>
 
-        {showForm && (
-          <div className="bg-white rounded-xl border border-gray-200 p-5 mb-5">
-            <h3 className="font-bold text-gray-900 mb-4">Create Coupon</h3>
-            <div className="grid grid-cols-2 gap-3 mb-3">
+        {/* Tabs */}
+        <div className="flex gap-1 mb-6 bg-gray-100 rounded-xl p-1 w-fit">
+          <button
+            onClick={() => setActiveTab("redeem")}
+            className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === "redeem" ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+          >
+            <KeyRound size={15} /> Redeem Codes
+          </button>
+          <button
+            onClick={() => setActiveTab("coupons")}
+            className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === "coupons" ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+          >
+            <Tag size={15} /> User Coupons
+          </button>
+        </div>
+
+        {/* ── REDEEM CODES TAB ── */}
+        {activeTab === "redeem" && (
+          <div>
+            <div className="flex items-center justify-between mb-4">
               <div>
-                <label className="text-xs font-bold text-gray-600 mb-1 block">User Email *</label>
-                <input value={form.user_email} onChange={e => setForm(f => ({ ...f, user_email: e.target.value }))}
-                  placeholder="user@email.com" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-yellow-400" />
+                <p className="text-sm text-gray-500">Create shareable codes users can redeem for coupon rewards.</p>
               </div>
-              <div>
-                <label className="text-xs font-bold text-gray-600 mb-1 block">Code *</label>
-                <input value={form.code} onChange={e => setForm(f => ({ ...f, code: e.target.value.toUpperCase() }))}
-                  placeholder="SAVE10" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-yellow-400 font-mono" />
-              </div>
-              <div>
-                <label className="text-xs font-bold text-gray-600 mb-1 block">Type</label>
-                <select value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))}
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none bg-white">
-                  <option value="percent">Percent (%)</option>
-                  <option value="fixed">Fixed ($)</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-xs font-bold text-gray-600 mb-1 block">Discount Value</label>
-                <input type="number" value={form.discount_value} onChange={e => setForm(f => ({ ...f, discount_value: e.target.value }))}
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-yellow-400" />
-              </div>
-              <div>
-                <label className="text-xs font-bold text-gray-600 mb-1 block">Min Order ($)</label>
-                <input type="number" value={form.min_order} onChange={e => setForm(f => ({ ...f, min_order: e.target.value }))}
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-yellow-400" />
-              </div>
-              <div>
-                <label className="text-xs font-bold text-gray-600 mb-1 block">Expires in (days)</label>
-                <input type="number" value={form.expires_days} onChange={e => setForm(f => ({ ...f, expires_days: e.target.value }))}
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-yellow-400" />
-              </div>
+              <button
+                onClick={() => setShowRedeemForm(!showRedeemForm)}
+                className="flex items-center gap-2 bg-yellow-400 text-black font-bold px-4 py-2 rounded-xl text-sm hover:bg-yellow-300"
+              >
+                <Plus size={15} /> New Code
+              </button>
             </div>
-            <div className="mb-4">
-              <label className="text-xs font-bold text-gray-600 mb-1 block">Description</label>
-              <input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                placeholder="Optional description" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-yellow-400" />
+
+            {showRedeemForm && (
+              <div className="bg-white rounded-xl border border-gray-200 p-5 mb-5">
+                <h3 className="font-bold text-gray-900 mb-4">Create Redeem Code</h3>
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  <div>
+                    <label className="text-xs font-bold text-gray-600 mb-1 block">Code *</label>
+                    <div className="flex gap-2">
+                      <input
+                        value={redeemForm.code}
+                        onChange={e => setRedeemForm(f => ({ ...f, code: e.target.value.toUpperCase() }))}
+                        placeholder="NOXY2024"
+                        className="flex-1 border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-yellow-400 font-mono"
+                      />
+                      <button
+                        onClick={() => setRedeemForm(f => ({ ...f, code: generateCode() }))}
+                        className="border border-gray-200 text-gray-500 px-3 rounded-xl text-xs hover:bg-gray-50 whitespace-nowrap"
+                      >
+                        Auto
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-gray-600 mb-1 block">Reward Type</label>
+                    <select
+                      value={redeemForm.type}
+                      onChange={e => setRedeemForm(f => ({ ...f, type: e.target.value }))}
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none bg-white"
+                    >
+                      <option value="coupon">Coupon (% discount)</option>
+                      <option value="percent">Percent Off</option>
+                      <option value="fixed">Fixed Amount ($)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-gray-600 mb-1 block">
+                      Value {redeemForm.type === "fixed" ? "($)" : "(%)"}
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={redeemForm.value}
+                      onChange={e => setRedeemForm(f => ({ ...f, value: e.target.value }))}
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-yellow-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-gray-600 mb-1 block">Max Uses</label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={redeemForm.max_uses}
+                      onChange={e => setRedeemForm(f => ({ ...f, max_uses: e.target.value }))}
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-yellow-400"
+                      placeholder="1"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4 mb-4">
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <div
+                      onClick={() => setRedeemForm(f => ({ ...f, has_expiry: !f.has_expiry }))}
+                      className={`w-10 h-6 rounded-full transition-colors flex items-center px-1 ${redeemForm.has_expiry ? "bg-yellow-400" : "bg-gray-200"}`}
+                    >
+                      <div className={`w-4 h-4 bg-white rounded-full shadow transition-transform ${redeemForm.has_expiry ? "translate-x-4" : "translate-x-0"}`} />
+                    </div>
+                    <span className="text-sm font-semibold text-gray-700">Set expiry</span>
+                  </label>
+                  {redeemForm.has_expiry && (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        min="1"
+                        value={redeemForm.expires_days}
+                        onChange={e => setRedeemForm(f => ({ ...f, expires_days: e.target.value }))}
+                        className="w-20 border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-yellow-400"
+                      />
+                      <span className="text-sm text-gray-500">days from now</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex gap-2">
+                  <button onClick={createRedeemCode} disabled={saving} className="bg-yellow-400 text-black font-bold px-5 py-2.5 rounded-xl text-sm hover:bg-yellow-300 disabled:opacity-50">
+                    {saving ? "Creating…" : "Create Code"}
+                  </button>
+                  <button onClick={() => { setShowRedeemForm(false); setRedeemForm(EMPTY_REDEEM_FORM); }} className="border border-gray-200 text-gray-600 font-semibold px-5 py-2.5 rounded-xl text-sm">
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+              {redeemLoading ? (
+                <div className="p-8 text-center text-sm text-gray-400">Loading redeem codes…</div>
+              ) : redeemCodes.length === 0 ? (
+                <div className="p-8 text-center">
+                  <KeyRound size={32} className="text-gray-200 mx-auto mb-2" />
+                  <p className="text-sm text-gray-400">No redeem codes yet. Create your first one above.</p>
+                </div>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
+                    <tr>
+                      <th className="px-4 py-3 text-left">Code</th>
+                      <th className="px-4 py-3 text-left">Reward</th>
+                      <th className="px-4 py-3 text-left">Uses</th>
+                      <th className="px-4 py-3 text-left">Expires</th>
+                      <th className="px-4 py-3 text-left">Status</th>
+                      <th className="px-4 py-3" />
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {redeemCodes.map(rc => {
+                      const expired = isExpired(rc.expires_at);
+                      const exhausted = rc.max_uses !== null && rc.used_count >= rc.max_uses;
+                      const statusLabel = !rc.is_active ? "Disabled" : expired ? "Expired" : exhausted ? "Used Up" : "Active";
+                      const statusColor = !rc.is_active || expired || exhausted
+                        ? "bg-gray-100 text-gray-500"
+                        : "bg-green-100 text-green-700";
+
+                      return (
+                        <tr key={rc.id} className="hover:bg-gray-50">
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono font-bold text-gray-900 text-base tracking-wider">{rc.code}</span>
+                              <button onClick={() => copyCode(rc.code)} className="text-gray-300 hover:text-gray-600 transition-colors">
+                                <Copy size={13} />
+                              </button>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 font-semibold text-orange-500">
+                            {rc.type === "fixed" ? `$${rc.value}` : `${rc.value}%`}
+                            <span className="text-gray-400 font-normal text-xs ml-1">
+                              {rc.type === "coupon" ? "coupon" : rc.type === "fixed" ? "off" : "off"}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={`text-sm font-bold ${exhausted ? "text-red-500" : "text-gray-700"}`}>
+                              {rc.used_count}
+                            </span>
+                            <span className="text-gray-400 text-xs"> / {rc.max_uses ?? "∞"}</span>
+                          </td>
+                          <td className="px-4 py-3 text-gray-400 text-xs">
+                            {rc.expires_at ? (
+                              <span className={expired ? "text-red-400" : ""}>{new Date(rc.expires_at).toLocaleDateString()}</span>
+                            ) : (
+                              <span className="text-gray-300">No expiry</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${statusColor}`}>
+                              {statusLabel}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2 justify-end">
+                              <button
+                                onClick={() => toggleRedeemCode(rc.id, rc.is_active)}
+                                className="text-gray-400 hover:text-gray-700 transition-colors"
+                                title={rc.is_active ? "Disable" : "Enable"}
+                              >
+                                {rc.is_active ? <ToggleRight size={20} className="text-green-500" /> : <ToggleLeft size={20} />}
+                              </button>
+                              <button onClick={() => deleteRedeemCode(rc.id)} className="text-red-400 hover:text-red-600 p-1">
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
             </div>
-            <div className="flex gap-2">
-              <button onClick={createCoupon} className="bg-yellow-400 text-black font-bold px-5 py-2.5 rounded-xl text-sm hover:bg-yellow-300">Create</button>
-              <button onClick={() => setShowForm(false)} className="border border-gray-200 text-gray-600 font-semibold px-5 py-2.5 rounded-xl text-sm">Cancel</button>
-            </div>
+            <p className="text-xs text-gray-400 mt-2">
+              Users can redeem these codes in their Account → Coupons section. Each code issues a coupon to the user's account.
+            </p>
           </div>
         )}
 
-        <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-          {loading ? (
-            <div className="p-8 text-center text-sm text-gray-400">Loading coupons…</div>
-          ) : coupons.length === 0 ? (
-            <div className="p-8 text-center">
-              <Tag size={32} className="text-gray-200 mx-auto mb-2" />
-              <p className="text-sm text-gray-400">No coupons yet</p>
+        {/* ── USER COUPONS TAB ── */}
+        {activeTab === "coupons" && (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-sm text-gray-500">Issue coupons directly to specific user accounts.</p>
+              <button
+                onClick={() => setShowCouponForm(!showCouponForm)}
+                className="flex items-center gap-2 bg-yellow-400 text-black font-bold px-4 py-2 rounded-xl text-sm hover:bg-yellow-300"
+              >
+                <Plus size={15} /> Issue Coupon
+              </button>
             </div>
-          ) : (
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
-                <tr>
-                  <th className="px-4 py-3 text-left">Code</th>
-                  <th className="px-4 py-3 text-left">User</th>
-                  <th className="px-4 py-3 text-left">Discount</th>
-                  <th className="px-4 py-3 text-left">Expires</th>
-                  <th className="px-4 py-3 text-left">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {coupons.map(c => (
-                  <tr key={c.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 font-mono font-bold text-gray-900">{c.code}</td>
-                    <td className="px-4 py-3 text-gray-500 text-xs">{c.user_email}</td>
-                    <td className="px-4 py-3 font-semibold text-orange-500">
-                      {c.type === "percent" ? `${c.discount_value}%` : `$${c.discount_value}`}
-                    </td>
-                    <td className="px-4 py-3 text-gray-400 text-xs">{new Date(c.expires_at).toLocaleDateString()}</td>
-                    <td className="px-4 py-3">
-                      <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${c.is_used ? "bg-gray-100 text-gray-500" : new Date(c.expires_at) < new Date() ? "bg-red-100 text-red-500" : "bg-green-100 text-green-600"}`}>
-                        {c.is_used ? "Used" : new Date(c.expires_at) < new Date() ? "Expired" : "Active"}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
+
+            {showCouponForm && (
+              <div className="bg-white rounded-xl border border-gray-200 p-5 mb-5">
+                <h3 className="font-bold text-gray-900 mb-4">Issue Coupon to User</h3>
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  <div>
+                    <label className="text-xs font-bold text-gray-600 mb-1 block">User Email *</label>
+                    <input
+                      value={couponForm.user_email}
+                      onChange={e => setCouponForm(f => ({ ...f, user_email: e.target.value }))}
+                      placeholder="user@email.com"
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-yellow-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-gray-600 mb-1 block">Code *</label>
+                    <input
+                      value={couponForm.code}
+                      onChange={e => setCouponForm(f => ({ ...f, code: e.target.value.toUpperCase() }))}
+                      placeholder="SAVE10"
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-yellow-400 font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-gray-600 mb-1 block">Type</label>
+                    <select
+                      value={couponForm.type}
+                      onChange={e => setCouponForm(f => ({ ...f, type: e.target.value }))}
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none bg-white"
+                    >
+                      <option value="percent">Percent (%)</option>
+                      <option value="fixed">Fixed ($)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-gray-600 mb-1 block">Discount Value</label>
+                    <input
+                      type="number"
+                      value={couponForm.discount_value}
+                      onChange={e => setCouponForm(f => ({ ...f, discount_value: e.target.value }))}
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-yellow-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-gray-600 mb-1 block">Min Order ($)</label>
+                    <input
+                      type="number"
+                      value={couponForm.min_order}
+                      onChange={e => setCouponForm(f => ({ ...f, min_order: e.target.value }))}
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-yellow-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-gray-600 mb-1 block">Expires in (days)</label>
+                    <input
+                      type="number"
+                      value={couponForm.expires_days}
+                      onChange={e => setCouponForm(f => ({ ...f, expires_days: e.target.value }))}
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-yellow-400"
+                    />
+                  </div>
+                </div>
+                <div className="mb-4">
+                  <label className="text-xs font-bold text-gray-600 mb-1 block">Description</label>
+                  <input
+                    value={couponForm.description}
+                    onChange={e => setCouponForm(f => ({ ...f, description: e.target.value }))}
+                    placeholder="Optional description shown to user"
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-yellow-400"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={createCoupon} className="bg-yellow-400 text-black font-bold px-5 py-2.5 rounded-xl text-sm hover:bg-yellow-300">Issue</button>
+                  <button onClick={() => setShowCouponForm(false)} className="border border-gray-200 text-gray-600 font-semibold px-5 py-2.5 rounded-xl text-sm">Cancel</button>
+                </div>
+              </div>
+            )}
+
+            <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+              {couponsLoading ? (
+                <div className="p-8 text-center text-sm text-gray-400">Loading coupons…</div>
+              ) : coupons.length === 0 ? (
+                <div className="p-8 text-center">
+                  <Tag size={32} className="text-gray-200 mx-auto mb-2" />
+                  <p className="text-sm text-gray-400">No coupons issued yet</p>
+                </div>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
+                    <tr>
+                      <th className="px-4 py-3 text-left">Code</th>
+                      <th className="px-4 py-3 text-left">User</th>
+                      <th className="px-4 py-3 text-left">Discount</th>
+                      <th className="px-4 py-3 text-left">Expires</th>
+                      <th className="px-4 py-3 text-left">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {coupons.map(c => (
+                      <tr key={c.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-3 font-mono font-bold text-gray-900">{c.code}</td>
+                        <td className="px-4 py-3 text-gray-500 text-xs">{c.user_email}</td>
+                        <td className="px-4 py-3 font-semibold text-orange-500">
+                          {c.type === "percent" ? `${c.discount_value}%` : `$${c.discount_value}`}
+                        </td>
+                        <td className="px-4 py-3 text-gray-400 text-xs">{new Date(c.expires_at).toLocaleDateString()}</td>
+                        <td className="px-4 py-3">
+                          <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${
+                            c.is_used ? "bg-gray-100 text-gray-500"
+                            : new Date(c.expires_at) < new Date() ? "bg-red-100 text-red-500"
+                            : "bg-green-100 text-green-600"
+                          }`}>
+                            {c.is_used ? "Used" : new Date(c.expires_at) < new Date() ? "Expired" : "Active"}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </AdminLayout>
   );
