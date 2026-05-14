@@ -170,3 +170,4 @@ export function AdminApiStatusPage() {
     </AdminLayout>
   );
 }
+please Trigger the fetch-game-images edge function automatically inside lootbar-proxy whenever new games are upserted to games_cache with a null game_image, so missing images are always filled immediately after a game sync.
