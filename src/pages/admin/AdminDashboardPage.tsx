@@ -131,3 +131,4 @@ export function AdminDashboardPage() {
     </AdminLayout>
   );
 }
+please fix lootbar check if the game fetch check wait 5minut to re check in admin page and lootbar check f app yo mal load fixed siw pa nn page check li pa dwe ask u for check and also fix light/dark them support.
