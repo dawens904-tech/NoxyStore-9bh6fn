@@ -649,3 +649,4 @@ export function HomePage() {
     </div>
   );
 }
+update HomePage to merge manual_products from the database with Lootbar games_cache when building the Hot Selling, New Games, and category sections, so admin-created manual products appear alongside Lootbar games on the home page.
