@@ -195,12 +195,56 @@ function RegionSheet({
   );
 }
 
+// ─── Manual product types ───────────────────────────────────────────────────
+interface ManualProductFull {
+  id: string;
+  product_name: string;
+  game_category: string;
+  photo_url: string | null;
+  is_active: boolean;
+  requires_server: boolean;
+  requires_player_id: boolean;
+  short_description: string;
+  full_description: string;
+}
+
+interface ManualRegion {
+  id: string;
+  region_name: string;
+  region_key: string;
+  sort_order: number;
+}
+
+interface ManualSku {
+  id: string;
+  region_id: string | null;
+  sku_name: string;
+  original_price: number;
+  sale_price: number | null;
+  photo_url: string | null;
+  sort_order: number;
+}
+
+// ── UUID detection ───────────────────────────────────────────────────────────
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const isManualProduct = (id: string) => UUID_RE.test(id);
+
 export function GameDetailPage() {
   const { gameId } = useParams<{ gameId: string }>();
   const navigate = useNavigate();
+  const isManual = gameId ? isManualProduct(gameId) : false;
 
+  // ── Lootbar state ─────────────────────────────────────────────────────────
   const [game, setGame] = useState<LootbarGame | null>(null);
   const [skus, setSkus] = useState<SkuItem[]>([]);
+
+  // ── Manual product state ──────────────────────────────────────────────────
+  const [manualProduct, setManualProduct] = useState<ManualProductFull | null>(null);
+  const [manualRegions, setManualRegions] = useState<ManualRegion[]>([]);
+  const [manualSkus, setManualSkus] = useState<ManualSku[]>([]);
+  const [selectedManualRegion, setSelectedManualRegion] = useState<ManualRegion | null>(null);
+  const [selectedManualSku, setSelectedManualSku] = useState<ManualSku | null>(null);
+
   const [isLoading, setIsLoading] = useState(true);
   const [selectedRegion, setSelectedRegion] = useState<string>("");
   const [selectedSku, setSelectedSku] = useState<SkuItem | null>(null);
@@ -232,6 +276,7 @@ export function GameDetailPage() {
     trackEvent("game_view", { page: `/game/${gameId}`, gameId });
     setIsLoading(true);
     setSelectedSku(null);
+    setSelectedManualSku(null);
     setExtraInfoValues({});
 
     supabase.from("markup_settings").select("markup_percent").eq("id", 1).single()
@@ -243,46 +288,64 @@ export function GameDetailPage() {
         .then(({ data: ref }) => { if (ref) setReferralCode(ref.short_code || ref.code); });
     });
 
-    supabase.functions.invoke("lootbar-proxy", {
-      body: { action: "game_guide", game_id: gameId }
-    }).then(({ data }) => {
-      if (data?.guide && Array.isArray(data.guide) && data.guide.length > 0) {
-        setInstructions(data.guide.map((g: any, i: number) => ({
-          step: i + 1,
-          title: g.title || `Step ${i + 1}`,
-          description: g.content || g.description || "",
-          image: g.image || g.img || undefined,
-        })));
-      }
-    }).catch(() => {});
-
-    supabase.from("games_cache").select("*").eq("game_id", gameId).single()
-      .then(({ data: cached }) => {
-        if (cached) {
-          setGame({
-            game_id: cached.game_id,
-            game_name: cached.game_name,
-            game_image: cached.game_image || "",
-            category: cached.category || "Top Up",
-            rating: cached.rating ?? 5.0,
-            sold_count: cached.sold_count || "100k+ Sold",
-            is_hot: cached.is_hot ?? false,
-            discount: cached.discount ?? 0,
-            min_price: cached.min_price ?? null,
-          });
-        }
+    if (isManual) {
+      // ── Load manual product from Supabase ──
+      Promise.all([
+        supabase.from("manual_products").select("*").eq("id", gameId).single(),
+        supabase.from("manual_product_regions").select("*").eq("product_id", gameId).order("sort_order"),
+        supabase.from("manual_skus").select("*").eq("product_id", gameId).order("sort_order"),
+      ]).then(([{ data: prod }, { data: regs }, { data: sk }]) => {
+        if (!prod) { setIsLoading(false); return; }
+        setManualProduct(prod as ManualProductFull);
+        const regions = (regs || []) as ManualRegion[];
+        const skList = (sk || []) as ManualSku[];
+        setManualRegions(regions);
+        setManualSkus(skList);
+        if (regions.length > 0) setSelectedManualRegion(regions[0]);
+        setIsLoading(false);
       });
+    } else {
+      // ── Load Lootbar product ──
+      supabase.functions.invoke("lootbar-proxy", {
+        body: { action: "game_guide", game_id: gameId }
+      }).then(({ data }) => {
+        if (data?.guide && Array.isArray(data.guide) && data.guide.length > 0) {
+          setInstructions(data.guide.map((g: any, i: number) => ({
+            step: i + 1,
+            title: g.title || `Step ${i + 1}`,
+            description: g.content || g.description || "",
+            image: g.image || g.img || undefined,
+          })));
+        }
+      }).catch(() => {});
 
-    lootbarApi.getSkus(gameId).then((data) => {
-      // Sort SKUs by price ascending — lowest price shown first
-      const sorted = [...data].sort((a, b) => (a.price || 0) - (b.price || 0));
-      setSkus(sorted);
-      if (sorted.length > 0) {
-        const firstRegion = sorted[0]?.attribute?.[0]?.value || "global";
-        setSelectedRegion(firstRegion);
-      }
-      setIsLoading(false);
-    }).catch(() => setIsLoading(false));
+      supabase.from("games_cache").select("*").eq("game_id", gameId).single()
+        .then(({ data: cached }) => {
+          if (cached) {
+            setGame({
+              game_id: cached.game_id,
+              game_name: cached.game_name,
+              game_image: cached.game_image || "",
+              category: cached.category || "Top Up",
+              rating: cached.rating ?? 5.0,
+              sold_count: cached.sold_count || "100k+ Sold",
+              is_hot: cached.is_hot ?? false,
+              discount: cached.discount ?? 0,
+              min_price: cached.min_price ?? null,
+            });
+          }
+        });
+
+      lootbarApi.getSkus(gameId).then((data) => {
+        const sorted = [...data].sort((a, b) => (a.price || 0) - (b.price || 0));
+        setSkus(sorted);
+        if (sorted.length > 0) {
+          const firstRegion = sorted[0]?.attribute?.[0]?.value || "global";
+          setSelectedRegion(firstRegion);
+        }
+        setIsLoading(false);
+      }).catch(() => setIsLoading(false));
+    }
   }, [gameId]);
 
   const regions = useMemo(() => {
@@ -383,7 +446,321 @@ export function GameDetailPage() {
     </>
   );
 
-  if (isLoading && !game) {
+  // ── Manual product computed values ────────────────────────────────────────────
+  const filteredManualSkus = useMemo(() => {
+    if (!manualProduct?.requires_server) return manualSkus;
+    if (!selectedManualRegion) return manualSkus;
+    return manualSkus.filter(s => s.region_id === selectedManualRegion.id);
+  }, [manualSkus, selectedManualRegion, manualProduct]);
+
+  const manualTotalPrice = selectedManualSku
+    ? applyMarkup(Number(selectedManualSku.original_price)) * quantity
+    : 0;
+
+  const handleManualTopUp = (isMobile = false) => {
+    if (!selectedManualSku) { toast.error("Select a package first"); return; }
+    const productName = manualProduct?.product_name || "";
+    const regionName = selectedManualRegion?.region_name || "";
+    const skuData = {
+      sku_id: selectedManualSku.id,
+      sku_name: selectedManualSku.sku_name,
+      price: applyMarkup(Number(selectedManualSku.original_price)),
+      original_price: Number(selectedManualSku.original_price),
+      discount_amount: selectedManualSku.sale_price ? Number(selectedManualSku.original_price) - Number(selectedManualSku.sale_price) : 0,
+      image: selectedManualSku.photo_url || manualProduct?.photo_url || "",
+      attribute: [],
+      extra_info: [],
+    };
+    const gameData = {
+      game_id: gameId!,
+      game_name: productName + (regionName ? ` (${regionName})` : ""),
+      game_image: manualProduct?.photo_url || "",
+      category: manualProduct?.game_category || "Top Up",
+      rating: 5.0,
+      sold_count: "",
+      is_hot: false,
+      discount: 0,
+      min_price: null,
+    };
+    if (manualProduct?.requires_player_id && isMobile) {
+      navigate("/verify-player", { state: { sku: skuData, game: gameData, quantity, isManual: true } });
+    } else {
+      navigate("/checkout", { state: { sku: skuData, game: gameData, quantity, extraInfo: {}, isManual: true } });
+    }
+  };
+
+  // ── Manual product layout (────────────────────────────────────────────
+  if (isManual && (manualProduct || !isLoading)) {
+    const prod = manualProduct;
+    const cover = prod?.photo_url || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=200&h=200&fit=crop";
+    const displayName = prod?.product_name || "";
+
+    const ManualDesktop = () => (
+      <div className="hidden lg:block min-h-screen bg-[#f5f5f5]">
+        <DesktopHeader />
+        <div className="max-w-[1280px] mx-auto px-6 py-3 flex items-center gap-2 text-sm text-gray-500">
+          <button onClick={() => navigate("/")} className="hover:text-gray-700">Home</button>
+          <ChevronRight size={14} />
+          <button onClick={() => navigate("/categories")} className="hover:text-gray-700">{prod?.game_category || "Top Up"}</button>
+          <ChevronRight size={14} />
+          <span className="text-gray-800 font-medium">{displayName}</span>
+        </div>
+        <div className="max-w-[1280px] mx-auto px-6 pb-16">
+          <div className="flex gap-6 items-start">
+            {/* Left */}
+            <div className="flex-1 min-w-0">
+              {/* Game header */}
+              <div className="bg-white p-6 mb-4 border border-gray-100 rounded-xl">
+                <div className="flex items-start gap-5">
+                  <img src={cover} alt={displayName} className="w-24 h-24 rounded-2xl object-cover flex-shrink-0" />
+                  <div className="flex-1">
+                    <h1 className="text-2xl font-black text-gray-900 mb-1">{displayName}</h1>
+                    {prod?.short_description && <p className="text-sm text-gray-500 mt-1">{prod.short_description}</p>}
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {["Safe and Fast Top-Up", "24/7 Customer Service", "Instant Delivery"].map(tag => (
+                        <span key={tag} className="border border-gray-200 text-gray-600 text-xs px-3 py-1 rounded-full">{tag}</span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Region tabs */}
+              {prod?.requires_server && manualRegions.length > 0 && (
+                <div className="bg-white px-5 py-4 mb-4 border border-gray-100 rounded-xl">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Select Region</p>
+                  <div className="flex flex-wrap gap-2">
+                    {manualRegions.map(r => (
+                      <button key={r.id}
+                        onClick={() => { setSelectedManualRegion(r); setSelectedManualSku(null); }}
+                        className={`px-4 py-2 rounded-xl border text-sm font-semibold transition-all ${selectedManualRegion?.id === r.id ? "border-yellow-400 bg-yellow-50 text-yellow-700" : "border-gray-200 text-gray-600 hover:border-gray-300 bg-white"}`}>
+                        {r.region_name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* SKU grid - each with own photo */}
+              <div className="bg-white p-5 mb-4 border border-gray-100 rounded-xl">
+                <p className="text-sm font-bold text-gray-700 mb-4">
+                  {prod?.requires_server && selectedManualRegion ? selectedManualRegion.region_name + " — " : ""}Packages
+                </p>
+                {isLoading ? (
+                  <div className="grid grid-cols-3 xl:grid-cols-4 gap-3">
+                    {Array.from({ length: 6 }).map((_, i) => <div key={i} className="shimmer h-36 rounded-xl" />)}
+                  </div>
+                ) : filteredManualSkus.length === 0 ? (
+                  <p className="text-sm text-gray-400 text-center py-8">
+                    {prod?.requires_server && !selectedManualRegion ? "Select a region above" : "No packages available"}
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-3 xl:grid-cols-5 gap-3">
+                    {filteredManualSkus.map(sku => {
+                      const price = applyMarkup(Number(sku.original_price));
+                      const isSelected = selectedManualSku?.id === sku.id;
+                      const skuImg = sku.photo_url || cover;
+                      return (
+                        <button key={sku.id}
+                          onClick={() => setSelectedManualSku(sku)}
+                          className={`relative flex flex-col bg-white border-2 overflow-hidden transition-all hover:shadow-md text-left rounded-xl ${isSelected ? "border-yellow-400 shadow-md" : "border-gray-200 hover:border-gray-300"}`}>
+                          <div className="aspect-[4/3] bg-gray-100 relative overflow-hidden">
+                            <img src={skuImg} alt={sku.sku_name} className="w-full h-full object-cover"
+                              onError={e => { (e.target as HTMLImageElement).src = cover; }} />
+                            {isSelected && (
+                              <div className="absolute top-1.5 right-1.5 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center shadow-sm">
+                                <Check size={11} className="text-black" />
+                              </div>
+                            )}
+                            {sku.sale_price && (
+                              <div className="absolute top-1.5 left-1.5 bg-orange-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">SALE</div>
+                            )}
+                          </div>
+                          <div className="p-2.5">
+                            <p className="text-xs font-bold text-gray-900 leading-tight line-clamp-2 mb-1.5">{sku.sku_name}</p>
+                            <p className="text-sm font-black text-orange-500">${price.toFixed(2)}</p>
+                            {sku.sale_price && (
+                              <span className="text-[10px] text-gray-400 line-through">${Number(sku.sale_price).toFixed(2)}</span>
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Description */}
+              {(prod?.full_description || prod?.short_description) && (
+                <div className="bg-white p-6 border border-gray-100 rounded-xl">
+                  <h3 className="text-lg font-bold text-gray-900 mb-3">About this product</h3>
+                  <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">{prod.full_description || prod.short_description}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Right: Order panel */}
+            <div className="w-72 flex-shrink-0">
+              <div style={{ position: "sticky", top: "70px" } as React.CSSProperties}>
+                <div className="border border-gray-200 shadow-sm bg-white rounded-xl overflow-hidden">
+                  <div className="px-5 py-4 border-b border-gray-100">
+                    <h3 className="font-bold text-gray-900 mb-1">Order Summary</h3>
+                    {selectedManualSku ? (
+                      <div className="flex items-center gap-3 mt-3 bg-yellow-50 border border-yellow-200 rounded-xl p-3">
+                        <img src={selectedManualSku.photo_url || cover} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+                        <div>
+                          <p className="text-xs font-bold text-gray-900">{selectedManualSku.sku_name}</p>
+                          <p className="text-sm font-black text-orange-500">${applyMarkup(Number(selectedManualSku.original_price)).toFixed(2)}</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-gray-50 p-3 text-center text-sm text-gray-400 border border-dashed border-gray-200 rounded-xl mt-3">
+                        ← Select a package
+                      </div>
+                    )}
+                  </div>
+                  <div className="px-5 py-4 border-b border-gray-100">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-semibold text-gray-700">Quantity</span>
+                      <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden">
+                        <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-50 border-r border-gray-300">−</button>
+                        <span className="text-sm font-bold w-10 text-center">{quantity}</span>
+                        <button onClick={() => setQuantity(quantity + 1)} className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-50 border-l border-gray-300">+</button>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="px-5 py-4">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm text-gray-500">Total</span>
+                      <span className="text-xl font-black text-orange-500">{selectedManualSku ? `$${manualTotalPrice.toFixed(2)}` : "—"}</span>
+                    </div>
+                    <button onClick={() => handleManualTopUp(false)} disabled={!selectedManualSku}
+                      className={`w-full py-3.5 font-bold text-base transition-all mt-3 rounded-xl ${selectedManualSku ? "bg-yellow-400 hover:bg-yellow-300 text-black" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>
+                      Top-up Now
+                    </button>
+                    <div className="flex items-center justify-center gap-1.5 mt-3">
+                      <Shield size={13} className="text-green-500" />
+                      <span className="text-xs text-gray-500">NoxyStore Security Guarantee</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <Footer />
+        <FloatingChat />
+      </div>
+    );
+
+    const ManualMobile = () => (
+      <div className="lg:hidden bg-white min-h-screen">
+        <Header showMenu />
+        <div className="pb-52">
+          {/* Game header */}
+          <div className="px-4 py-4 border-b border-gray-100">
+            <div className="flex items-center gap-3">
+              <img src={cover} alt={displayName} className="w-16 h-16 rounded-xl object-cover flex-shrink-0 shadow-sm" />
+              <div>
+                <h1 className="text-lg font-bold text-gray-900 leading-tight">{displayName}</h1>
+                {prod?.short_description && <p className="text-xs text-gray-500 mt-0.5">{prod.short_description}</p>}
+                <span className="text-xs text-gray-400">{prod?.game_category}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Region tabs */}
+          {prod?.requires_server && manualRegions.length > 0 && (
+            <div className="px-4 pt-4 pb-3 border-b border-gray-100">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Select Region</p>
+              <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+                {manualRegions.map(r => (
+                  <button key={r.id}
+                    onClick={() => { setSelectedManualRegion(r); setSelectedManualSku(null); }}
+                    className={`flex-shrink-0 px-4 py-2 rounded-xl border text-sm font-semibold transition-all ${selectedManualRegion?.id === r.id ? "border-yellow-400 text-yellow-600 bg-yellow-50" : "border-gray-200 text-gray-600 bg-white"}`}>
+                    {r.region_name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* SKU grid */}
+          <div className="px-4 pt-4">
+            {isLoading ? (
+              <div className="grid grid-cols-2 gap-3">{Array.from({length: 4}).map((_,i)=><div key={i} className="shimmer h-36 rounded-xl" />)}</div>
+            ) : filteredManualSkus.length === 0 ? (
+              <p className="text-sm text-gray-400 text-center py-10">
+                {prod?.requires_server && !selectedManualRegion ? "Select a region above" : "No packages available"}
+              </p>
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                {filteredManualSkus.map(sku => {
+                  const price = applyMarkup(Number(sku.original_price));
+                  const isSelected = selectedManualSku?.id === sku.id;
+                  const skuImg = sku.photo_url || cover;
+                  return (
+                    <button key={sku.id}
+                      onClick={() => setSelectedManualSku(sku)}
+                      className={`relative flex flex-col bg-white rounded-xl border-2 overflow-hidden text-left transition-all ${isSelected ? "border-yellow-400 shadow-md" : "border-gray-200"}`}>
+                      <div className="aspect-[4/3] bg-gray-100 relative overflow-hidden">
+                        <img src={skuImg} alt={sku.sku_name} className="w-full h-full object-cover"
+                          onError={e => { (e.target as HTMLImageElement).src = cover; }} />
+                        {isSelected && (
+                          <div className="absolute top-1.5 right-1.5 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center">
+                            <Check size={10} className="text-black" />
+                          </div>
+                        )}
+                        {sku.sale_price && (
+                          <div className="absolute top-1.5 left-1.5 bg-orange-500 text-white text-[9px] font-bold px-1 py-0.5 rounded">SALE</div>
+                        )}
+                      </div>
+                      <div className="p-2.5">
+                        <p className="text-xs font-bold text-gray-900 leading-tight line-clamp-2 mb-1">{sku.sku_name}</p>
+                        <p className="text-sm font-black text-orange-500">${price.toFixed(2)}</p>
+                        {sku.sale_price && <span className="text-[10px] text-gray-400 line-through">${Number(sku.sale_price).toFixed(2)}</span>}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Bottom CTA */}
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 pt-3 pb-safe z-50" style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-gray-600">Qty</span>
+            <div className="flex items-center gap-2">
+              <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-8 h-8 rounded-xl border border-gray-300 flex items-center justify-center">−</button>
+              <span className="text-base font-bold w-6 text-center">{quantity}</span>
+              <button onClick={() => setQuantity(quantity + 1)} className="w-8 h-8 rounded-xl border border-gray-300 flex items-center justify-center">+</button>
+            </div>
+          </div>
+          <div className="flex items-center justify-between">
+            <p className="text-xl font-black text-orange-500">{selectedManualSku ? `$${manualTotalPrice.toFixed(2)}` : "—"}</p>
+            <button onClick={() => handleManualTopUp(true)} disabled={!selectedManualSku}
+              className={`px-8 py-3 rounded-2xl font-bold text-base transition-all ${selectedManualSku ? "bg-yellow-400 text-black hover:bg-yellow-300" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>
+              Top-up Now
+            </button>
+          </div>
+          {!selectedManualSku && <p className="text-center text-xs text-gray-400 mt-1.5">Select a package to continue</p>}
+        </div>
+        <MobileFooter />
+        <FloatingChat />
+      </div>
+    );
+
+    return (
+      <>
+        <ManualDesktop />
+        <ManualMobile />
+      </>
+    );
+  }
+
+
     return (
       <div className="min-h-screen bg-[#f5f5f5]">
         <div className="hidden lg:block"><DesktopHeader /></div>

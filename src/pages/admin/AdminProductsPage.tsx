@@ -4,10 +4,10 @@ import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import {
   Plus, Trash2, RefreshCw, Upload, Search, Edit2,
-  ChevronDown, ChevronUp, X, Check, Star, EyeOff, Eye
+  X, Check, Star, EyeOff, Save
 } from "lucide-react";
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
 interface ManualProduct {
   id: string;
   product_name: string;
@@ -55,26 +55,19 @@ interface LootbarGame {
   sort_order: number;
 }
 
-interface GameOverride {
-  game_id: string;
-  custom_price: number | null;
-  category_override: string | null;
-  is_featured: boolean;
-  is_hidden: boolean;
-  sort_order: number;
-  custom_image_url: string | null;
-}
-
 const CATEGORIES = ["Top Up", "Gift Card", "Game Pass", "CD Key", "Voucher", "Subscription", "Other"];
+
 const EMPTY_PRODUCT = {
   product_name: "", game_category: "Top Up", photo_url: "", is_active: true, is_featured: false,
   sort_order: 0, requires_server: false, requires_player_id: true, short_description: "", full_description: "", lootbar_game_id: "",
 };
 
+const EMPTY_SKU = { sku_name: "", original_price: "", sale_price: "", photo_url: "" };
+
 export function AdminProductsPage() {
   const [tab, setTab] = useState<"manual" | "lootbar">("manual");
 
-  // ── Manual products state ──────────────────────────────────────────────────
+  // ── Manual state ───────────────────────────────────────────────────────────
   const [products, setProducts] = useState<ManualProduct[]>([]);
   const [regions, setRegions] = useState<ManualRegion[]>([]);
   const [skus, setSkus] = useState<ManualSku[]>([]);
@@ -86,27 +79,38 @@ export function AdminProductsPage() {
   const [editingProduct, setEditingProduct] = useState<ManualProduct | null>(null);
   const [productForm, setProductForm] = useState(EMPTY_PRODUCT);
   const [uploadingProduct, setUploadingProduct] = useState(false);
-  const [uploadingSku, setUploadingSku] = useState(false);
-  const [skuForm, setSkuForm] = useState({ sku_name: "", original_price: "", sale_price: "", photo_url: "" });
-  const [showSkuForm, setShowSkuForm] = useState(false);
   const [regionForm, setRegionForm] = useState({ region_name: "", region_key: "" });
   const [showRegionForm, setShowRegionForm] = useState(false);
+
+  // SKU add form
+  const [showSkuForm, setShowSkuForm] = useState(false);
+  const [skuForm, setSkuForm] = useState(EMPTY_SKU);
+  const [uploadingSku, setUploadingSku] = useState(false);
+
+  // SKU inline edit
+  const [editingSkuId, setEditingSkuId] = useState<string | null>(null);
+  const [editingSkuForm, setEditingSkuForm] = useState(EMPTY_SKU);
+  const [uploadingEditSku, setUploadingEditSku] = useState(false);
+
   const productFileRef = useRef<HTMLInputElement>(null);
-  const skuFileRef = useRef<HTMLInputElement>(null);
+  const skuAddFileRef = useRef<HTMLInputElement>(null);
+  const skuEditFileRef = useRef<HTMLInputElement>(null);
 
   // ── Lootbar state ──────────────────────────────────────────────────────────
   const [lootbarGames, setLootbarGames] = useState<LootbarGame[]>([]);
   const [lootbarSearch, setLootbarSearch] = useState("");
   const [loadingLootbar, setLoadingLootbar] = useState(false);
   const [selectedLootbarGame, setSelectedLootbarGame] = useState<LootbarGame | null>(null);
-  const [override, setOverride] = useState<GameOverride | null>(null);
   const [overrideForm, setOverrideForm] = useState({
     custom_image_url: "", category_override: "", sort_order: "0", is_featured: false, is_hidden: false,
   });
   const [savingOverride, setSavingOverride] = useState(false);
   const [syncingCache, setSyncingCache] = useState(false);
+  const [uploadingLootbarImg, setUploadingLootbarImg] = useState(false);
+  const lootbarImgRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { loadManualProducts(); }, []);
+  useEffect(() => { if (tab === "lootbar" && lootbarGames.length === 0) loadLootbarGames(); }, [tab]);
 
   // ── Manual Products ────────────────────────────────────────────────────────
   async function loadManualProducts() {
@@ -122,26 +126,41 @@ export function AdminProductsPage() {
     setLoadingManual(false);
   }
 
+  async function uploadImage(file: File, folder: string): Promise<string | null> {
+    const ext = file.name.split(".").pop();
+    const path = `${folder}/${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("store-assets").upload(path, file);
+    if (error) { toast.error("Upload failed: " + error.message); return null; }
+    const { data: url } = supabase.storage.from("store-assets").getPublicUrl(path);
+    return url.publicUrl;
+  }
+
   async function uploadProductImage(file: File) {
     setUploadingProduct(true);
-    const ext = file.name.split(".").pop();
-    const path = `products/${Date.now()}.${ext}`;
-    const { error } = await supabase.storage.from("store-assets").upload(path, file);
-    if (error) { toast.error("Upload failed"); setUploadingProduct(false); return; }
-    const { data: url } = supabase.storage.from("store-assets").getPublicUrl(path);
-    setProductForm(f => ({ ...f, photo_url: url.publicUrl }));
+    const url = await uploadImage(file, "products");
+    if (url) setProductForm(f => ({ ...f, photo_url: url }));
     setUploadingProduct(false);
   }
 
-  async function uploadSkuImage(file: File) {
+  async function uploadSkuAddImage(file: File) {
     setUploadingSku(true);
-    const ext = file.name.split(".").pop();
-    const path = `skus/${Date.now()}.${ext}`;
-    const { error } = await supabase.storage.from("store-assets").upload(path, file);
-    if (error) { toast.error("Upload failed"); setUploadingSku(false); return; }
-    const { data: url } = supabase.storage.from("store-assets").getPublicUrl(path);
-    setSkuForm(f => ({ ...f, photo_url: url.publicUrl }));
+    const url = await uploadImage(file, "skus");
+    if (url) setSkuForm(f => ({ ...f, photo_url: url }));
     setUploadingSku(false);
+  }
+
+  async function uploadSkuEditImage(file: File) {
+    setUploadingEditSku(true);
+    const url = await uploadImage(file, "skus");
+    if (url) setEditingSkuForm(f => ({ ...f, photo_url: url }));
+    setUploadingEditSku(false);
+  }
+
+  async function uploadLootbarImage(file: File) {
+    setUploadingLootbarImg(true);
+    const url = await uploadImage(file, "games");
+    if (url) setOverrideForm(f => ({ ...f, custom_image_url: url }));
+    setUploadingLootbarImg(false);
   }
 
   async function saveProduct() {
@@ -164,6 +183,8 @@ export function AdminProductsPage() {
       const { error } = await supabase.from("manual_products").update(payload).eq("id", editingProduct.id);
       if (error) { toast.error(error.message); return; }
       toast.success("Product updated!");
+      // Refresh selected product too
+      setSelectedProduct(prev => prev?.id === editingProduct.id ? { ...prev, ...payload } as ManualProduct : prev);
     } else {
       const { error } = await supabase.from("manual_products").insert(payload);
       if (error) { toast.error(error.message); return; }
@@ -176,7 +197,7 @@ export function AdminProductsPage() {
   }
 
   async function deleteProduct(id: string) {
-    if (!confirm("Delete this product?")) return;
+    if (!confirm("Delete this product and all its SKUs?")) return;
     await supabase.from("manual_products").delete().eq("id", id);
     toast.success("Deleted");
     if (selectedProduct?.id === id) setSelectedProduct(null);
@@ -192,13 +213,14 @@ export function AdminProductsPage() {
       sort_order: regions.filter(r => r.product_id === selectedProduct.id).length,
     });
     if (error) { toast.error(error.message); return; }
+    toast.success("Region added!");
     setRegionForm({ region_name: "", region_key: "" });
     setShowRegionForm(false);
     loadManualProducts();
   }
 
   async function deleteRegion(id: string) {
-    if (!confirm("Delete this region and all its SKUs?")) return;
+    if (!confirm("Delete this region and all its products?")) return;
     await supabase.from("manual_skus").delete().eq("region_id", id);
     await supabase.from("manual_product_regions").delete().eq("id", id);
     if (selectedRegion?.id === id) setSelectedRegion(null);
@@ -208,6 +230,9 @@ export function AdminProductsPage() {
   async function addSku() {
     if (!selectedProduct || !skuForm.sku_name.trim() || !skuForm.original_price) {
       toast.error("SKU name and price required"); return;
+    }
+    if (selectedProduct.requires_server && !selectedRegion) {
+      toast.error("Select a region first"); return;
     }
     const { error } = await supabase.from("manual_skus").insert({
       product_id: selectedProduct.id,
@@ -219,15 +244,42 @@ export function AdminProductsPage() {
       sort_order: skus.filter(s => s.product_id === selectedProduct.id).length,
     });
     if (error) { toast.error(error.message); return; }
-    toast.success("SKU added!");
-    setSkuForm({ sku_name: "", original_price: "", sale_price: "", photo_url: "" });
+    toast.success("Product added!");
+    setSkuForm(EMPTY_SKU);
     setShowSkuForm(false);
     loadManualProducts();
   }
 
+  async function saveSkuEdit(skuId: string) {
+    if (!editingSkuForm.sku_name.trim() || !editingSkuForm.original_price) {
+      toast.error("Name and price required"); return;
+    }
+    const { error } = await supabase.from("manual_skus").update({
+      sku_name: editingSkuForm.sku_name,
+      original_price: parseFloat(editingSkuForm.original_price),
+      sale_price: editingSkuForm.sale_price ? parseFloat(editingSkuForm.sale_price) : null,
+      photo_url: editingSkuForm.photo_url || null,
+    }).eq("id", skuId);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Product saved!");
+    setEditingSkuId(null);
+    loadManualProducts();
+  }
+
   async function deleteSku(id: string) {
+    if (!confirm("Delete this product?")) return;
     await supabase.from("manual_skus").delete().eq("id", id);
     loadManualProducts();
+  }
+
+  function startEditSku(sku: ManualSku) {
+    setEditingSkuId(sku.id);
+    setEditingSkuForm({
+      sku_name: sku.sku_name,
+      original_price: String(sku.original_price),
+      sale_price: sku.sale_price ? String(sku.sale_price) : "",
+      photo_url: sku.photo_url || "",
+    });
   }
 
   // ── Lootbar ────────────────────────────────────────────────────────────────
@@ -249,16 +301,14 @@ export function AdminProductsPage() {
     setSelectedLootbarGame(game);
     const { data } = await supabase.from("game_overrides").select("*").eq("game_id", game.game_id).single();
     if (data) {
-      setOverride(data);
       setOverrideForm({
-        custom_image_url: data.custom_image_url || "",
+        custom_image_url: data.custom_image_url || game.game_image || "",
         category_override: data.category_override || "",
         sort_order: String(data.sort_order || 0),
         is_featured: data.is_featured || false,
         is_hidden: data.is_hidden || false,
       });
     } else {
-      setOverride(null);
       setOverrideForm({ custom_image_url: game.game_image || "", category_override: game.category || "", sort_order: "0", is_featured: false, is_hidden: false });
     }
   }
@@ -276,11 +326,12 @@ export function AdminProductsPage() {
       updated_at: new Date().toISOString(),
     };
     await supabase.from("game_overrides").upsert(payload);
-    // Sync to games_cache so frontend sees changes immediately
-    const cacheUpdate: Record<string, unknown> = { updated_at: new Date().toISOString() };
+    const cacheUpdate: Record<string, unknown> = {};
     if (overrideForm.custom_image_url) cacheUpdate.game_image = overrideForm.custom_image_url;
     if (overrideForm.category_override) cacheUpdate.category = overrideForm.category_override;
-    await supabase.from("games_cache").update(cacheUpdate).eq("game_id", selectedLootbarGame.game_id);
+    if (Object.keys(cacheUpdate).length > 0) {
+      await supabase.from("games_cache").update(cacheUpdate).eq("game_id", selectedLootbarGame.game_id);
+    }
     toast.success("Override saved!");
     setSavingOverride(false);
     loadLootbarGames();
@@ -293,18 +344,16 @@ export function AdminProductsPage() {
     setSyncingCache(false);
   }
 
-  useEffect(() => { if (tab === "lootbar" && lootbarGames.length === 0) loadLootbarGames(); }, [tab]);
-
-  // ── Filtered data ──────────────────────────────────────────────────────────
+  // ── Derived data ───────────────────────────────────────────────────────────
   const filteredProducts = products.filter(p => !productSearch || p.product_name.toLowerCase().includes(productSearch.toLowerCase()));
   const filteredLootbar = lootbarGames.filter(g => !lootbarSearch || g.game_name.toLowerCase().includes(lootbarSearch.toLowerCase()));
   const productRegions = selectedProduct ? regions.filter(r => r.product_id === selectedProduct.id) : [];
   const relevantSkus = selectedProduct
-    ? skus.filter(s => s.product_id === selectedProduct.id && (
-        !selectedProduct.requires_server || selectedRegion === null || s.region_id === selectedRegion?.id
-      ))
+    ? skus.filter(s => s.product_id === selectedProduct.id &&
+        (!selectedProduct.requires_server || !selectedRegion || s.region_id === selectedRegion.id))
     : [];
 
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <AdminLayout>
       <div className="p-4">
@@ -318,14 +367,16 @@ export function AdminProductsPage() {
           ))}
         </div>
 
-        {/* ── MANUAL TAB ────────────────────────────────────────────────────── */}
+        {/* ── MANUAL TAB ──────────────────────────────────────────────────────── */}
         {tab === "manual" && (
-          <div className="grid grid-cols-12 gap-4 min-h-[80vh]">
+          <div className="grid grid-cols-12 gap-4" style={{ minHeight: "80vh" }}>
+
             {/* Panel 1: Games list */}
             <div className="col-span-3 bg-white rounded-xl border border-gray-200 flex flex-col overflow-hidden">
               <div className="flex items-center justify-between px-3 py-3 border-b border-gray-100">
                 <h3 className="text-sm font-bold text-gray-900">Games</h3>
-                <button onClick={() => { setShowProductForm(true); setEditingProduct(null); setProductForm(EMPTY_PRODUCT); }}
+                <button
+                  onClick={() => { setShowProductForm(true); setEditingProduct(null); setProductForm(EMPTY_PRODUCT); }}
                   className="w-6 h-6 bg-yellow-400 rounded-md flex items-center justify-center hover:bg-yellow-300">
                   <Plus size={13} className="text-black" />
                 </button>
@@ -341,16 +392,15 @@ export function AdminProductsPage() {
                 {loadingManual ? (
                   <div className="p-4 text-center text-xs text-gray-400">Loading…</div>
                 ) : filteredProducts.map(p => (
-                  <button key={p.id} onClick={() => { setSelectedProduct(p); setSelectedRegion(null); setShowSkuForm(false); }}
+                  <button key={p.id}
+                    onClick={() => { setSelectedProduct(p); setSelectedRegion(null); setShowSkuForm(false); setEditingSkuId(null); }}
                     className={`w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-gray-50 transition-colors ${selectedProduct?.id === p.id ? "bg-yellow-50 border-l-2 border-yellow-400" : ""}`}>
-                    {p.photo_url ? (
-                      <img src={p.photo_url} alt={p.product_name} className="w-8 h-8 rounded-lg object-cover flex-shrink-0" />
-                    ) : (
-                      <div className="w-8 h-8 bg-gray-100 rounded-lg flex-shrink-0" />
-                    )}
+                    {p.photo_url
+                      ? <img src={p.photo_url} alt={p.product_name} className="w-8 h-8 rounded-lg object-cover flex-shrink-0" />
+                      : <div className="w-8 h-8 bg-gray-100 rounded-lg flex-shrink-0" />}
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-bold text-gray-900 truncate">{p.product_name}</p>
-                      <p className="text-[10px] text-gray-400">{p.game_category} {p.requires_server ? "· Server" : ""}</p>
+                      <p className="text-[10px] text-gray-400">{p.game_category}{p.requires_server ? " · Server" : ""}</p>
                     </div>
                     <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${p.is_active ? "bg-green-400" : "bg-gray-300"}`} />
                   </button>
@@ -358,13 +408,13 @@ export function AdminProductsPage() {
               </div>
             </div>
 
-            {/* Panel 2: Product form / Server management */}
+            {/* Panel 2: Product form + Region management */}
             <div className="col-span-3 flex flex-col gap-3">
               {/* Product form */}
               {showProductForm && (
                 <div className="bg-white rounded-xl border border-gray-200 p-4">
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-bold text-gray-900">{editingProduct ? "Edit Product" : "New Product"}</h3>
+                    <h3 className="text-sm font-bold text-gray-900">{editingProduct ? "Edit Game" : "New Game"}</h3>
                     <button onClick={() => { setShowProductForm(false); setEditingProduct(null); }}><X size={15} className="text-gray-400" /></button>
                   </div>
                   <div className="space-y-2.5">
@@ -381,31 +431,34 @@ export function AdminProductsPage() {
                       </select>
                     </div>
                     <div>
-                      <label className="text-[10px] font-bold text-gray-500 uppercase mb-1 block">Image</label>
+                      <label className="text-[10px] font-bold text-gray-500 uppercase mb-1 block">Game Photo</label>
                       {productForm.photo_url ? (
                         <div className="relative">
                           <img src={productForm.photo_url} className="w-full h-20 object-cover rounded-lg" />
-                          <button onClick={() => setProductForm(f => ({ ...f, photo_url: "" }))} className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">✕</button>
+                          <button onClick={() => setProductForm(f => ({ ...f, photo_url: "" }))}
+                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">✕</button>
                         </div>
                       ) : (
                         <button onClick={() => productFileRef.current?.click()}
-                          className="w-full h-16 border-2 border-dashed border-gray-200 rounded-lg flex items-center justify-center gap-2 text-xs text-gray-400 hover:border-yellow-400">
-                          {uploadingProduct ? <RefreshCw size={14} className="animate-spin" /> : <><Upload size={14} /> Upload</>}
+                          className="w-full h-14 border-2 border-dashed border-gray-200 rounded-lg flex items-center justify-center gap-2 text-xs text-gray-400 hover:border-yellow-400 hover:text-yellow-600">
+                          {uploadingProduct ? <RefreshCw size={14} className="animate-spin" /> : <><Upload size={14} /> Upload Photo</>}
                         </button>
                       )}
-                      <input ref={productFileRef} type="file" accept="image/*" className="hidden" onChange={e => e.target.files?.[0] && uploadProductImage(e.target.files[0])} />
+                      <input ref={productFileRef} type="file" accept="image/*" className="hidden"
+                        onChange={e => e.target.files?.[0] && uploadProductImage(e.target.files[0])} />
                       <input value={productForm.photo_url} onChange={e => setProductForm(f => ({ ...f, photo_url: e.target.value }))}
-                        placeholder="Or paste URL…" className="w-full border border-gray-100 rounded-lg px-2 py-1.5 text-xs outline-none mt-1" />
+                        placeholder="Or paste image URL…"
+                        className="w-full border border-gray-100 rounded-lg px-2 py-1.5 text-xs outline-none mt-1" />
                     </div>
                     <div>
                       <label className="text-[10px] font-bold text-gray-500 uppercase mb-1 block">Short Description</label>
                       <input value={productForm.short_description} onChange={e => setProductForm(f => ({ ...f, short_description: e.target.value }))}
                         className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-yellow-400" />
                     </div>
-                    <div className="flex gap-3">
+                    <div className="flex gap-3 flex-wrap">
                       <label className="flex items-center gap-1.5 text-xs text-gray-700 cursor-pointer">
                         <input type="checkbox" checked={productForm.requires_server} onChange={e => setProductForm(f => ({ ...f, requires_server: e.target.checked }))} className="rounded" />
-                        Server-based
+                        Server/Region
                       </label>
                       <label className="flex items-center gap-1.5 text-xs text-gray-700 cursor-pointer">
                         <input type="checkbox" checked={productForm.requires_player_id} onChange={e => setProductForm(f => ({ ...f, requires_player_id: e.target.checked }))} className="rounded" />
@@ -416,23 +469,43 @@ export function AdminProductsPage() {
                         Featured
                       </label>
                     </div>
-                    <button onClick={saveProduct} className="w-full bg-yellow-400 text-black font-bold py-2 rounded-lg text-sm hover:bg-yellow-300">
-                      {editingProduct ? "Update" : "Create"}
+                    <button onClick={saveProduct}
+                      className="w-full bg-yellow-400 text-black font-bold py-2 rounded-lg text-sm hover:bg-yellow-300">
+                      {editingProduct ? "Save Changes" : "Create Game"}
                     </button>
                   </div>
                 </div>
               )}
 
-              {/* Server management */}
+              {/* Region / server management */}
               {selectedProduct && (
-                <div className="bg-white rounded-xl border border-gray-200 flex flex-col overflow-hidden" style={{ minHeight: 0, flex: 1 }}>
+                <div className="bg-white rounded-xl border border-gray-200 flex flex-col overflow-hidden flex-1">
                   <div className="flex items-center justify-between px-3 py-3 border-b border-gray-100">
                     <div>
-                      <h3 className="text-sm font-bold text-gray-900">{selectedProduct.product_name}</h3>
-                      <p className="text-[10px] text-gray-400">{selectedProduct.requires_server ? "Server Regions" : "No server needed"}</p>
+                      <h3 className="text-sm font-bold text-gray-900 truncate">{selectedProduct.product_name}</h3>
+                      <p className="text-[10px] text-gray-400">
+                        {selectedProduct.requires_server ? "Select a region to manage its products" : "No regions — products are global"}
+                      </p>
                     </div>
-                    <div className="flex gap-1.5">
-                      <button onClick={() => { setEditingProduct(selectedProduct); setProductForm({ ...selectedProduct, photo_url: selectedProduct.photo_url || "", lootbar_game_id: selectedProduct.lootbar_game_id || "", short_description: selectedProduct.short_description || "", full_description: selectedProduct.full_description || "" }); setShowProductForm(true); }}
+                    <div className="flex gap-1 flex-shrink-0">
+                      <button
+                        onClick={() => {
+                          setEditingProduct(selectedProduct);
+                          setProductForm({
+                            product_name: selectedProduct.product_name,
+                            game_category: selectedProduct.game_category,
+                            photo_url: selectedProduct.photo_url || "",
+                            is_active: selectedProduct.is_active,
+                            is_featured: selectedProduct.is_featured,
+                            sort_order: selectedProduct.sort_order,
+                            requires_server: selectedProduct.requires_server,
+                            requires_player_id: selectedProduct.requires_player_id,
+                            short_description: selectedProduct.short_description || "",
+                            full_description: selectedProduct.full_description || "",
+                            lootbar_game_id: selectedProduct.lootbar_game_id || "",
+                          });
+                          setShowProductForm(true);
+                        }}
                         className="w-6 h-6 bg-gray-100 rounded-md flex items-center justify-center hover:bg-gray-200">
                         <Edit2 size={11} className="text-gray-600" />
                       </button>
@@ -443,22 +516,23 @@ export function AdminProductsPage() {
                     </div>
                   </div>
 
-                  {selectedProduct.requires_server && (
+                  {selectedProduct.requires_server ? (
                     <>
                       <div className="flex-1 overflow-y-auto divide-y divide-gray-100">
-                        {productRegions.map(r => (
-                          <button key={r.id} onClick={() => setSelectedRegion(selectedRegion?.id === r.id ? null : r)}
-                            className={`w-full flex items-center justify-between px-3 py-2.5 text-left hover:bg-gray-50 ${selectedRegion?.id === r.id ? "bg-yellow-50" : ""}`}>
+                        {productRegions.length === 0 ? (
+                          <p className="text-xs text-gray-400 text-center py-6">No regions yet. Add one below.</p>
+                        ) : productRegions.map(r => (
+                          <button key={r.id}
+                            onClick={() => setSelectedRegion(selectedRegion?.id === r.id ? null : r)}
+                            className={`w-full flex items-center justify-between px-3 py-2.5 text-left hover:bg-gray-50 transition-colors ${selectedRegion?.id === r.id ? "bg-yellow-50 border-l-2 border-yellow-400" : ""}`}>
                             <div>
                               <p className="text-xs font-bold text-gray-900">{r.region_name}</p>
-                              <p className="text-[10px] text-gray-400">{r.region_key}</p>
+                              <p className="text-[10px] text-gray-400">{skus.filter(s => s.region_id === r.id).length} products</p>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-[10px] text-gray-400">{skus.filter(s => s.region_id === r.id).length} SKUs</span>
-                              <button onClick={e => { e.stopPropagation(); deleteRegion(r.id); }} className="text-red-400 hover:text-red-600 p-1">
-                                <Trash2 size={11} />
-                              </button>
-                            </div>
+                            <button onClick={e => { e.stopPropagation(); deleteRegion(r.id); }}
+                              className="text-red-400 hover:text-red-600 p-1">
+                              <Trash2 size={11} />
+                            </button>
                           </button>
                         ))}
                       </div>
@@ -466,9 +540,11 @@ export function AdminProductsPage() {
                         {showRegionForm ? (
                           <div className="space-y-2">
                             <input value={regionForm.region_name} onChange={e => setRegionForm(f => ({ ...f, region_name: e.target.value }))}
-                              placeholder="Region name (e.g. Asia)" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-yellow-400" />
+                              placeholder="Region name (e.g. USA, Asia)"
+                              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-yellow-400" />
                             <input value={regionForm.region_key} onChange={e => setRegionForm(f => ({ ...f, region_key: e.target.value }))}
-                              placeholder="Key (e.g. asia) — optional" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-yellow-400" />
+                              placeholder="Key — optional (e.g. usa)"
+                              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-yellow-400" />
                             <div className="flex gap-1.5">
                               <button onClick={addRegion} className="flex-1 bg-yellow-400 text-black font-bold py-1.5 rounded-lg text-xs hover:bg-yellow-300">Add</button>
                               <button onClick={() => setShowRegionForm(false)} className="flex-1 border border-gray-200 text-gray-500 py-1.5 rounded-lg text-xs">Cancel</button>
@@ -482,99 +558,176 @@ export function AdminProductsPage() {
                         )}
                       </div>
                     </>
+                  ) : (
+                    <div className="p-4 flex-1 flex items-center justify-center">
+                      <p className="text-xs text-gray-400 text-center">Products are shown on the right panel.<br />Enable "Server/Region" to add regions.</p>
+                    </div>
                   )}
                 </div>
               )}
             </div>
 
-            {/* Panel 3 & 4: SKU list + add form */}
+            {/* Panel 3: SKU list with inline edit */}
             <div className="col-span-6 flex flex-col gap-3">
               {selectedProduct ? (
-                <>
-                  <div className="bg-white rounded-xl border border-gray-200 flex flex-col overflow-hidden flex-1">
-                    <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-                      <div>
-                        <h3 className="text-sm font-bold text-gray-900">Products / SKUs</h3>
-                        {selectedProduct.requires_server && (
-                          <p className="text-[10px] text-gray-400">{selectedRegion ? selectedRegion.region_name : "All regions"}</p>
-                        )}
-                      </div>
-                      <button onClick={() => setShowSkuForm(!showSkuForm)}
-                        className="flex items-center gap-1.5 bg-yellow-400 text-black font-bold px-3 py-1.5 rounded-lg text-xs hover:bg-yellow-300">
-                        <Plus size={12} /> Add SKU
-                      </button>
+                <div className="bg-white rounded-xl border border-gray-200 flex flex-col overflow-hidden flex-1">
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                    <div>
+                      <h3 className="text-sm font-bold text-gray-900">
+                        {selectedProduct.requires_server
+                          ? selectedRegion ? `${selectedRegion.region_name} — Products` : "Select a region to manage products"
+                          : "Products"}
+                      </h3>
+                      <p className="text-[10px] text-gray-400">{relevantSkus.length} product{relevantSkus.length !== 1 ? "s" : ""} — each can have its own photo, name, price</p>
                     </div>
+                    {(!selectedProduct.requires_server || selectedRegion) && (
+                      <button onClick={() => { setShowSkuForm(!showSkuForm); setSkuForm(EMPTY_SKU); }}
+                        className="flex items-center gap-1.5 bg-yellow-400 text-black font-bold px-3 py-1.5 rounded-lg text-xs hover:bg-yellow-300">
+                        <Plus size={12} /> Add Product
+                      </button>
+                    )}
+                  </div>
 
-                    {showSkuForm && (
-                      <div className="px-4 py-3 bg-yellow-50 border-b border-yellow-100">
-                        <div className="grid grid-cols-2 gap-2 mb-2">
-                          <div className="col-span-2">
-                            <input value={skuForm.sku_name} onChange={e => setSkuForm(f => ({ ...f, sku_name: e.target.value }))}
-                              placeholder="SKU name *" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-yellow-400" />
-                          </div>
-                          <input type="number" value={skuForm.original_price} onChange={e => setSkuForm(f => ({ ...f, original_price: e.target.value }))}
-                            placeholder="Price ($) *" className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-yellow-400" />
-                          <input type="number" value={skuForm.sale_price} onChange={e => setSkuForm(f => ({ ...f, sale_price: e.target.value }))}
-                            placeholder="Sale price (opt)" className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-yellow-400" />
-                        </div>
+                  {/* Add SKU form */}
+                  {showSkuForm && (!selectedProduct.requires_server || selectedRegion) && (
+                    <div className="px-4 py-3 bg-yellow-50 border-b border-yellow-100 space-y-2">
+                      <p className="text-xs font-bold text-gray-700">New product {selectedRegion ? `for ${selectedRegion.region_name}` : ""}</p>
+                      <input value={skuForm.sku_name} onChange={e => setSkuForm(f => ({ ...f, sku_name: e.target.value }))}
+                        placeholder="Product name (e.g. 100 Diamonds) *"
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-yellow-400" />
+                      <div className="grid grid-cols-2 gap-2">
+                        <input type="number" value={skuForm.original_price} onChange={e => setSkuForm(f => ({ ...f, original_price: e.target.value }))}
+                          placeholder="Price ($) *"
+                          className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-yellow-400" />
+                        <input type="number" value={skuForm.sale_price} onChange={e => setSkuForm(f => ({ ...f, sale_price: e.target.value }))}
+                          placeholder="Sale price (opt)"
+                          className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-yellow-400" />
+                      </div>
+                      {/* Photo upload for new SKU */}
+                      <div className="flex items-center gap-2">
                         {skuForm.photo_url ? (
-                          <div className="relative mb-2 w-16 h-16">
-                            <img src={skuForm.photo_url} className="w-16 h-16 object-cover rounded-lg" />
-                            <button onClick={() => setSkuForm(f => ({ ...f, photo_url: "" }))} className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px]">✕</button>
+                          <div className="relative flex-shrink-0">
+                            <img src={skuForm.photo_url} className="w-14 h-14 object-cover rounded-lg border border-gray-200" />
+                            <button onClick={() => setSkuForm(f => ({ ...f, photo_url: "" }))}
+                              className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px]">✕</button>
                           </div>
                         ) : (
-                          <div className="flex items-center gap-2 mb-2">
-                            <button onClick={() => skuFileRef.current?.click()}
-                              className="flex items-center gap-1.5 border border-gray-200 rounded-lg px-3 py-1.5 text-xs text-gray-500 hover:border-yellow-400">
-                              {uploadingSku ? <RefreshCw size={12} className="animate-spin" /> : <><Upload size={12} /> Image</>}
-                            </button>
-                            <input value={skuForm.photo_url} onChange={e => setSkuForm(f => ({ ...f, photo_url: e.target.value }))}
-                              placeholder="Or URL" className="flex-1 border border-gray-100 rounded-lg px-2 py-1.5 text-xs outline-none" />
-                            <input ref={skuFileRef} type="file" accept="image/*" className="hidden" onChange={e => e.target.files?.[0] && uploadSkuImage(e.target.files[0])} />
-                          </div>
+                          <button onClick={() => skuAddFileRef.current?.click()}
+                            className="flex-shrink-0 flex items-center gap-1.5 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-500 hover:border-yellow-400">
+                            {uploadingSku ? <RefreshCw size={12} className="animate-spin" /> : <><Upload size={12} /> Photo</>}
+                          </button>
                         )}
-                        {selectedProduct.requires_server && !selectedRegion && (
-                          <p className="text-xs text-orange-600 font-semibold mb-2">⚠ Select a region first</p>
-                        )}
-                        <div className="flex gap-2">
-                          <button onClick={addSku} className="bg-yellow-400 text-black font-bold px-4 py-1.5 rounded-lg text-sm hover:bg-yellow-300">Add</button>
-                          <button onClick={() => setShowSkuForm(false)} className="border border-gray-200 text-gray-500 px-4 py-1.5 rounded-lg text-sm">Cancel</button>
-                        </div>
+                        <input value={skuForm.photo_url} onChange={e => setSkuForm(f => ({ ...f, photo_url: e.target.value }))}
+                          placeholder="Or paste image URL"
+                          className="flex-1 border border-gray-100 rounded-lg px-2 py-1.5 text-xs outline-none" />
+                        <input ref={skuAddFileRef} type="file" accept="image/*" className="hidden"
+                          onChange={e => e.target.files?.[0] && uploadSkuAddImage(e.target.files[0])} />
                       </div>
-                    )}
+                      <div className="flex gap-2 pt-1">
+                        <button onClick={addSku} className="bg-yellow-400 text-black font-bold px-4 py-1.5 rounded-lg text-sm hover:bg-yellow-300">Add</button>
+                        <button onClick={() => setShowSkuForm(false)} className="border border-gray-200 text-gray-500 px-4 py-1.5 rounded-lg text-sm">Cancel</button>
+                      </div>
+                    </div>
+                  )}
 
-                    <div className="flex-1 overflow-y-auto divide-y divide-gray-100">
-                      {relevantSkus.length === 0 ? (
-                        <div className="p-6 text-center text-xs text-gray-400">No SKUs yet. Click "Add SKU" to create one.</div>
-                      ) : relevantSkus.map(sku => (
-                        <div key={sku.id} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50">
-                          {sku.photo_url ? (
-                            <img src={sku.photo_url} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
-                          ) : (
-                            <div className="w-10 h-10 bg-gray-100 rounded-lg flex-shrink-0" />
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-bold text-gray-900 truncate">{sku.sku_name}</p>
-                            <div className="flex items-center gap-2 mt-0.5">
-                              <span className="text-sm font-black text-orange-500">${Number(sku.original_price).toFixed(2)}</span>
-                              {sku.sale_price && <span className="text-xs text-gray-400 line-through">${Number(sku.sale_price).toFixed(2)}</span>}
+                  {/* SKU list */}
+                  <div className="flex-1 overflow-y-auto divide-y divide-gray-100">
+                    {selectedProduct.requires_server && !selectedRegion ? (
+                      <div className="p-8 text-center text-xs text-gray-400">
+                        ← Select a region to manage its products
+                      </div>
+                    ) : relevantSkus.length === 0 ? (
+                      <div className="p-8 text-center text-xs text-gray-400">
+                        No products yet. Click "Add Product" to create one.
+                      </div>
+                    ) : relevantSkus.map(sku => (
+                      <div key={sku.id}>
+                        {editingSkuId === sku.id ? (
+                          /* ── Inline edit mode ── */
+                          <div className="px-4 py-3 bg-blue-50 border-l-2 border-blue-400 space-y-2">
+                            <p className="text-xs font-bold text-blue-700">Editing product</p>
+                            <input value={editingSkuForm.sku_name} onChange={e => setEditingSkuForm(f => ({ ...f, sku_name: e.target.value }))}
+                              placeholder="Product name *"
+                              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-400" />
+                            <div className="grid grid-cols-2 gap-2">
+                              <input type="number" value={editingSkuForm.original_price} onChange={e => setEditingSkuForm(f => ({ ...f, original_price: e.target.value }))}
+                                placeholder="Price ($) *"
+                                className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-400" />
+                              <input type="number" value={editingSkuForm.sale_price} onChange={e => setEditingSkuForm(f => ({ ...f, sale_price: e.target.value }))}
+                                placeholder="Sale price (opt)"
+                                className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-400" />
+                            </div>
+                            {/* Photo upload for edit */}
+                            <div className="flex items-center gap-2">
+                              {editingSkuForm.photo_url ? (
+                                <div className="relative flex-shrink-0">
+                                  <img src={editingSkuForm.photo_url} className="w-14 h-14 object-cover rounded-lg border border-gray-200" />
+                                  <button onClick={() => setEditingSkuForm(f => ({ ...f, photo_url: "" }))}
+                                    className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px]">✕</button>
+                                </div>
+                              ) : (
+                                <button onClick={() => skuEditFileRef.current?.click()}
+                                  className="flex-shrink-0 flex items-center gap-1.5 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-500 hover:border-blue-400">
+                                  {uploadingEditSku ? <RefreshCw size={12} className="animate-spin" /> : <><Upload size={12} /> Change Photo</>}
+                                </button>
+                              )}
+                              <input value={editingSkuForm.photo_url} onChange={e => setEditingSkuForm(f => ({ ...f, photo_url: e.target.value }))}
+                                placeholder="Or paste URL"
+                                className="flex-1 border border-gray-100 rounded-lg px-2 py-1.5 text-xs outline-none" />
+                              <input ref={skuEditFileRef} type="file" accept="image/*" className="hidden"
+                                onChange={e => e.target.files?.[0] && uploadSkuEditImage(e.target.files[0])} />
+                            </div>
+                            <div className="flex gap-2 pt-1">
+                              <button onClick={() => saveSkuEdit(sku.id)}
+                                className="flex items-center gap-1.5 bg-blue-500 text-white font-bold px-4 py-1.5 rounded-lg text-sm hover:bg-blue-600">
+                                <Save size={13} /> Save
+                              </button>
+                              <button onClick={() => setEditingSkuId(null)}
+                                className="border border-gray-200 text-gray-500 px-4 py-1.5 rounded-lg text-sm">Cancel</button>
+                              <button onClick={() => deleteSku(sku.id)}
+                                className="ml-auto border border-red-200 text-red-500 px-3 py-1.5 rounded-lg text-sm hover:bg-red-50">
+                                <Trash2 size={13} />
+                              </button>
                             </div>
                           </div>
-                          <button onClick={() => deleteSku(sku.id)} className="text-red-400 hover:text-red-600 p-1.5">
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
+                        ) : (
+                          /* ── Normal row ── */
+                          <div className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 group">
+                            <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 border border-gray-100 bg-gray-50">
+                              {sku.photo_url
+                                ? <img src={sku.photo_url} className="w-full h-full object-cover" />
+                                : <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200" />}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-bold text-gray-900 truncate">{sku.sku_name}</p>
+                              <div className="flex items-center gap-2 mt-0.5">
+                                <span className="text-sm font-black text-orange-500">${Number(sku.original_price).toFixed(2)}</span>
+                                {sku.sale_price && (
+                                  <span className="text-xs text-gray-400 line-through">${Number(sku.sale_price).toFixed(2)}</span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button onClick={() => startEditSku(sku)}
+                                className="w-7 h-7 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-blue-100 hover:text-blue-600">
+                                <Edit2 size={12} className="text-gray-500" />
+                              </button>
+                              <button onClick={() => deleteSku(sku.id)}
+                                className="w-7 h-7 bg-red-50 rounded-lg flex items-center justify-center hover:bg-red-100">
+                                <Trash2 size={12} className="text-red-500" />
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
-                </>
+                </div>
               ) : (
                 <div className="bg-white rounded-xl border border-gray-200 flex-1 flex items-center justify-center">
                   <div className="text-center text-gray-400">
-                    <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                      <Search size={20} className="text-gray-300" />
-                    </div>
-                    <p className="text-sm">Select a product to manage SKUs</p>
+                    <Search size={24} className="text-gray-200 mx-auto mb-2" />
+                    <p className="text-sm">Select a game from the left to manage its products</p>
                   </div>
                 </div>
               )}
@@ -582,9 +735,9 @@ export function AdminProductsPage() {
           </div>
         )}
 
-        {/* ── LOOTBAR TAB ───────────────────────────────────────────────────── */}
+        {/* ── LOOTBAR TAB ─────────────────────────────────────────────────────── */}
         {tab === "lootbar" && (
-          <div className="grid grid-cols-12 gap-4 min-h-[80vh]">
+          <div className="grid grid-cols-12 gap-4" style={{ minHeight: "80vh" }}>
             {/* Games list */}
             <div className="col-span-5 bg-white rounded-xl border border-gray-200 flex flex-col overflow-hidden">
               <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
@@ -607,17 +760,17 @@ export function AdminProductsPage() {
                   <div className="p-4 text-center text-xs text-gray-400">Loading…</div>
                 ) : filteredLootbar.map(game => (
                   <button key={game.game_id} onClick={() => selectLootbarGame(game)}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-gray-50 transition-colors ${selectedLootbarGame?.game_id === game.game_id ? "bg-yellow-50 border-l-2 border-yellow-400" : ""} ${game.is_hidden ? "opacity-50" : ""}`}>
-                    {game.game_image ? (
-                      <img src={game.game_image} className="w-8 h-8 rounded-lg object-cover flex-shrink-0" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                    ) : (
-                      <div className="w-8 h-8 bg-gray-100 rounded-lg flex-shrink-0" />
-                    )}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-gray-50 transition-colors ${selectedLootbarGame?.game_id === game.game_id ? "bg-yellow-50 border-l-2 border-yellow-400" : ""} ${game.is_hidden ? "opacity-40" : ""}`}>
+                    <div className="w-8 h-8 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
+                      {game.game_image
+                        ? <img src={game.game_image} className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                        : null}
+                    </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-bold text-gray-900 truncate">{game.game_name}</p>
                       <p className="text-[10px] text-gray-400">{game.category || "Top Up"}</p>
                     </div>
-                    <div className="flex gap-1 flex-shrink-0">
+                    <div className="flex gap-1">
                       {game.is_featured && <Star size={10} fill="#FFD200" stroke="none" />}
                       {game.is_hidden && <EyeOff size={10} className="text-gray-300" />}
                     </div>
@@ -631,9 +784,11 @@ export function AdminProductsPage() {
               {selectedLootbarGame ? (
                 <div className="bg-white rounded-xl border border-gray-200 p-5">
                   <div className="flex items-start gap-4 mb-5">
-                    {selectedLootbarGame.game_image && (
-                      <img src={selectedLootbarGame.game_image} className="w-16 h-16 rounded-xl object-cover flex-shrink-0" />
-                    )}
+                    <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-200">
+                      {selectedLootbarGame.game_image
+                        ? <img src={selectedLootbarGame.game_image} className="w-full h-full object-cover" />
+                        : null}
+                    </div>
                     <div>
                       <h3 className="font-bold text-gray-900">{selectedLootbarGame.game_name}</h3>
                       <p className="text-xs text-gray-400">ID: {selectedLootbarGame.game_id}</p>
@@ -642,14 +797,30 @@ export function AdminProductsPage() {
                   </div>
 
                   <div className="space-y-4">
+                    {/* Image override with upload */}
                     <div>
-                      <label className="text-xs font-bold text-gray-600 uppercase mb-1.5 block">Custom Image URL</label>
-                      <input value={overrideForm.custom_image_url} onChange={e => setOverrideForm(f => ({ ...f, custom_image_url: e.target.value }))}
-                        placeholder="Leave blank to use cached image" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-yellow-400" />
-                      {overrideForm.custom_image_url && (
-                        <img src={overrideForm.custom_image_url} alt="Preview" className="w-full h-32 object-cover rounded-xl mt-2" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                      )}
+                      <label className="text-xs font-bold text-gray-600 uppercase mb-2 block">Game Image</label>
+                      {overrideForm.custom_image_url ? (
+                        <div className="relative mb-2">
+                          <img src={overrideForm.custom_image_url} className="w-full h-36 object-cover rounded-xl"
+                            onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                          <button onClick={() => setOverrideForm(f => ({ ...f, custom_image_url: "" }))}
+                            className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow">✕</button>
+                        </div>
+                      ) : null}
+                      <div className="flex gap-2">
+                        <button onClick={() => lootbarImgRef.current?.click()}
+                          className="flex items-center gap-1.5 border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-600 hover:border-yellow-400 hover:text-yellow-600 font-semibold">
+                          {uploadingLootbarImg ? <RefreshCw size={12} className="animate-spin" /> : <><Upload size={12} /> Upload Image</>}
+                        </button>
+                        <input value={overrideForm.custom_image_url} onChange={e => setOverrideForm(f => ({ ...f, custom_image_url: e.target.value }))}
+                          placeholder="Or paste image URL"
+                          className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-yellow-400" />
+                        <input ref={lootbarImgRef} type="file" accept="image/*" className="hidden"
+                          onChange={e => e.target.files?.[0] && uploadLootbarImage(e.target.files[0])} />
+                      </div>
                     </div>
+
                     <div>
                       <label className="text-xs font-bold text-gray-600 uppercase mb-1.5 block">Category Override</label>
                       <select value={overrideForm.category_override} onChange={e => setOverrideForm(f => ({ ...f, category_override: e.target.value }))}
@@ -658,11 +829,13 @@ export function AdminProductsPage() {
                         {CATEGORIES.map(c => <option key={c}>{c}</option>)}
                       </select>
                     </div>
+
                     <div>
                       <label className="text-xs font-bold text-gray-600 uppercase mb-1.5 block">Sort Order</label>
                       <input type="number" value={overrideForm.sort_order} onChange={e => setOverrideForm(f => ({ ...f, sort_order: e.target.value }))}
                         className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-yellow-400" />
                     </div>
+
                     <div className="flex gap-6">
                       <label className="flex items-center gap-2 cursor-pointer">
                         <input type="checkbox" checked={overrideForm.is_featured} onChange={e => setOverrideForm(f => ({ ...f, is_featured: e.target.checked }))} className="w-4 h-4 accent-yellow-400" />
@@ -673,9 +846,11 @@ export function AdminProductsPage() {
                         <span className="text-sm font-semibold text-gray-700">Hidden</span>
                       </label>
                     </div>
+
                     <button onClick={saveOverride} disabled={savingOverride}
-                      className="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-bold py-3 rounded-xl text-sm disabled:opacity-50">
-                      {savingOverride ? "Saving…" : "Save Override"}
+                      className="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-bold py-3 rounded-xl text-sm disabled:opacity-50 flex items-center justify-center gap-2">
+                      <Check size={16} />
+                      {savingOverride ? "Saving…" : "Save Changes"}
                     </button>
                   </div>
                 </div>
@@ -683,7 +858,7 @@ export function AdminProductsPage() {
                 <div className="bg-white rounded-xl border border-gray-200 h-full flex items-center justify-center">
                   <div className="text-center text-gray-400">
                     <Search size={32} className="text-gray-200 mx-auto mb-2" />
-                    <p className="text-sm">Select a game to edit override</p>
+                    <p className="text-sm">Select a game to edit its image and settings</p>
                   </div>
                 </div>
               )}

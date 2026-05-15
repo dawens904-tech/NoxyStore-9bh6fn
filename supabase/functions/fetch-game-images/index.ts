@@ -244,6 +244,13 @@ Deno.serve(async (req: Request) => {
     let query = supabase.from("games_cache").select("game_id, game_name, game_image");
     if (game_ids?.length) query = query.in("game_id", game_ids);
 
+    // IMAGE AUTO-FETCH DISABLED — remove this block to re-enable
+    return new Response(
+      JSON.stringify({ status: "disabled", msg: "Automatic image fetching is currently disabled." }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+    // END DISABLED BLOCK
+
     const { data: games, error: fetchErr } = await query.limit(50);
     if (fetchErr) {
       return new Response(JSON.stringify({ status: "error", msg: fetchErr.message }), {
