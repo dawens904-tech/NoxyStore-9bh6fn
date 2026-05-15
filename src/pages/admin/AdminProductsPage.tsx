@@ -995,4 +995,4 @@ export function AdminProductsPage() {
     </AdminLayout>
   );
 }
-
+please Add client-side pagination to the Lootbar tab in AdminProductsPage — show 50 games per page with prev/next buttons and a page indicator, so the list is easier to navigate when there are hundreds of games and chak game must have their photo when i upload a phoot and go to other game i see the same fix all must have their photo different.
