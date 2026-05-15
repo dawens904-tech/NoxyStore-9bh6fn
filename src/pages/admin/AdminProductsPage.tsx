@@ -55,6 +55,14 @@ interface LootbarGame {
   sort_order: number;
 }
 
+interface SkuCacheRow {
+  sku_id: string;
+  sku_name: string;
+  price: number;
+  original_price: number;
+  image: string | null;
+}
+
 const CATEGORIES = ["Top Up", "Gift Card", "Game Pass", "CD Key", "Voucher", "Subscription", "Other"];
 
 const EMPTY_PRODUCT = {
@@ -108,6 +116,14 @@ export function AdminProductsPage() {
   const [syncingCache, setSyncingCache] = useState(false);
   const [uploadingLootbarImg, setUploadingLootbarImg] = useState(false);
   const lootbarImgRef = useRef<HTMLInputElement>(null);
+
+  // ── Lootbar SKU cache state ────────────────────────────────────────────────
+  const [lootbarSkus, setLootbarSkus] = useState<SkuCacheRow[]>([]);
+  const [editingSkuCacheId, setEditingSkuCacheId] = useState<string | null>(null);
+  const [skuCacheEditForm, setSkuCacheEditForm] = useState({ sku_name: "", price: "", image: "" });
+  const [uploadingSkuCacheImg, setUploadingSkuCacheImg] = useState(false);
+  const [savingSkuCache, setSavingSkuCache] = useState(false);
+  const skuCacheImgRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { loadManualProducts(); }, []);
   useEffect(() => { if (tab === "lootbar" && lootbarGames.length === 0) loadLootbarGames(); }, [tab]);
@@ -163,6 +179,13 @@ export function AdminProductsPage() {
     setUploadingLootbarImg(false);
   }
 
+  async function uploadSkuCacheImage(file: File) {
+    setUploadingSkuCacheImg(true);
+    const url = await uploadImage(file, "skus");
+    if (url) setSkuCacheEditForm(f => ({ ...f, image: url }));
+    setUploadingSkuCacheImg(false);
+  }
+
   async function saveProduct() {
     if (!productForm.product_name.trim()) { toast.error("Product name required"); return; }
     const payload = {
@@ -183,7 +206,6 @@ export function AdminProductsPage() {
       const { error } = await supabase.from("manual_products").update(payload).eq("id", editingProduct.id);
       if (error) { toast.error(error.message); return; }
       toast.success("Product updated!");
-      // Refresh selected product too
       setSelectedProduct(prev => prev?.id === editingProduct.id ? { ...prev, ...payload } as ManualProduct : prev);
     } else {
       const { error } = await supabase.from("manual_products").insert(payload);
@@ -299,18 +321,43 @@ export function AdminProductsPage() {
 
   async function selectLootbarGame(game: LootbarGame) {
     setSelectedLootbarGame(game);
-    const { data } = await supabase.from("game_overrides").select("*").eq("game_id", game.game_id).single();
-    if (data) {
+    setEditingSkuCacheId(null);
+    setLootbarSkus([]);
+    const [{ data: ov }, { data: skuData }] = await Promise.all([
+      supabase.from("game_overrides").select("*").eq("game_id", game.game_id).single(),
+      supabase.from("sku_cache").select("sku_id, sku_name, price, original_price, image").eq("game_id", game.game_id).order("price"),
+    ]);
+    if (ov) {
       setOverrideForm({
-        custom_image_url: data.custom_image_url || game.game_image || "",
-        category_override: data.category_override || "",
-        sort_order: String(data.sort_order || 0),
-        is_featured: data.is_featured || false,
-        is_hidden: data.is_hidden || false,
+        custom_image_url: ov.custom_image_url || game.game_image || "",
+        category_override: ov.category_override || "",
+        sort_order: String(ov.sort_order || 0),
+        is_featured: ov.is_featured || false,
+        is_hidden: ov.is_hidden || false,
       });
     } else {
       setOverrideForm({ custom_image_url: game.game_image || "", category_override: game.category || "", sort_order: "0", is_featured: false, is_hidden: false });
     }
+    setLootbarSkus((skuData || []) as SkuCacheRow[]);
+  }
+
+  async function saveSkuCacheEdit(skuId: string) {
+    if (!skuCacheEditForm.sku_name.trim() || !skuCacheEditForm.price) {
+      toast.error("Name and price required"); return;
+    }
+    setSavingSkuCache(true);
+    const { error } = await supabase.from("sku_cache").update({
+      sku_name: skuCacheEditForm.sku_name,
+      price: parseFloat(skuCacheEditForm.price),
+      image: skuCacheEditForm.image || null,
+    }).eq("sku_id", skuId);
+    if (error) { toast.error(error.message); setSavingSkuCache(false); return; }
+    toast.success("SKU saved!");
+    setEditingSkuCacheId(null);
+    setSavingSkuCache(false);
+    setLootbarSkus(prev => prev.map(s => s.sku_id === skuId
+      ? { ...s, sku_name: skuCacheEditForm.sku_name, price: parseFloat(skuCacheEditForm.price), image: skuCacheEditForm.image || null }
+      : s));
   }
 
   async function saveOverride() {
@@ -353,12 +400,15 @@ export function AdminProductsPage() {
         (!selectedProduct.requires_server || !selectedRegion || s.region_id === selectedRegion.id))
     : [];
 
+  // Panel height constant
+  const PANEL_H = "calc(100vh - 160px)";
+
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <AdminLayout>
-      <div className="p-4">
+      <div className="p-4 flex flex-col" style={{ height: "100vh" }}>
         {/* Tabs */}
-        <div className="flex items-center gap-1 mb-5 bg-gray-100 p-1 rounded-xl w-fit">
+        <div className="flex items-center gap-1 mb-4 bg-gray-100 p-1 rounded-xl w-fit flex-shrink-0">
           {(["manual", "lootbar"] as const).map(t => (
             <button key={t} onClick={() => setTab(t)}
               className={`px-5 py-2 rounded-lg text-sm font-bold transition-all ${tab === t ? "bg-white shadow-sm text-gray-900" : "text-gray-500"}`}>
@@ -369,11 +419,11 @@ export function AdminProductsPage() {
 
         {/* ── MANUAL TAB ──────────────────────────────────────────────────────── */}
         {tab === "manual" && (
-          <div className="grid grid-cols-12 gap-4" style={{ minHeight: "80vh" }}>
+          <div className="grid grid-cols-12 gap-4 flex-1 overflow-hidden">
 
-            {/* Panel 1: Games list */}
+            {/* Panel 1: Games list — scrollable */}
             <div className="col-span-3 bg-white rounded-xl border border-gray-200 flex flex-col overflow-hidden">
-              <div className="flex items-center justify-between px-3 py-3 border-b border-gray-100">
+              <div className="flex items-center justify-between px-3 py-3 border-b border-gray-100 flex-shrink-0">
                 <h3 className="text-sm font-bold text-gray-900">Games</h3>
                 <button
                   onClick={() => { setShowProductForm(true); setEditingProduct(null); setProductForm(EMPTY_PRODUCT); }}
@@ -381,14 +431,15 @@ export function AdminProductsPage() {
                   <Plus size={13} className="text-black" />
                 </button>
               </div>
-              <div className="px-3 py-2 border-b border-gray-100">
+              <div className="px-3 py-2 border-b border-gray-100 flex-shrink-0">
                 <div className="relative">
                   <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input value={productSearch} onChange={e => setProductSearch(e.target.value)} placeholder="Search…"
                     className="w-full pl-7 pr-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none" />
                 </div>
               </div>
-              <div className="flex-1 overflow-y-auto divide-y divide-gray-100">
+              {/* Scrollable list */}
+              <div className="flex-1 overflow-y-auto divide-y divide-gray-100" style={{ minHeight: 0 }}>
                 {loadingManual ? (
                   <div className="p-4 text-center text-xs text-gray-400">Loading…</div>
                 ) : filteredProducts.map(p => (
@@ -409,10 +460,10 @@ export function AdminProductsPage() {
             </div>
 
             {/* Panel 2: Product form + Region management */}
-            <div className="col-span-3 flex flex-col gap-3">
+            <div className="col-span-3 flex flex-col gap-3 overflow-hidden">
               {/* Product form */}
               {showProductForm && (
-                <div className="bg-white rounded-xl border border-gray-200 p-4">
+                <div className="bg-white rounded-xl border border-gray-200 p-4 flex-shrink-0 overflow-y-auto" style={{ maxHeight: "55%" }}>
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-sm font-bold text-gray-900">{editingProduct ? "Edit Game" : "New Game"}</h3>
                     <button onClick={() => { setShowProductForm(false); setEditingProduct(null); }}><X size={15} className="text-gray-400" /></button>
@@ -479,8 +530,8 @@ export function AdminProductsPage() {
 
               {/* Region / server management */}
               {selectedProduct && (
-                <div className="bg-white rounded-xl border border-gray-200 flex flex-col overflow-hidden flex-1">
-                  <div className="flex items-center justify-between px-3 py-3 border-b border-gray-100">
+                <div className="bg-white rounded-xl border border-gray-200 flex flex-col overflow-hidden flex-1" style={{ minHeight: 0 }}>
+                  <div className="flex items-center justify-between px-3 py-3 border-b border-gray-100 flex-shrink-0">
                     <div>
                       <h3 className="text-sm font-bold text-gray-900 truncate">{selectedProduct.product_name}</h3>
                       <p className="text-[10px] text-gray-400">
@@ -518,7 +569,7 @@ export function AdminProductsPage() {
 
                   {selectedProduct.requires_server ? (
                     <>
-                      <div className="flex-1 overflow-y-auto divide-y divide-gray-100">
+                      <div className="flex-1 overflow-y-auto divide-y divide-gray-100" style={{ minHeight: 0 }}>
                         {productRegions.length === 0 ? (
                           <p className="text-xs text-gray-400 text-center py-6">No regions yet. Add one below.</p>
                         ) : productRegions.map(r => (
@@ -536,7 +587,7 @@ export function AdminProductsPage() {
                           </button>
                         ))}
                       </div>
-                      <div className="p-3 border-t border-gray-100">
+                      <div className="p-3 border-t border-gray-100 flex-shrink-0">
                         {showRegionForm ? (
                           <div className="space-y-2">
                             <input value={regionForm.region_name} onChange={e => setRegionForm(f => ({ ...f, region_name: e.target.value }))}
@@ -567,11 +618,11 @@ export function AdminProductsPage() {
               )}
             </div>
 
-            {/* Panel 3: SKU list with inline edit */}
-            <div className="col-span-6 flex flex-col gap-3">
+            {/* Panel 3: SKU list with inline edit — scrollable */}
+            <div className="col-span-6 flex flex-col gap-3 overflow-hidden">
               {selectedProduct ? (
-                <div className="bg-white rounded-xl border border-gray-200 flex flex-col overflow-hidden flex-1">
-                  <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                <div className="bg-white rounded-xl border border-gray-200 flex flex-col overflow-hidden flex-1" style={{ minHeight: 0 }}>
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 flex-shrink-0">
                     <div>
                       <h3 className="text-sm font-bold text-gray-900">
                         {selectedProduct.requires_server
@@ -590,7 +641,7 @@ export function AdminProductsPage() {
 
                   {/* Add SKU form */}
                   {showSkuForm && (!selectedProduct.requires_server || selectedRegion) && (
-                    <div className="px-4 py-3 bg-yellow-50 border-b border-yellow-100 space-y-2">
+                    <div className="px-4 py-3 bg-yellow-50 border-b border-yellow-100 space-y-2 flex-shrink-0">
                       <p className="text-xs font-bold text-gray-700">New product {selectedRegion ? `for ${selectedRegion.region_name}` : ""}</p>
                       <input value={skuForm.sku_name} onChange={e => setSkuForm(f => ({ ...f, sku_name: e.target.value }))}
                         placeholder="Product name (e.g. 100 Diamonds) *"
@@ -603,7 +654,6 @@ export function AdminProductsPage() {
                           placeholder="Sale price (opt)"
                           className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-yellow-400" />
                       </div>
-                      {/* Photo upload for new SKU */}
                       <div className="flex items-center gap-2">
                         {skuForm.photo_url ? (
                           <div className="relative flex-shrink-0">
@@ -630,20 +680,15 @@ export function AdminProductsPage() {
                     </div>
                   )}
 
-                  {/* SKU list */}
-                  <div className="flex-1 overflow-y-auto divide-y divide-gray-100">
+                  {/* SKU list — scrollable */}
+                  <div className="flex-1 overflow-y-auto divide-y divide-gray-100" style={{ minHeight: 0 }}>
                     {selectedProduct.requires_server && !selectedRegion ? (
-                      <div className="p-8 text-center text-xs text-gray-400">
-                        ← Select a region to manage its products
-                      </div>
+                      <div className="p-8 text-center text-xs text-gray-400">← Select a region to manage its products</div>
                     ) : relevantSkus.length === 0 ? (
-                      <div className="p-8 text-center text-xs text-gray-400">
-                        No products yet. Click "Add Product" to create one.
-                      </div>
+                      <div className="p-8 text-center text-xs text-gray-400">No products yet. Click "Add Product" to create one.</div>
                     ) : relevantSkus.map(sku => (
                       <div key={sku.id}>
                         {editingSkuId === sku.id ? (
-                          /* ── Inline edit mode ── */
                           <div className="px-4 py-3 bg-blue-50 border-l-2 border-blue-400 space-y-2">
                             <p className="text-xs font-bold text-blue-700">Editing product</p>
                             <input value={editingSkuForm.sku_name} onChange={e => setEditingSkuForm(f => ({ ...f, sku_name: e.target.value }))}
@@ -657,7 +702,6 @@ export function AdminProductsPage() {
                                 placeholder="Sale price (opt)"
                                 className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-400" />
                             </div>
-                            {/* Photo upload for edit */}
                             <div className="flex items-center gap-2">
                               {editingSkuForm.photo_url ? (
                                 <div className="relative flex-shrink-0">
@@ -691,7 +735,6 @@ export function AdminProductsPage() {
                             </div>
                           </div>
                         ) : (
-                          /* ── Normal row ── */
                           <div className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 group">
                             <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 border border-gray-100 bg-gray-50">
                               {sku.photo_url
@@ -737,10 +780,11 @@ export function AdminProductsPage() {
 
         {/* ── LOOTBAR TAB ─────────────────────────────────────────────────────── */}
         {tab === "lootbar" && (
-          <div className="grid grid-cols-12 gap-4" style={{ minHeight: "80vh" }}>
-            {/* Games list */}
-            <div className="col-span-5 bg-white rounded-xl border border-gray-200 flex flex-col overflow-hidden">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+          <div className="grid grid-cols-12 gap-4 flex-1 overflow-hidden">
+
+            {/* Left: Games list — scrollable */}
+            <div className="col-span-4 bg-white rounded-xl border border-gray-200 flex flex-col overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 flex-shrink-0">
                 <h3 className="text-sm font-bold text-gray-900">Lootbar Games ({lootbarGames.length})</h3>
                 <button onClick={syncCache} disabled={syncingCache}
                   className="flex items-center gap-1.5 bg-blue-50 text-blue-600 font-bold px-3 py-1.5 rounded-lg text-xs hover:bg-blue-100 disabled:opacity-50">
@@ -748,14 +792,15 @@ export function AdminProductsPage() {
                   {syncingCache ? "Syncing…" : "Sync Cache"}
                 </button>
               </div>
-              <div className="px-4 py-2 border-b border-gray-100">
+              <div className="px-4 py-2 border-b border-gray-100 flex-shrink-0">
                 <div className="relative">
                   <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input value={lootbarSearch} onChange={e => setLootbarSearch(e.target.value)} placeholder="Search games…"
                     className="w-full pl-7 pr-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none" />
                 </div>
               </div>
-              <div className="flex-1 overflow-y-auto divide-y divide-gray-100">
+              {/* Scrollable game list */}
+              <div className="flex-1 overflow-y-auto divide-y divide-gray-100" style={{ minHeight: 0 }}>
                 {loadingLootbar ? (
                   <div className="p-4 text-center text-xs text-gray-400">Loading…</div>
                 ) : filteredLootbar.map(game => (
@@ -779,83 +824,164 @@ export function AdminProductsPage() {
               </div>
             </div>
 
-            {/* Override panel */}
-            <div className="col-span-7">
+            {/* Right: Override + SKU panel — non-scrolling outer, each inner section scrolls */}
+            <div className="col-span-8 flex flex-col gap-3 overflow-hidden">
               {selectedLootbarGame ? (
-                <div className="bg-white rounded-xl border border-gray-200 p-5">
-                  <div className="flex items-start gap-4 mb-5">
-                    <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-200">
-                      {selectedLootbarGame.game_image
-                        ? <img src={selectedLootbarGame.game_image} className="w-full h-full object-cover" />
-                        : null}
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-gray-900">{selectedLootbarGame.game_name}</h3>
-                      <p className="text-xs text-gray-400">ID: {selectedLootbarGame.game_id}</p>
-                      <p className="text-xs text-gray-400">{selectedLootbarGame.category}</p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    {/* Image override with upload */}
-                    <div>
-                      <label className="text-xs font-bold text-gray-600 uppercase mb-2 block">Game Image</label>
-                      {overrideForm.custom_image_url ? (
-                        <div className="relative mb-2">
-                          <img src={overrideForm.custom_image_url} className="w-full h-36 object-cover rounded-xl"
+                <>
+                  {/* Game override card — fixed height, no scroll */}
+                  <div className="bg-white rounded-xl border border-gray-200 p-4 flex-shrink-0">
+                    <div className="flex items-start gap-4 mb-3">
+                      {/* Live preview — updates as URL is typed or file uploaded */}
+                      <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-200">
+                        {overrideForm.custom_image_url ? (
+                          <img src={overrideForm.custom_image_url} className="w-full h-full object-cover"
                             onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                          <button onClick={() => setOverrideForm(f => ({ ...f, custom_image_url: "" }))}
-                            className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow">✕</button>
-                        </div>
-                      ) : null}
-                      <div className="flex gap-2">
-                        <button onClick={() => lootbarImgRef.current?.click()}
-                          className="flex items-center gap-1.5 border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-600 hover:border-yellow-400 hover:text-yellow-600 font-semibold">
-                          {uploadingLootbarImg ? <RefreshCw size={12} className="animate-spin" /> : <><Upload size={12} /> Upload Image</>}
-                        </button>
-                        <input value={overrideForm.custom_image_url} onChange={e => setOverrideForm(f => ({ ...f, custom_image_url: e.target.value }))}
-                          placeholder="Or paste image URL"
-                          className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-yellow-400" />
-                        <input ref={lootbarImgRef} type="file" accept="image/*" className="hidden"
-                          onChange={e => e.target.files?.[0] && uploadLootbarImage(e.target.files[0])} />
+                        ) : selectedLootbarGame.game_image ? (
+                          <img src={selectedLootbarGame.game_image} className="w-full h-full object-cover" />
+                        ) : <div className="w-full h-full bg-gray-200" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-gray-900 text-sm truncate">{selectedLootbarGame.game_name}</h3>
+                        <p className="text-xs text-gray-400">ID: {selectedLootbarGame.game_id}</p>
+                        <p className="text-xs text-gray-400">{selectedLootbarGame.category}</p>
                       </div>
                     </div>
 
-                    <div>
-                      <label className="text-xs font-bold text-gray-600 uppercase mb-1.5 block">Category Override</label>
-                      <select value={overrideForm.category_override} onChange={e => setOverrideForm(f => ({ ...f, category_override: e.target.value }))}
-                        className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none bg-white">
-                        <option value="">Use default: {selectedLootbarGame.category}</option>
-                        {CATEGORIES.map(c => <option key={c}>{c}</option>)}
-                      </select>
-                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      {/* Image — auto-previews when URL typed */}
+                      <div className="col-span-2">
+                        <label className="text-[10px] font-bold text-gray-500 uppercase mb-1.5 block">Game Image (preview updates live)</label>
+                        <div className="flex gap-2">
+                          <button onClick={() => lootbarImgRef.current?.click()}
+                            className="flex-shrink-0 flex items-center gap-1.5 border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-600 hover:border-yellow-400 hover:text-yellow-600 font-semibold">
+                            {uploadingLootbarImg ? <RefreshCw size={12} className="animate-spin" /> : <><Upload size={12} /> Upload</>}
+                          </button>
+                          <input
+                            value={overrideForm.custom_image_url}
+                            onChange={e => setOverrideForm(f => ({ ...f, custom_image_url: e.target.value }))}
+                            placeholder="Paste image URL — preview updates instantly"
+                            className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-yellow-400"
+                          />
+                          {overrideForm.custom_image_url && (
+                            <button onClick={() => setOverrideForm(f => ({ ...f, custom_image_url: "" }))}
+                              className="flex-shrink-0 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-500">
+                              <X size={13} />
+                            </button>
+                          )}
+                          <input ref={lootbarImgRef} type="file" accept="image/*" className="hidden"
+                            onChange={e => e.target.files?.[0] && uploadLootbarImage(e.target.files[0])} />
+                        </div>
+                      </div>
 
-                    <div>
-                      <label className="text-xs font-bold text-gray-600 uppercase mb-1.5 block">Sort Order</label>
-                      <input type="number" value={overrideForm.sort_order} onChange={e => setOverrideForm(f => ({ ...f, sort_order: e.target.value }))}
-                        className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-yellow-400" />
-                    </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-gray-500 uppercase mb-1.5 block">Category Override</label>
+                        <select value={overrideForm.category_override} onChange={e => setOverrideForm(f => ({ ...f, category_override: e.target.value }))}
+                          className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none bg-white">
+                          <option value="">Default: {selectedLootbarGame.category}</option>
+                          {CATEGORIES.map(c => <option key={c}>{c}</option>)}
+                        </select>
+                      </div>
 
-                    <div className="flex gap-6">
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" checked={overrideForm.is_featured} onChange={e => setOverrideForm(f => ({ ...f, is_featured: e.target.checked }))} className="w-4 h-4 accent-yellow-400" />
-                        <span className="text-sm font-semibold text-gray-700">Featured</span>
-                      </label>
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" checked={overrideForm.is_hidden} onChange={e => setOverrideForm(f => ({ ...f, is_hidden: e.target.checked }))} className="w-4 h-4 accent-red-400" />
-                        <span className="text-sm font-semibold text-gray-700">Hidden</span>
-                      </label>
-                    </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-gray-500 uppercase mb-1.5 block">Sort Order</label>
+                        <input type="number" value={overrideForm.sort_order} onChange={e => setOverrideForm(f => ({ ...f, sort_order: e.target.value }))}
+                          className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-yellow-400" />
+                      </div>
 
-                    <button onClick={saveOverride} disabled={savingOverride}
-                      className="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-bold py-3 rounded-xl text-sm disabled:opacity-50 flex items-center justify-center gap-2">
-                      <Check size={16} />
-                      {savingOverride ? "Saving…" : "Save Changes"}
-                    </button>
+                      <div className="col-span-2 flex items-center gap-6">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input type="checkbox" checked={overrideForm.is_featured} onChange={e => setOverrideForm(f => ({ ...f, is_featured: e.target.checked }))} className="w-4 h-4 accent-yellow-400" />
+                          <span className="text-xs font-semibold text-gray-700">Featured</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input type="checkbox" checked={overrideForm.is_hidden} onChange={e => setOverrideForm(f => ({ ...f, is_hidden: e.target.checked }))} className="w-4 h-4 accent-red-400" />
+                          <span className="text-xs font-semibold text-gray-700">Hidden</span>
+                        </label>
+                        <button onClick={saveOverride} disabled={savingOverride}
+                          className="ml-auto flex items-center gap-1.5 bg-yellow-400 hover:bg-yellow-300 text-black font-bold px-5 py-2 rounded-xl text-xs disabled:opacity-50">
+                          <Check size={13} />
+                          {savingOverride ? "Saving…" : "Save Changes"}
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                </div>
+
+                  {/* SKU cache list — scrollable */}
+                  <div className="bg-white rounded-xl border border-gray-200 flex flex-col flex-1 overflow-hidden">
+                    <div className="px-4 py-3 border-b border-gray-100 flex-shrink-0">
+                      <h3 className="text-sm font-bold text-gray-900">SKU Packages ({lootbarSkus.length})</h3>
+                      <p className="text-[10px] text-gray-400 mt-0.5">Hover a row and click edit to change photo, name, or price</p>
+                    </div>
+                    <div className="flex-1 overflow-y-auto divide-y divide-gray-100" style={{ minHeight: 0 }}>
+                      {lootbarSkus.length === 0 ? (
+                        <div className="p-6 text-center text-xs text-gray-400">No SKUs cached for this game yet. Sync cache to load them.</div>
+                      ) : lootbarSkus.map(sku => (
+                        <div key={sku.sku_id}>
+                          {editingSkuCacheId === sku.sku_id ? (
+                            <div className="px-4 py-3 bg-blue-50 border-l-2 border-blue-400 space-y-2">
+                              <p className="text-xs font-bold text-blue-700">Editing SKU</p>
+                              <input value={skuCacheEditForm.sku_name} onChange={e => setSkuCacheEditForm(f => ({ ...f, sku_name: e.target.value }))}
+                                placeholder="SKU name *"
+                                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-400" />
+                              <input type="number" step="0.01" value={skuCacheEditForm.price} onChange={e => setSkuCacheEditForm(f => ({ ...f, price: e.target.value }))}
+                                placeholder="Price ($) *"
+                                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-400" />
+                              <div className="flex items-center gap-2">
+                                {skuCacheEditForm.image ? (
+                                  <div className="relative flex-shrink-0">
+                                    <img src={skuCacheEditForm.image} className="w-12 h-12 object-cover rounded-lg border border-gray-200" />
+                                    <button onClick={() => setSkuCacheEditForm(f => ({ ...f, image: "" }))}
+                                      className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px]">✕</button>
+                                  </div>
+                                ) : (
+                                  <button onClick={() => skuCacheImgRef.current?.click()}
+                                    className="flex-shrink-0 flex items-center gap-1.5 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-500 hover:border-blue-400">
+                                    {uploadingSkuCacheImg ? <RefreshCw size={12} className="animate-spin" /> : <><Upload size={12} /> Photo</>}
+                                  </button>
+                                )}
+                                <input value={skuCacheEditForm.image} onChange={e => setSkuCacheEditForm(f => ({ ...f, image: e.target.value }))}
+                                  placeholder="Or paste image URL"
+                                  className="flex-1 border border-gray-100 rounded-lg px-2 py-1.5 text-xs outline-none" />
+                                <input ref={skuCacheImgRef} type="file" accept="image/*" className="hidden"
+                                  onChange={e => e.target.files?.[0] && uploadSkuCacheImage(e.target.files[0])} />
+                              </div>
+                              <div className="flex gap-2 pt-1">
+                                <button onClick={() => saveSkuCacheEdit(sku.sku_id)} disabled={savingSkuCache}
+                                  className="flex items-center gap-1.5 bg-blue-500 text-white font-bold px-4 py-1.5 rounded-lg text-sm hover:bg-blue-600 disabled:opacity-50">
+                                  <Save size={13} /> {savingSkuCache ? "Saving…" : "Save"}
+                                </button>
+                                <button onClick={() => setEditingSkuCacheId(null)}
+                                  className="border border-gray-200 text-gray-500 px-4 py-1.5 rounded-lg text-sm">Cancel</button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 group">
+                              <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100 border border-gray-100">
+                                {sku.image
+                                  ? <img src={sku.image} className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                                  : <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200" />}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-bold text-gray-900 truncate">{sku.sku_name}</p>
+                                <p className="text-xs font-black text-orange-500">${Number(sku.price).toFixed(2)}</p>
+                              </div>
+                              <button
+                                onClick={() => {
+                                  setEditingSkuCacheId(sku.sku_id);
+                                  setSkuCacheEditForm({ sku_name: sku.sku_name, price: String(sku.price), image: sku.image || "" });
+                                }}
+                                className="w-7 h-7 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-blue-100 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Edit2 size={12} className="text-gray-500" />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
               ) : (
-                <div className="bg-white rounded-xl border border-gray-200 h-full flex items-center justify-center">
+                <div className="bg-white rounded-xl border border-gray-200 flex-1 flex items-center justify-center">
                   <div className="text-center text-gray-400">
                     <Search size={32} className="text-gray-200 mx-auto mb-2" />
                     <p className="text-sm">Select a game to edit its image and settings</p>
@@ -869,4 +995,3 @@ export function AdminProductsPage() {
     </AdminLayout>
   );
 }
-left side can scroll and right side cannot scroll and also fix when i upload a photo or put url auto change this game for photo and i can edit region this game lootbar if have it and add product lidt photo edit name also  price.
