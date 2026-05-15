@@ -165,6 +165,7 @@ export function HomePage() {
   const [sections, setSections] = useState<HomeSection[]>([]);
   const [dynamicBanners, setDynamicBanners] = useState<Array<{ id: string; title: string; subtitle: string; image_url: string; link: string; sort_order: number }>>([]);
   const [isLoadingBanners, setIsLoadingBanners] = useState(false);
+  const [manualGames, setManualGames] = useState<LootbarGame[]>([]);
 
   // Mobile row expansion state — 3 cols, 3 lines initially
   const [hotRows, setHotRows] = useState(3);
@@ -210,22 +211,57 @@ export function HomePage() {
     supabase.from("home_banners").select("*").eq("is_active", true).order("sort_order")
       .then(({ data }) => { if (data) setDynamicBanners(data); setIsLoadingBanners(false); })
       .catch(() => setIsLoadingBanners(false));
+
+    // Fetch manual products and convert to LootbarGame format
+    Promise.all([
+      supabase.from("manual_products").select("*").eq("is_active", true).order("sort_order"),
+      supabase.from("manual_skus").select("product_id, original_price, sale_price").eq("is_active", true),
+    ]).then(([{ data: prods }, { data: skuData }]) => {
+      if (!prods) return;
+      const skuMap = new Map<string, number>();
+      (skuData || []).forEach(s => {
+        const price = Number(s.sale_price ?? s.original_price);
+        const existing = skuMap.get(s.product_id);
+        if (existing === undefined || price < existing) skuMap.set(s.product_id, price);
+      });
+      const converted: LootbarGame[] = prods.map(p => ({
+        game_id: p.id,
+        game_name: p.product_name,
+        game_image: p.photo_url || "",
+        category: p.game_category || "Top Up",
+        rating: 5.0,
+        sold_count: "",
+        is_hot: p.is_featured || false,
+        discount: 0,
+        min_price: skuMap.get(p.id) ?? null,
+      }));
+      setManualGames(converted);
+    });
   }, []);
 
   const getSectionGames = (section: HomeSection): LootbarGame[] => {
     if (section.game_ids.length === 0) return [];
-    return section.game_ids.map((id) => games.find((g) => g.game_id === id)).filter(Boolean) as LootbarGame[];
+    const combined = [...manualGames, ...games];
+    return section.game_ids.map((id) => combined.find((g) => g.game_id === id)).filter(Boolean) as LootbarGame[];
   };
 
-  const hotGames = games.filter((g) => g.is_hot);
-  const discountGames = games.filter((g) => g.discount && g.discount > 0);
-  const newGames = [...games].reverse();
-  const giftCardGames = games.filter((g) =>
+  // Merge manual products with Lootbar games (manual first if featured)
+  const allGames = [
+    ...manualGames.filter(g => g.is_hot),
+    ...games.filter(g => g.is_hot),
+    ...manualGames.filter(g => !g.is_hot),
+    ...games.filter(g => !g.is_hot),
+  ];
+
+  const hotGames = allGames.filter((g) => g.is_hot).concat(allGames.filter(g => !g.is_hot));
+  const discountGames = allGames.filter((g) => g.discount && g.discount > 0);
+  const newGames = [...manualGames, ...games].reverse();
+  const giftCardGames = allGames.filter((g) =>
     g.category?.toLowerCase().includes("gift") ||
     g.game_name?.toLowerCase().includes("gift") ||
     g.game_name?.toLowerCase().includes("card")
   );
-  const gameKeyGames = games.filter((g) =>
+  const gameKeyGames = allGames.filter((g) =>
     g.category?.toLowerCase().includes("key") ||
     g.game_name?.toLowerCase().includes("steam") ||
     g.game_name?.toLowerCase().includes("key") ||
@@ -280,9 +316,9 @@ export function HomePage() {
             </div>
             <div className="grid grid-cols-5 lg:grid-cols-7 gap-4">
               {isLoading ? Array.from({ length: hotDesktopRows * DESKTOP_COLS }).map((_, i) => <div key={i} className="shimmer rounded-2xl aspect-square" />)
-                : hotGames.concat(games.filter(g => !g.is_hot)).slice(0, hotDesktopRows * DESKTOP_COLS).map((game) => <GameCard key={game.game_id} game={game} size="sm" />)}
+                : hotGames.slice(0, hotDesktopRows * DESKTOP_COLS).map((game) => <GameCard key={game.game_id} game={game} size="sm" />)}
             </div>
-            {!isLoading && hotGames.concat(games.filter(g => !g.is_hot)).length > hotDesktopRows * DESKTOP_COLS ? (
+            {!isLoading && hotGames.length > hotDesktopRows * DESKTOP_COLS ? (
               <button onClick={() => setHotDesktopRows(r => r + 2)} className="w-full mt-4 py-2 text-sm font-semibold text-gray-400 flex items-center justify-center gap-1 hover:text-gray-700 transition-colors">
                 View More <ChevronRight size={14} />
               </button>
@@ -474,13 +510,12 @@ export function HomePage() {
                   <div key={i} className="shimmer rounded-xl aspect-square" />
                 ))
               : hotGames
-                  .concat(games.filter(g => !g.is_hot))
                   .slice(0, hotRows * COLS)
                   .map((game) => <MobileGameCard key={game.game_id} game={game} />)
             }
           </div>
 
-          {hotGames.concat(games.filter(g => !g.is_hot)).length > hotRows * COLS ? (
+          {hotGames.length > hotRows * COLS ? (
             <button 
               onClick={() => setHotRows((r) => r + LINES_PER_CLICK)} 
               className="w-full mt-4 py-2 text-sm font-semibold text-gray-400 flex items-center justify-center gap-1 hover:text-gray-700 transition-colors"
@@ -649,4 +684,3 @@ export function HomePage() {
     </div>
   );
 }
-update HomePage to merge manual_products from the database with Lootbar games_cache when building the Hot Selling, New Games, and category sections, so admin-created manual products appear alongside Lootbar games on the home page.
