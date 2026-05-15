@@ -869,3 +869,4 @@ export function AdminProductsPage() {
     </AdminLayout>
   );
 }
+left side can scroll and right side cannot scroll and also fix when i upload a photo or put url auto change this game for photo and i can edit region this game lootbar if have it and add product lidt photo edit name also  price.
