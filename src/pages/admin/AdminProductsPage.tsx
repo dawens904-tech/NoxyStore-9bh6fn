@@ -869,3 +869,4 @@ export function AdminProductsPage() {
     </AdminLayout>
   );
 }
+fix error in this page and also make for mobile better.
