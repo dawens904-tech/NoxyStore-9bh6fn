@@ -779,7 +779,6 @@ export function GameDetailPage() {
         </div>
       </div>
     );
-  }
 
   // ─── Desktop Layout ─────────────────────────────────────────────────────────
   const DesktopLayout = () => (
