@@ -76,9 +76,9 @@ export function AdminDashboardPage() {
     setLootbar(prev => ({ ...prev, checking: true }));
     try {
       const { data, error } = await supabase.functions.invoke("lootbar-proxy", {
-        body: { action: "getGames", page: 1, pageSize: 1 },
+        body: { action: "check_token" },
       });
-      const ok = !error && Array.isArray(data?.games) && data.games.length > 0;
+      const ok = !error && data?.data?.valid === true;
       setLootbar({ ok, checkedAt: Date.now(), checking: false });
     } catch {
       setLootbar({ ok: false, checkedAt: Date.now(), checking: false });

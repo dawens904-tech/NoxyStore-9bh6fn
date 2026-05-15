@@ -306,18 +306,7 @@ export function GameDetailPage() {
       });
     } else {
       // ── Load Lootbar product ──
-      supabase.functions.invoke("lootbar-proxy", {
-        body: { action: "game_guide", game_id: gameId }
-      }).then(({ data }) => {
-        if (data?.guide && Array.isArray(data.guide) && data.guide.length > 0) {
-          setInstructions(data.guide.map((g: any, i: number) => ({
-            step: i + 1,
-            title: g.title || `Step ${i + 1}`,
-            description: g.content || g.description || "",
-            image: g.image || g.img || undefined,
-          })));
-        }
-      }).catch(() => {});
+      // Note: game_guide not supported in current proxy version — skip
 
       supabase.from("games_cache").select("*").eq("game_id", gameId).single()
         .then(({ data: cached }) => {

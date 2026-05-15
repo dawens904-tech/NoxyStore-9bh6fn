@@ -995,12 +995,4 @@ export function AdminProductsPage() {
     </AdminLayout>
   );
 }
-fix error when i put photo for a game all game must have their own photo and make the page large for all li tro small and if can add multi page for them and also fix {
-  "eventMessage": "POST | 400 | http://lcfbkgryqwjlbtowlcfb.backend.onspace.ai/functions/v1/lootbar-proxy | Bad Request",
-  "functionId": "lootbar-proxy",
-  "id": "3d55a7eb-bdc7-4c68-af72-3860b13bf84e",
-  "logLevel": "ERROR",
-  "method": "POST",
-  "statusCode": 400,
-  "timestamp": 1778865877
-}.
+
