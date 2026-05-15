@@ -1277,4 +1277,3 @@ export function GameDetailPage() {
     </>
   );
 }
-fix all error in this page for desktop when i put id example mw put 1 input la close fom tap li ank poum put 2 fix.
