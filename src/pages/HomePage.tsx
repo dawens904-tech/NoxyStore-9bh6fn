@@ -649,5 +649,3 @@ export function HomePage() {
     </div>
   );
 }
-
-fix all error.
