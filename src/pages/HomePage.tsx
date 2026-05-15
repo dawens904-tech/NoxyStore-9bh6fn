@@ -346,7 +346,7 @@ export function HomePage() {
                 </div>
                 <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2">
                   {isLoading ? Array.from({length:4}).map((_,i) => <div key={i} className="shimmer w-44 h-64 rounded-xl flex-shrink-0" />)
-                    : gameKeyGames.slice(0, 5).map((game) => (
+                    : gameKeyGames.slice(0, 12).map((game) => (
                       <button key={game.game_id} onClick={() => navigate(`/game/${game.game_id}`)}
                         className="flex-shrink-0 w-44 flex flex-col bg-white rounded-xl overflow-hidden text-left hover:shadow-xl hover:-translate-y-1 transition-all group">
                         <div className="h-40 bg-gray-200 relative overflow-hidden">
@@ -684,4 +684,4 @@ export function HomePage() {
     </div>
   );
 }
-popular game key for desktop add 12 product.
+
