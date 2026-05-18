@@ -164,3 +164,4 @@ export function Header({ showMenu, title, showBack }: HeaderProps) {
   );
 }
 
+nn plas user name example B replace it by currency bottom and also fix layout oou tout page yo solid also home page make better solid poul djanm page yo pa djanm fix app.tsx pou tut solid and better in mobile.
