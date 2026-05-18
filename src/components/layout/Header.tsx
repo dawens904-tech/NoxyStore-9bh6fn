@@ -54,22 +54,27 @@ export function Header({ showMenu, title, showBack }: HeaderProps) {
           </div>
 
           {/* Right actions */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5">
             <button onClick={() => navigate("/search")} className="text-white p-2">
               <Search size={19} />
             </button>
 
-            {/* Lang/Currency or login */}
+            {/* Currency toggle — always visible */}
+            <button
+              onClick={() => setShowLangModal(true)}
+              className="flex items-center gap-1 bg-white/15 hover:bg-white/25 text-white text-[11px] font-bold px-2.5 py-1.5 transition-colors"
+            >
+              {currency}
+            </button>
+
+            {/* Account avatar */}
             {isAuthenticated ? (
-              <button onClick={() => navigate("/account")} className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 text-black font-black text-sm ml-1">
+              <button onClick={() => navigate("/account")} className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 text-black font-black text-sm">
                 {user?.nickname?.[0]?.toUpperCase() ?? "U"}
               </button>
             ) : (
-              <button
-                onClick={() => setShowLangModal(true)}
-                className="flex items-center gap-1 bg-white/15 text-white text-[11px] font-bold px-2 py-1.5 rounded ml-1"
-              >
-                {language.toUpperCase()}/{currency}
+              <button onClick={() => navigate("/login")} className="text-white p-1.5">
+                <User size={19} />
               </button>
             )}
           </div>
@@ -164,4 +169,4 @@ export function Header({ showMenu, title, showBack }: HeaderProps) {
   );
 }
 
-nn plas user name example B replace it by currency bottom and also fix layout oou tout page yo solid also home page make better solid poul djanm page yo pa djanm fix app.tsx pou tut solid and better in mobile.
+
