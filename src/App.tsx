@@ -34,20 +34,6 @@ import { LanguageCurrencyPage } from "@/pages/LanguageCurrencyPage";
 import { ContactPage } from "@/pages/ContactPage";
 import { MessagesPage } from "@/pages/MessagesPage";
 // Admin pages — each is its own dedicated page
-import { AdminDashboardPage } from "@/pages/admin/AdminDashboardPage";
-import { AdminOrdersPage } from "@/pages/admin/AdminOrdersPage";
-import { AdminLiveChatPage } from "@/pages/admin/AdminLiveChatPage";
-import { AdminMarkupPage } from "@/pages/admin/AdminMarkupPage";
-import { AdminCouponsPage } from "@/pages/admin/AdminCouponsPage";
-import { AdminBannersPage } from "@/pages/admin/AdminBannersPage";
-import { AdminProductsPage } from "@/pages/admin/AdminProductsPage";
-import { AdminAddProductPage } from "@/pages/admin/AdminAddProductPage";
-import { AdminHomeSectionsPage } from "@/pages/admin/AdminHomeSectionsPage";
-import { AdminRolesPage } from "@/pages/admin/AdminRolesPage";
-import { AdminCategoriesPage } from "@/pages/admin/AdminCategoriesPage";
-import { AdminAnalyticsPage } from "@/pages/admin/AdminAnalyticsPage";
-import { AdminApiStatusPage } from "@/pages/admin/AdminApiStatusPage";
-import { AdminGroupChatPage } from "@/pages/admin/AdminGroupChatPage";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore, mapSupabaseUser } from "@/stores/authStore";
 import { trackEvent } from "@/lib/analytics";
@@ -228,22 +214,6 @@ function App() {
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/messages" element={<MessagesPage />} />
 
-          {/* Admin routes — each section is its own page */}
-          <Route path="/admin" element={<AdminDashboardPage />} />
-          <Route path="/admin/orders" element={<AdminOrdersPage />} />
-          <Route path="/admin/livechat" element={<AdminLiveChatPage />} />
-          <Route path="/admin/markup" element={<AdminMarkupPage />} />
-          <Route path="/admin/coupons" element={<AdminCouponsPage />} />
-          <Route path="/admin/banners" element={<AdminBannersPage />} />
-          <Route path="/admin/products" element={<AdminProductsPage />} />
-          <Route path="/admin/add-product" element={<AdminAddProductPage />} />
-          <Route path="/admin/sections" element={<AdminHomeSectionsPage />} />
-          <Route path="/admin/roles" element={<AdminRolesPage />} />
-          <Route path="/admin/categories" element={<AdminCategoriesPage />} />
-          <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
-          <Route path="/admin/api-status" element={<AdminApiStatusPage />} />
-          <Route path="/admin/group-chat" element={<AdminGroupChatPage />} />
-
           {/* Legacy admin route redirect compatibility */}
           <Route path="/secure-dashboard-92x2011" element={<AdminDashboardPage />} />
 
@@ -265,3 +235,4 @@ function App() {
 }
 
 export default App;
+remove all admin pages no admin needed for now.
