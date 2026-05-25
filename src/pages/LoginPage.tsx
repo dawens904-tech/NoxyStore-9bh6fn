@@ -10,7 +10,7 @@ type LoginView = "main" | "email" | "otp" | "setPassword";
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const { login, signInWithGoogle, sendOtp, verifyOtp, setPassword, signInWithPassword } = useAuth();
+  const { login, signInWithGoogle, sendOtp, verifyOtp, setPassword: setAccountPassword, signInWithPassword } = useAuth();
   const { t } = useTranslation();
 
   const [view, setView] = useState<LoginView>("main");
@@ -72,7 +72,7 @@ export function LoginPage() {
     if (password.length < 6) { toast.error("Password must be at least 6 characters"); return; }
     setIsLoading(true);
     try {
-      await setPassword(password, email.split("@")[0]);
+      await setAccountPassword(password, email.split("@")[0]);
       toast.success("Account created successfully! Welcome to NoxyStore!");
       navigate("/");
     } catch (err: any) {
@@ -442,4 +442,4 @@ export function LoginPage() {
   );
 }
 
-fix when i login with google auto create user real time remove login button in desktop header trplace by info.
+

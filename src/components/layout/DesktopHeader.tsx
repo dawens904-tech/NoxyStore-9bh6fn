@@ -237,9 +237,13 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
           ) : (
             <button
               onClick={() => navigate("/login")}
-              className="bg-yellow-400 hover:bg-yellow-300 text-black font-bold text-sm px-4 py-2 rounded-xl transition-colors whitespace-nowrap"
+              className="flex items-center gap-2 group"
+              title="Sign in"
             >
-              {t("loginSignup")}
+              <div className="w-8 h-8 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-gray-400 group-hover:bg-white/20 group-hover:text-white transition-colors">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              </div>
+              <span className="hidden lg:block text-gray-400 text-sm font-medium group-hover:text-white transition-colors">{t("loginSignup")}</span>
             </button>
           )}
         </div>
