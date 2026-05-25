@@ -684,5 +684,3 @@ export function HomePage() {
     </div>
   );
 }
-
-fix error show desktop header and also the mobile even if you scroll down.
