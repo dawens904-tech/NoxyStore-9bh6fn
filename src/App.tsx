@@ -36,6 +36,7 @@ import { MessagesPage } from "@/pages/MessagesPage";
 // Admin pages — each is its own dedicated page
 import { supabase } from "@/lib/supabase";
 import { useAuthStore, mapSupabaseUser } from "@/stores/authStore";
+import { AuthProvider } from "@/lib/AuthContext";
 import { trackEvent } from "@/lib/analytics";
 
 // ─── Error Boundary ─────────────────────────────────────────────────────────
@@ -176,6 +177,7 @@ function OfflineBanner() {
 function App() {
   return (
     <BrowserRouter>
+      <AuthProvider>
       <ErrorBoundary>
         <OfflineBanner />
         <AuthInitializer />
@@ -219,6 +221,7 @@ function App() {
       </div>
 
       </ErrorBoundary>
+      </AuthProvider>
       <Toaster
         position="top-center"
         toastOptions={{
