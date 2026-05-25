@@ -442,3 +442,4 @@ export function LoginPage() {
   );
 }
 
+fix when i login with google auto create user real time remove login button in desktop header trplace by info.
