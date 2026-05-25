@@ -247,4 +247,4 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
     </>
   );
 }
-
+fix show even if user scroll down.
