@@ -33,6 +33,7 @@ import { VipBenefitsPage } from "@/pages/VipBenefitsPage";
 import { LanguageCurrencyPage } from "@/pages/LanguageCurrencyPage";
 import { ContactPage } from "@/pages/ContactPage";
 import { MessagesPage } from "@/pages/MessagesPage";
+import AdminRoute from "@/components/features/AdminRoute";
 // Admin pages — each is its own dedicated page
 import AdminDashboard from './pages/admin/AdminDashboard';
 import GameManagement from './pages/admin/GameManagement';
@@ -224,16 +225,16 @@ function App() {
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/messages" element={<MessagesPage />} />
 
-             {/* Secure Admin Routes — prefix: /secure-dashboard-92x2011 */}
-        <Route path="/secure-dashboard-92x2011" element={<AdminDashboard />} />
-        <Route path="/secure-dashboard-92x2011/games" element={<GameManagement />} />
-        <Route path="/secure-dashboard-92x2011/games/:gameId/servers" element={<ServerManagement />} />
-        <Route path="/secure-dashboard-92x2011/games/:gameId/servers/:serverId/products" element={<GameProductManagement />} />
-        <Route path="/secure-dashboard-92x2011/games/:gameId/products" element={<GameProductManagement />} />
-        <Route path="/secure-dashboard-92x2011/products" element={<ProductManagement />} />
-        <Route path="/secure-dashboard-92x2011/products/add" element={<AddProductPage />} />
-        <Route path="/secure-dashboard-92x2011/products/edit/:id" element={<EditProductPage />} />
-        <Route path="/secure-dashboard-92x2011/products/regional-pricing/:id" element={<EditRegionalPricing />} />
+             {/* Secure Admin Routes — guarded by AdminRoute */}
+        <Route path="/secure-dashboard-92x2011" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+        <Route path="/secure-dashboard-92x2011/games" element={<AdminRoute><GameManagement /></AdminRoute>} />
+        <Route path="/secure-dashboard-92x2011/games/:gameId/servers" element={<AdminRoute><ServerManagement /></AdminRoute>} />
+        <Route path="/secure-dashboard-92x2011/games/:gameId/servers/:serverId/products" element={<AdminRoute><GameProductManagement /></AdminRoute>} />
+        <Route path="/secure-dashboard-92x2011/games/:gameId/products" element={<AdminRoute><GameProductManagement /></AdminRoute>} />
+        <Route path="/secure-dashboard-92x2011/products" element={<AdminRoute><ProductManagement /></AdminRoute>} />
+        <Route path="/secure-dashboard-92x2011/products/add" element={<AdminRoute><AddProductPage /></AdminRoute>} />
+        <Route path="/secure-dashboard-92x2011/products/edit/:id" element={<AdminRoute><EditProductPage /></AdminRoute>} />
+        <Route path="/secure-dashboard-92x2011/products/regional-pricing/:id" element={<AdminRoute><EditRegionalPricing /></AdminRoute>} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </div>
