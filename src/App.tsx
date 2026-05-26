@@ -33,9 +33,19 @@ import { VipBenefitsPage } from "@/pages/VipBenefitsPage";
 import { LanguageCurrencyPage } from "@/pages/LanguageCurrencyPage";
 import { ContactPage } from "@/pages/ContactPage";
 import { MessagesPage } from "@/pages/MessagesPage";
+import AdminRoute from "@/components/features/AdminRoute";
 // Admin pages — each is its own dedicated page
+import AdminDashboard from './pages/admin/AdminDashboard';
+import GameManagement from './pages/admin/GameManagement';
+import ServerManagement from './pages/admin/ServerManagement';
+import GameProductManagement from './pages/admin/GameProductManagement';
+import ProductManagement from './pages/admin/ProductManagement';
+import AddProductPage from './pages/admin/AddProductPage';
+import EditProductPage from './pages/admin/EditProductPage';
+import EditRegionalPricing from './pages/admin/EditRegionalPricing';
 import { supabase } from "@/lib/supabase";
 import { useAuthStore, mapSupabaseUser } from "@/stores/authStore";
+import { AuthProvider } from "@/lib/AuthContext";
 import { trackEvent } from "@/lib/analytics";
 
 // ─── Error Boundary ─────────────────────────────────────────────────────────
@@ -176,6 +186,7 @@ function OfflineBanner() {
 function App() {
   return (
     <BrowserRouter>
+      <AuthProvider>
       <ErrorBoundary>
         <OfflineBanner />
         <AuthInitializer />
@@ -214,11 +225,22 @@ function App() {
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/messages" element={<MessagesPage />} />
 
+             {/* Secure Admin Routes — guarded by AdminRoute */}
+        <Route path="/secure-dashboard-92x2011" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+        <Route path="/secure-dashboard-92x2011/games" element={<AdminRoute><GameManagement /></AdminRoute>} />
+        <Route path="/secure-dashboard-92x2011/games/:gameId/servers" element={<AdminRoute><ServerManagement /></AdminRoute>} />
+        <Route path="/secure-dashboard-92x2011/games/:gameId/servers/:serverId/products" element={<AdminRoute><GameProductManagement /></AdminRoute>} />
+        <Route path="/secure-dashboard-92x2011/games/:gameId/products" element={<AdminRoute><GameProductManagement /></AdminRoute>} />
+        <Route path="/secure-dashboard-92x2011/products" element={<AdminRoute><ProductManagement /></AdminRoute>} />
+        <Route path="/secure-dashboard-92x2011/products/add" element={<AdminRoute><AddProductPage /></AdminRoute>} />
+        <Route path="/secure-dashboard-92x2011/products/edit/:id" element={<AdminRoute><EditProductPage /></AdminRoute>} />
+        <Route path="/secure-dashboard-92x2011/products/regional-pricing/:id" element={<AdminRoute><EditRegionalPricing /></AdminRoute>} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </div>
 
       </ErrorBoundary>
+      </AuthProvider>
       <Toaster
         position="top-center"
         toastOptions={{
