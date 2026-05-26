@@ -31,6 +31,7 @@ export default function ProductManagement() {
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
+    if (!user) { navigate('/login'); return; }
     if (user?.role !== 'admin') {
       navigate('/');
       return;
@@ -120,10 +121,10 @@ export default function ProductManagement() {
                         {product.is_active ? 'Active' : 'Disabled'}
                       </td>
                       <td className="px-6 py-4 text-right text-sm font-medium space-x-2">
-                        <Button variant="secondary" size="sm" onClick={() => navigate(`/admin/products/edit/${product.id}`)}>
+                        <Button variant="secondary" size="sm" onClick={() => navigate(`/secure-dashboard-92x2011/products/edit/${product.id}`)}>
                           Edit
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => navigate(`/admin/products/regional-pricing/${product.id}`)}>
+                        <Button variant="ghost" size="sm" onClick={() => navigate(`/secure-dashboard-92x2011/products/regional-pricing/${product.id}`)}>
                           Pricing
                         </Button>
                       </td>

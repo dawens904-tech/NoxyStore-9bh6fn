@@ -229,7 +229,7 @@ export default function EditRegionalPricing() {
         title: 'Pricing updated',
         description: 'Regional pricing has been saved successfully'
       });
-      navigate('/admin/products');
+      navigate('/secure-dashboard-92x2011/products');
     } catch (error) {
       toast({
         title: 'Error',

@@ -55,6 +55,7 @@ export default function GameProductManagement() {
   });
 
   useEffect(() => {
+    if (!user) { navigate('/login'); return; }
     if (user?.role !== 'admin') {
       navigate('/');
       return;
@@ -264,7 +265,7 @@ export default function GameProductManagement() {
         <div className="container mx-auto px-4 max-w-7xl">
           <div className="flex items-center gap-4 mb-6">
             <button 
-              onClick={() => navigate(serverId ? `/admin/games/${gameId}/servers` : '/admin/games')} 
+              onClick={() => navigate(serverId ? `/secure-dashboard-92x2011/games/${gameId}/servers` : '/secure-dashboard-92x2011/games')} 
               className="p-2 hover:bg-accent rounded-lg"
             >
               <ArrowLeft className="h-5 w-5" />

@@ -224,16 +224,16 @@ function App() {
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/messages" element={<MessagesPage />} />
 
-             {/* Admin Routes */}
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/admin/games" element={<GameManagement />} />
-        <Route path="/admin/games/:gameId/servers" element={<ServerManagement />} />
-        <Route path="/admin/games/:gameId/servers/:serverId/products" element={<GameProductManagement />} />
-        <Route path="/admin/games/:gameId/products" element={<GameProductManagement />} />
-        <Route path="/admin/products" element={<ProductManagement />} />
-        <Route path="/admin/products/add" element={<AddProductPage />} />
-        <Route path="/admin/products/edit/:id" element={<EditProductPage />} />
-        <Route path="/admin/products/regional-pricing/:id" element={<EditRegionalPricing />} />
+             {/* Secure Admin Routes — prefix: /secure-dashboard-92x2011 */}
+        <Route path="/secure-dashboard-92x2011" element={<AdminDashboard />} />
+        <Route path="/secure-dashboard-92x2011/games" element={<GameManagement />} />
+        <Route path="/secure-dashboard-92x2011/games/:gameId/servers" element={<ServerManagement />} />
+        <Route path="/secure-dashboard-92x2011/games/:gameId/servers/:serverId/products" element={<GameProductManagement />} />
+        <Route path="/secure-dashboard-92x2011/games/:gameId/products" element={<GameProductManagement />} />
+        <Route path="/secure-dashboard-92x2011/products" element={<ProductManagement />} />
+        <Route path="/secure-dashboard-92x2011/products/add" element={<AddProductPage />} />
+        <Route path="/secure-dashboard-92x2011/products/edit/:id" element={<EditProductPage />} />
+        <Route path="/secure-dashboard-92x2011/products/regional-pricing/:id" element={<EditRegionalPricing />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </div>

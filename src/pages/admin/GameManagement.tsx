@@ -83,6 +83,7 @@ export default function GameManagement() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   useEffect(() => {
+    if (!user) { navigate('/login'); return; }
     if (user?.role !== 'admin') {
       navigate('/');
       return;
@@ -404,7 +405,7 @@ export default function GameManagement() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => navigate(`/admin/games/${game.id}/servers`)}
+                        onClick={() => navigate(`/secure-dashboard-92x2011/games/${game.id}/servers`)}
                         className="gap-2"
                       >
                         <Server className="h-4 w-4" />
@@ -414,7 +415,7 @@ export default function GameManagement() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => navigate(`/admin/games/${game.id}/products`)}
+                        onClick={() => navigate(`/secure-dashboard-92x2011/games/${game.id}/products`)}
                         className="gap-2"
                       >
                         <ShoppingBag className="h-4 w-4" />

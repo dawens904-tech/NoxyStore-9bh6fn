@@ -233,7 +233,7 @@ export default function ServerManagement() {
       <div className="ml-64 flex-1 py-8">
         <div className="container mx-auto px-4 max-w-5xl">
           <div className="flex items-center gap-4 mb-6">
-            <button onClick={() => navigate('/admin/games')} className="p-2 hover:bg-accent rounded-lg">
+            <button onClick={() => navigate('/secure-dashboard-92x2011/games')} className="p-2 hover:bg-accent rounded-lg">
               <ArrowLeft className="h-5 w-5" />
             </button>
             <div className="flex-1">
@@ -277,7 +277,7 @@ export default function ServerManagement() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => navigate(`/admin/games/${gameId}/servers/${server.id}/products`)}
+                    onClick={() => navigate(`/secure-dashboard-92x2011/games/${gameId}/servers/${server.id}/products`)}
                     className="flex-1 gap-2"
                   >
                     <ShoppingBag className="h-4 w-4" />

@@ -125,7 +125,7 @@ export default function EditProductPage() {
           description: 'The requested product could not be found',
           variant: 'destructive'
         });
-        navigate('/admin/products');
+        navigate('/secure-dashboard-92x2011/products');
         return;
       }
 
@@ -190,7 +190,7 @@ export default function EditProductPage() {
       description: 'The product has been successfully updated'
     });
 
-    navigate('/admin/products');
+    navigate('/secure-dashboard-92x2011/products');
   };
 
   const addQuantityOption = () => {
@@ -257,15 +257,15 @@ export default function EditProductPage() {
   };
 
   const menuItems = [
-    { icon: LayoutDashboard, label: 'Dashboard', path: '/admin' },
-    { icon: Package, label: 'Products', path: '/admin/products', active: true },
-    { icon: Layers, label: 'Categories', path: '/admin/categories' },
-    { icon: ShoppingCart, label: 'Orders', path: '/admin/orders' },
-    { icon: Users, label: 'Users', path: '/admin/users' },
-    { icon: Store, label: 'Stores', path: '/admin/stores' },
-    { icon: TrendingUp, label: 'Affiliate', path: '/admin/affiliate' },
-    { icon: CreditCard, label: 'Payments', path: '/admin/payments' },
-    { icon: Settings, label: 'Settings', path: '/admin/settings' }
+    { icon: LayoutDashboard, label: 'Dashboard', path: '/secure-dashboard-92x2011' },
+    { icon: Package, label: 'Products', path: '/secure-dashboard-92x2011/products', active: true },
+    { icon: Layers, label: 'Categories', path: '/secure-dashboard-92x2011/categories' },
+    { icon: ShoppingCart, label: 'Orders', path: '/secure-dashboard-92x2011/orders' },
+    { icon: Users, label: 'Users', path: '/secure-dashboard-92x2011/users' },
+    { icon: Store, label: 'Stores', path: '/secure-dashboard-92x2011/stores' },
+    { icon: TrendingUp, label: 'Affiliate', path: '/secure-dashboard-92x2011/affiliate' },
+    { icon: CreditCard, label: 'Payments', path: '/secure-dashboard-92x2011/payments' },
+    { icon: Settings, label: 'Settings', path: '/secure-dashboard-92x2011/settings' }
   ];
 
   // Loading state

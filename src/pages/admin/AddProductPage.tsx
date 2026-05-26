@@ -259,7 +259,7 @@ export default function AddProductPage() {
       description: `${formData.name} has been successfully created`
     });
 
-    navigate('/admin/products');
+    navigate('/secure-dashboard-92x2011/products');
   };
 
   return (
@@ -270,7 +270,7 @@ export default function AddProductPage() {
         <div className="mb-6">
           <Button
             variant="ghost"
-            onClick={() => navigate('/admin/products')}
+            onClick={() => navigate('/secure-dashboard-92x2011/products')}
             className="mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -845,7 +845,7 @@ export default function AddProductPage() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => navigate('/admin/products')}
+                onClick={() => navigate('/secure-dashboard-92x2011/products')}
                 className="h-12 px-8"
               >
                 Cancel
