@@ -212,7 +212,7 @@ export function generateReferenceId(): string {
 // ─── Fallback Data Guards ────────────────────────────────────────────────────
 function getDevFallbackGames(): LootbarGame[] {
   // Only available in development — prevents mock data in production
-  if (import.meta.env.DEV) {
+  if (process.env.NODE_ENV === "development" || __DEV__) {
     return MOCK_GAMES;
   }
   throw new LootbarAPIError(
@@ -223,7 +223,7 @@ function getDevFallbackGames(): LootbarGame[] {
 }
 
 function getDevFallbackSkus(gameId: string, gameName: string): SkuItem[] {
-  if (import.meta.env.DEV) {
+  if (process.env.NODE_ENV === "development" || __DEV__) {
     return MOCK_SKUS[gameId] ?? getGenericSkus(gameId, gameName);
   }
   throw new LootbarAPIError(

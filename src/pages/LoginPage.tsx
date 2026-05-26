@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Mail, Eye, EyeOff, X, Loader2, ChevronRight, ArrowLeft } from "lucide-react";
-import { useAuth } from "@/lib/AuthContext";
+import { supabase } from "@/lib/supabase";
+import { useAuthStore, mapSupabaseUser } from "@/stores/authStore";
 import { useTranslation } from "@/hooks/useTranslation";
 import { DesktopHeader } from "@/components/layout/DesktopHeader";
 import { toast } from "sonner";
@@ -10,7 +11,7 @@ type LoginView = "main" | "email" | "otp" | "setPassword";
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const { login, signInWithGoogle, sendOtp, verifyOtp, setPassword: setAccountPassword, signInWithPassword } = useAuth();
+  const { login } = useAuthStore();
   const { t } = useTranslation();
 
   const [view, setView] = useState<LoginView>("main");
@@ -24,46 +25,60 @@ export function LoginPage() {
   const handleClose = () => navigate(-1);
 
   const handleGoogleLogin = async () => {
-    try {
-      await signInWithGoogle();
-      // Redirect happens automatically via OAuth flow
-    } catch (err: any) {
-      toast.error(err.message || "Google login failed");
-    }
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: window.location.origin,
+        queryParams: { access_type: "offline", prompt: "consent" },
+        skipBrowserRedirect: false,
+      },
+    });
+    if (error) toast.error(error.message);
   };
+
+  // Only listen to auth changes - don't re-navigate if already logged in
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === "SIGNED_IN" && session?.user) {
+        const { data: roleData } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("email", session.user.email)
+          .single();
+        const role = roleData?.role || "user";
+        const authUser = mapSupabaseUser(session.user, role);
+        login(authUser);
+        useAuthStore.getState().syncOrdersFromDB(session.user.email!);
+        toast.success(`Welcome back, ${authUser.nickname}!`);
+        navigate("/");
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim()) { toast.error("Please enter your email"); return; }
     setIsLoading(true);
-    try {
-      await sendOtp(email);
-      setView("otp");
-      toast.success("Verification code sent to your email!");
-    } catch (err: any) {
-      toast.error(err.message || "Failed to send code");
-    } finally {
-      setIsLoading(false);
-    }
+    const { error } = await supabase.auth.signInWithOtp({
+      email: email.trim(),
+      options: { shouldCreateUser: true },
+    });
+    setIsLoading(false);
+    if (error) { toast.error(error.message); return; }
+    setView("otp");
+    toast.success("Verification code sent to your email!");
   };
 
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!otp.trim()) { toast.error("Please enter the verification code"); return; }
     setIsLoading(true);
-    try {
-      await verifyOtp(email, otp);
-      if (isRegister) {
-        setView("setPassword");
-      } else {
-        // OTP login: AuthInitializer will handle redirect via onAuthStateChange
-        toast.success("Logged in successfully!");
-        navigate("/");
-      }
-    } catch (err: any) {
-      toast.error(err.message || "Invalid code");
-    } finally {
-      setIsLoading(false);
+    const { error } = await supabase.auth.verifyOtp({ email: email.trim(), token: otp.trim(), type: "email" });
+    setIsLoading(false);
+    if (error) { toast.error(error.message); return; }
+    if (isRegister) {
+      setView("setPassword");
     }
   };
 
@@ -71,33 +86,25 @@ export function LoginPage() {
     e.preventDefault();
     if (password.length < 6) { toast.error("Password must be at least 6 characters"); return; }
     setIsLoading(true);
-    try {
-      await setAccountPassword(password, email.split("@")[0]);
-      toast.success("Account created successfully! Welcome to NoxyStore!");
-      navigate("/");
-    } catch (err: any) {
-      toast.error(err.message || "Failed to set password");
-    } finally {
-      setIsLoading(false);
-    }
+    const username = email.split("@")[0];
+    const { error } = await supabase.auth.updateUser({ password, data: { username } });
+    setIsLoading(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Account created successfully!");
   };
 
   const handlePasswordLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim() || !password.trim()) { toast.error("Please fill in all fields"); return; }
     setIsLoading(true);
-    try {
-      await signInWithPassword(email, password);
-      toast.success("Welcome back!");
-      navigate("/");
-    } catch (err: any) {
-      if (err.message?.includes("Invalid login credentials")) {
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    setIsLoading(false);
+    if (error) {
+      if (error.message.includes("Invalid login credentials")) {
         toast.error("Wrong email or password. Try sending a verification code.");
       } else {
-        toast.error(err.message || "Login failed");
+        toast.error(error.message);
       }
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -441,5 +448,4 @@ export function LoginPage() {
     </>
   );
 }
-
 
