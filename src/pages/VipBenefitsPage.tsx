@@ -542,8 +542,10 @@ export function VipBenefitsPage() {
         </div>
       </div>
       <div className="max-w-[1280px] mx-auto px-6 pb-12 flex gap-6 items-start">
-        <Sidebar />
-        <div className="flex-1">
+        <div className="sticky top-[72px] self-start">
+          <Sidebar />
+        </div>
+        <div className="flex-1 min-h-0 overflow-y-auto" style={{ maxHeight: "calc(100vh - 88px)" }}>
           <div className={`rounded-lg border overflow-hidden ${isV5 ? "border-gray-800 bg-gray-900" : "border-gray-200 bg-white"}`}>
             <div className="px-8 py-6">
               <h2 className={`text-xl font-bold mb-6 ${isV5 ? "text-white" : "text-gray-900"}`}>NoxyStore VIP Benefits</h2>
