@@ -1,1267 +1,957 @@
 import { useEffect, useState, useMemo, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
 import { Footer } from "@/components/layout/Footer";
 import { MobileFooter } from "@/components/layout/MobileFooter";
-import { Star, Zap, Shield, Clock, ChevronRight, Info, AlertCircle, X, Check, ChevronDown } from "lucide-react";
 import { DesktopHeader } from "@/components/layout/DesktopHeader";
 import { Header } from "@/components/layout/Header";
 import { FloatingChat } from "@/components/features/FloatingChat";
 import { lootbarApi } from "@/lib/lootbar-api";
 import type { LootbarGame, SkuItem } from "@/types";
 import { trackEvent } from "@/lib/analytics";
-import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
+import { createClient } from '@supabase/supabase-js';
+import { Star, Info, ArrowLeft, Zap, Shield, Headphones, Gift, Copy, Check, Users } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
-// ── Country flag + name map ──────────────────────────────────────────────────
-const COUNTRY_FLAG: Record<string, string> = {
-  "United States": "🇺🇸", "US": "🇺🇸",
-  "Turkey": "🇹🇷", "TR": "🇹🇷",
-  "United Kingdom": "🇬🇧", "UK": "🇬🇧", "GB": "🇬🇧",
-  "France": "🇫🇷", "FR": "🇫🇷",
-  "Japan": "🇯🇵", "JP": "🇯🇵",
-  "Germany": "🇩🇪", "DE": "🇩🇪",
-  "Brazil": "🇧🇷", "BR": "🇧🇷",
-  "Australia": "🇦🇺", "AU": "🇦🇺",
-  "Canada": "🇨🇦", "CA": "🇨🇦",
-  "Italy": "🇮🇹", "IT": "🇮🇹",
-  "Spain": "🇪🇸", "ES": "🇪🇸",
-  "Russia": "🇷🇺", "RU": "🇷🇺",
-  "South Korea": "🇰🇷", "KR": "🇰🇷",
-  "China": "🇨🇳", "CN": "🇨🇳",
-  "Mexico": "🇲🇽", "MX": "🇲🇽",
-  "India": "🇮🇳", "IN": "🇮🇳",
-  "Indonesia": "🇮🇩", "ID": "🇮🇩",
-  "Malaysia": "🇲🇾", "MY": "🇲🇾",
-  "Singapore": "🇸🇬", "SG": "🇸🇬",
-  "Thailand": "🇹🇭", "TH": "🇹🇭",
-  "Vietnam": "🇻🇳", "VN": "🇻🇳",
-  "Philippines": "🇵🇭", "PH": "🇵🇭",
-  "Saudi Arabia": "🇸🇦", "SA": "🇸🇦",
-  "UAE": "🇦🇪", "AE": "🇦🇪",
-  "Egypt": "🇪🇬", "EG": "🇪🇬",
-  "Hong Kong": "🇭🇰", "HK": "🇭🇰",
-  "Taiwan": "🇹🇼", "TW": "🇹🇼",
-  "Pakistan": "🇵🇰", "PK": "🇵🇰",
-  "Argentina": "🇦🇷", "AR": "🇦🇷",
-  "Poland": "🇵🇱", "PL": "🇵🇱",
-  "Netherlands": "🇳🇱", "NL": "🇳🇱",
-  "Sweden": "🇸🇪", "SE": "🇸🇪",
-  "Norway": "🇳🇴", "NO": "🇳🇴",
-  "Denmark": "🇩🇰", "DK": "🇩🇰",
-  "Finland": "🇫🇮", "FI": "🇫🇮",
-  "Switzerland": "🇨🇭", "CH": "🇨🇭",
-  "Austria": "🇦🇹", "AT": "🇦🇹",
-  "Belgium": "🇧🇪", "BE": "🇧🇪",
-  "Portugal": "🇵🇹", "PT": "🇵🇹",
-  "Czech Republic": "🇨🇿", "CZ": "🇨🇿",
-  "Romania": "🇷🇴", "RO": "🇷🇴",
-  "Hungary": "🇭🇺", "HU": "🇭🇺",
-  "Greece": "🇬🇷", "GR": "🇬🇷",
-  "Israel": "🇮🇱", "IL": "🇮🇱",
-  "South Africa": "🇿🇦", "ZA": "🇿🇦",
-  "Global": "🌐", "ROW": "🌐", "GLOBAL": "🌐",
-  "Europe": "🇪🇺", "EU": "🇪🇺",
-  "America": "🌎", "Americas": "🌎",
-  "Asia": "🌏",
-  "TW,HK,MO": "🇹🇼",
-  "VNG": "🇻🇳",
-  "Middle East": "🌍",
-};
 
-function getFlag(region: string): string {
-  return COUNTRY_FLAG[region] || "🌐";
-}
+const supabase = createClient(
+  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.VITE_SUPABASE_ANON_KEY
+);
 
-// ── Region Dropdown (mobile bottom-sheet / desktop dropdown) ─────────────────
-function RegionDropdown({
-  regions,
-  selected,
-  onSelect,
-}: {
-  regions: { value: string; label: string }[];
-  selected: string;
-  onSelect: (v: string) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const selectedLabel = regions.find((r) => r.value === selected)?.label || selected;
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [open]);
-
-  return (
-    <div className="relative" ref={dropdownRef}>
-      <button
-        onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-xl px-4 py-3 hover:border-gray-300 transition-colors"
-      >
-        <div className="flex items-center gap-3">
-          <span className="text-2xl leading-none">{getFlag(selectedLabel)}</span>
-          <span className="text-sm font-semibold text-gray-800">{selectedLabel}</span>
-        </div>
-        <ChevronDown size={16} className={`text-gray-400 transition-transform ${open ? "rotate-180" : ""}`} />
-      </button>
-
-      {open && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-50 max-h-60 overflow-y-auto">
-          {regions.map((r) => {
-            const isSelected = r.value === selected;
-            return (
-              <button
-                key={r.value}
-                onClick={() => { onSelect(r.value); setOpen(false); }}
-                className={`w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors ${isSelected ? "bg-yellow-50" : ""}`}
-              >
-                <div className="flex items-center gap-3">
-                  <span className="text-xl leading-none">{getFlag(r.label)}</span>
-                  <span className={`text-sm font-medium ${isSelected ? "text-yellow-700 font-semibold" : "text-gray-800"}`}>{r.label}</span>
-                </div>
-                {isSelected && (
-                  <Check size={16} className="text-yellow-500 flex-shrink-0" />
-                )}
-              </button>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ── Mobile Region Bottom Sheet ────────────────────────────────────────────────
-function RegionSheet({
-  regions,
-  selected,
-  onSelect,
-  onClose,
-}: {
-  regions: { value: string; label: string }[];
-  selected: string;
-  onSelect: (v: string) => void;
-  onClose: () => void;
-}) {
-  const selectedLabel = regions.find((r) => r.value === selected)?.label || selected;
-  const [search, setSearch] = useState("");
-  const filtered = regions.filter((r) => r.label.toLowerCase().includes(search.toLowerCase()));
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-end">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative bg-white rounded-t-3xl w-full shadow-2xl overflow-hidden" style={{ maxHeight: "75vh" }}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-          <button onClick={onClose}><X size={20} className="text-gray-700" /></button>
-          <h3 className="font-bold text-gray-900 text-base">{selectedLabel}</h3>
-          <div className="w-8" />
-        </div>
-        <div className="px-4 py-2 border-b border-gray-100">
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search region…"
-            className="w-full bg-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none text-gray-800"
-            autoFocus
-          />
-        </div>
-        <div className="overflow-y-auto" style={{ maxHeight: "calc(75vh - 130px)" }}>
-          <div className="divide-y divide-gray-100">
-            {filtered.map((r) => {
-              const isSel = r.value === selected;
-              return (
-                <button
-                  key={r.value}
-                  onClick={() => { onSelect(r.value); onClose(); }}
-                  className={`w-full flex items-center justify-between px-5 py-4 text-left transition-colors ${isSel ? "bg-yellow-50" : "hover:bg-gray-50"}`}
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl leading-none">{getFlag(r.label)}</span>
-                    <span className={`text-base font-medium ${isSel ? "text-yellow-700" : "text-gray-800"}`}>{r.label}</span>
-                  </div>
-                  {isSel && <Check size={18} className="text-yellow-500 flex-shrink-0" />}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-        <div className="h-6 bg-white" />
-      </div>
-    </div>
-  );
-}
-
-// ─── Manual product types ───────────────────────────────────────────────────
-interface ManualProductFull {
+interface Game {
   id: string;
-  product_name: string;
-  game_category: string;
-  photo_url: string | null;
-  is_active: boolean;
-  requires_server: boolean;
-  requires_player_id: boolean;
+  name: string;
+  slug: string;
+  image: string;
+  description: string;
   short_description: string;
   full_description: string;
+  how_to_topup: string;
+  platform_info: string;
+  server_info: string;
+  rating: number;
+  total_reviews: number;
+  total_sold: number;
+  requires_server: boolean;
+  requires_player_id: boolean;
 }
 
-interface ManualRegion {
+interface Server {
   id: string;
-  region_name: string;
-  region_key: string;
-  sort_order: number;
+  name: string;
+  code: string;
 }
 
-interface ManualSku {
+interface Product {
   id: string;
-  region_id: string | null;
-  sku_name: string;
+  server_id: string | null;
+  name: string;
+  description: string;
+  short_description: string;
+  image: string;
   original_price: number;
-  sale_price: number | null;
-  photo_url: string | null;
-  sort_order: number;
+  sale_price: number;
+  discount_percent: number;
 }
 
-// ── UUID detection ───────────────────────────────────────────────────────────
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const isManualProduct = (id: string) => UUID_RE.test(id);
-
-export function GameDetailPage() {
-  const { gameId } = useParams<{ gameId: string }>();
+export default function GameTopUpPage() {
+  const { gameSlug } = useParams();
   const navigate = useNavigate();
-  const isManual = gameId ? isManualProduct(gameId) : false;
+  const { toast } = useToast();
+  const [searchParams] = useSearchParams();
 
-  // ── Lootbar state ─────────────────────────────────────────────────────────
-  const [game, setGame] = useState<LootbarGame | null>(null);
-  const [skus, setSkus] = useState<SkuItem[]>([]);
-
-  // ── Manual product state ──────────────────────────────────────────────────
-  const [manualProduct, setManualProduct] = useState<ManualProductFull | null>(null);
-  const [manualRegions, setManualRegions] = useState<ManualRegion[]>([]);
-  const [manualSkus, setManualSkus] = useState<ManualSku[]>([]);
-  const [selectedManualRegion, setSelectedManualRegion] = useState<ManualRegion | null>(null);
-  const [selectedManualSku, setSelectedManualSku] = useState<ManualSku | null>(null);
-
-  const [isLoading, setIsLoading] = useState(true);
-  const [selectedRegion, setSelectedRegion] = useState<string>("");
-  const [selectedSku, setSelectedSku] = useState<SkuItem | null>(null);
+  const [game, setGame] = useState<Game | null>(null);
+  const [servers, setServers] = useState<Server[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [selectedServer, setSelectedServer] = useState<string>('');
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [quantity, setQuantity] = useState(1);
-  const [imgError, setImgError] = useState(false);
-  const [markup, setMarkup] = useState(0);
-  const [notice, setNotice] = useState<string | null>("Americas Area Topup may take 10 minutes. Longer during busy periods.");
-  const [instructions, setInstructions] = useState<Array<{ step: number; title: string; description: string; image?: string }>>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [showInfoModal, setShowInfoModal] = useState(false);
+  const [showFullDescription, setShowFullDescription] = useState(false);
+  
+  // Invite Friends System
   const [showInviteModal, setShowInviteModal] = useState(false);
-  const [referralCode, setReferralCode] = useState("");
-  const [inviteCopied, setInviteCopied] = useState(false);
-  const [useShorterInvite, setUseShorterInvite] = useState(true);
-  const [extraInfoValues, setExtraInfoValues] = useState<Record<string, string>>({});
-  const [showRegionSheet, setShowRegionSheet] = useState(false);
+  const [shareMessage, setShareMessage] = useState('');
+  const [shareUrl, setShareUrl] = useState('');
+  const [shortUrl, setShortUrl] = useState('');
+  const [useShortLink, setUseShortLink] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [referralStats, setReferralStats] = useState({ completed: 0, pending: 0 });
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  
+  // Countdown timer (starts at 12 minutes)
+  const [countdown, setCountdown] = useState(12 * 60);
 
-  // Detect if this is a gift card product
-  const isGiftCard = useMemo(() =>
-    game?.category?.toLowerCase().includes("gift") ||
-    game?.game_name?.toLowerCase().includes("gift") ||
-    game?.game_name?.toLowerCase().includes("card") ||
-    game?.game_name?.toLowerCase().includes("itunes") ||
-    game?.game_name?.toLowerCase().includes("google play") ||
-    game?.game_name?.toLowerCase().includes("amazon") ||
-    game?.game_name?.toLowerCase().includes("tiktok"),
-  [game]);
+  // Countdown timer effect
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          return 12 * 60; // Reset to 12 minutes
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  // Format countdown to MM:SS
+  const formatCountdown = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  };
 
   useEffect(() => {
-    if (!gameId) return;
-    trackEvent("game_view", { page: `/game/${gameId}`, gameId });
-    setIsLoading(true);
-    setSelectedSku(null);
-    setSelectedManualSku(null);
-    setExtraInfoValues({});
-
-    supabase.from("markup_settings").select("markup_percent").eq("id", 1).single()
-      .then(({ data }) => { if (data) setMarkup(Number(data.markup_percent) || 0); });
-
-    supabase.auth.getUser().then(({ data }) => {
-      if (!data.user?.email) return;
-      supabase.from("referral_codes").select("code, short_code").eq("user_email", data.user.email).single()
-        .then(({ data: ref }) => { if (ref) setReferralCode(ref.short_code || ref.code); });
-    });
-
-    if (isManual) {
-      // ── Load manual product from Supabase ──
-      Promise.all([
-        supabase.from("manual_products").select("*").eq("id", gameId).single(),
-        supabase.from("manual_product_regions").select("*").eq("product_id", gameId).order("sort_order"),
-        supabase.from("manual_skus").select("*").eq("product_id", gameId).order("sort_order"),
-      ]).then(([{ data: prod }, { data: regs }, { data: sk }]) => {
-        if (!prod) { setIsLoading(false); return; }
-        setManualProduct(prod as ManualProductFull);
-        const regions = (regs || []) as ManualRegion[];
-        const skList = (sk || []) as ManualSku[];
-        setManualRegions(regions);
-        setManualSkus(skList);
-        if (regions.length > 0) setSelectedManualRegion(regions[0]);
-        setIsLoading(false);
-      });
-    } else {
-      // ── Load Lootbar product ──
-      // Note: game_guide not supported in current proxy version — skip
-
-      supabase.from("games_cache").select("*").eq("game_id", gameId).single()
-        .then(({ data: cached }) => {
-          if (cached) {
-            setGame({
-              game_id: cached.game_id,
-              game_name: cached.game_name,
-              game_image: cached.game_image || "",
-              category: cached.category || "Top Up",
-              rating: cached.rating ?? 5.0,
-              sold_count: cached.sold_count || "100k+ Sold",
-              is_hot: cached.is_hot ?? false,
-              discount: cached.discount ?? 0,
-              min_price: cached.min_price ?? null,
-            });
-          }
-        });
-
-      lootbarApi.getSkus(gameId).then((data) => {
-        const sorted = [...data].sort((a, b) => (a.price || 0) - (b.price || 0));
-        setSkus(sorted);
-        if (sorted.length > 0) {
-          const firstRegion = sorted[0]?.attribute?.[0]?.value || "global";
-          setSelectedRegion(firstRegion);
-        }
-        setIsLoading(false);
-      }).catch(() => setIsLoading(false));
+    fetchGame();
+    loadCurrentUser();
+    
+    // Track referral if share_token exists
+    const shareToken = searchParams.get('share_token');
+    if (shareToken && gameSlug) {
+      trackReferralClick(shareToken, gameSlug);
     }
-  }, [gameId]);
+  }, [gameSlug]);
 
-  const regions = useMemo(() => {
-    const seen = new Set<string>();
-    return skus.filter((s) => {
-      const region = s.attribute?.[0]?.value;
-      if (!region) return false;
-      if (seen.has(region)) return false;
-      seen.add(region);
-      return true;
-    }).map((s) => ({
-      value: s.attribute[0].value,
-      label: s.attribute[0].value_text || s.attribute[0].value,
-    }));
-  }, [skus]);
+  useEffect(() => {
+    if (game) {
+      if (game.requires_server) {
+        fetchServers();
+      } else {
+        fetchProducts(null);
+      }
+      loadShareMessage();
+      loadReferralStats();
+    }
+  }, [game]);
 
-  const filteredSkus = useMemo(() => {
-    if (!selectedRegion) return skus;
-    return skus.filter((s) =>
-      s.attribute?.[0]?.value === selectedRegion || s.attribute?.length === 0
-    );
-  }, [skus, selectedRegion]);
+  useEffect(() => {
+    if (selectedServer) {
+      fetchProducts(selectedServer);
+      setSelectedProduct(null);
+    }
+  }, [selectedServer]);
 
-  const extraInfoFields = useMemo(() => selectedSku?.extra_info || [], [selectedSku]);
+  const loadCurrentUser = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setCurrentUserId(user.id);
+      }
+    } catch (error) {
+      console.error('Load user error:', error);
+    }
+  };
 
-  const applyMarkup = (price: number) => price * (1 + markup / 100);
-  const totalPrice = selectedSku ? applyMarkup(selectedSku.price || 0) * quantity : 0;
-  const totalSavings = selectedSku ? (selectedSku.discount_amount || 0) * quantity : 0;
+  const trackReferralClick = async (shareToken: string, productId: string) => {
+    try {
+      await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/track-referral`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+        },
+        body: JSON.stringify({ share_token: shareToken, product_id: productId })
+      });
+    } catch (error) {
+      console.error('Track referral error:', error);
+    }
+  };
 
-  // Determine if this product needs player verification (has extra_info fields)
-  const needsVerification = extraInfoFields.length > 0;
+  const loadShareMessage = async () => {
+    if (!game) return;
 
-  // Desktop: always go directly to checkout with inline extra info (never to VerifyPlayerPage)
-  const handleDesktopTopUp = () => {
-    if (!selectedSku) { toast.error("Please select a package first"); return; }
-    for (const field of extraInfoFields) {
-      if (field.required && !extraInfoValues[field.name]?.trim()) {
-        toast.error(`${field.title} is required`);
+    try {
+      const { data, error } = await supabase
+        .from('game_share_messages')
+        .select('*')
+        .eq('product_id', game.slug)
+        .single();
+
+      if (error || !data) {
+        // Default message if none configured
+        setShareMessage(
+          `Running low on currency to buy your favorite items? Head to NoxyStore.com to purchase them now! Enjoy safe, reliable, and instant delivery at discounted prices!`
+        );
         return;
       }
+
+      // Replace {currency} placeholder
+      const message = data.share_message_template.replace('{currency}', data.currency_name);
+      setShareMessage(message);
+    } catch (error) {
+      console.error('Load share message error:', error);
     }
-    const finalSku = { ...selectedSku, price: applyMarkup(selectedSku.price || 0) };
-    navigate("/checkout", { state: { sku: finalSku, game, quantity, extraInfo: extraInfoValues } });
   };
 
-  // Mobile: go to VerifyPlayerPage when extra info is needed, else straight to checkout
+  const loadReferralStats = async () => {
+    if (!currentUserId) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('referral_tracking')
+        .select('status')
+        .eq('referrer_id', currentUserId);
+
+      if (error) throw error;
+
+      const completed = data?.filter(r => r.status === 'completed').length || 0;
+      const pending = data?.filter(r => r.status === 'pending' || r.status === 'registered').length || 0;
+
+      setReferralStats({ completed, pending });
+    } catch (error) {
+      console.error('Load referral stats error:', error);
+    }
+  };
+
+  const generateShareUrl = () => {
+    if (!game || !currentUserId) return '';
+
+    const timestamp = Date.now();
+    const shareToken = `${currentUserId}_${game.id}_${timestamp}`;
+    const baseUrl = window.location.origin;
+    
+    return `${baseUrl}/top-up/${game.slug}?share_token=${shareToken}&utm_source=copy&utm_campaign=topup&utm_medium=social`;
+  };
+
+  const generateShortLink = async () => {
+    if (!game || !currentUserId) return '';
+
+    try {
+      // Check if short link already exists for this user+game
+      const { data: existing } = await supabase
+        .from('referral_short_links')
+        .select('short_code')
+        .eq('user_id', currentUserId)
+        .eq('product_id', game.slug)
+        .single();
+
+      if (existing) {
+        return `${window.location.origin}/s/${existing.short_code}`;
+      }
+
+      // Generate new short code (6 characters)
+      const shortCode = Math.random().toString(36).substring(2, 8);
+      const fullUrl = generateShareUrl();
+      const shareToken = fullUrl.split('share_token=')[1]?.split('&')[0] || '';
+
+      const { data, error } = await supabase
+        .from('referral_short_links')
+        .insert({
+          user_id: currentUserId,
+          product_id: game.slug,
+          short_code: shortCode,
+          full_url: fullUrl,
+          share_token: shareToken
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return `${window.location.origin}/s/${data.short_code}`;
+    } catch (error) {
+      console.error('Generate short link error:', error);
+      return generateShareUrl();
+    }
+  };
+
+  const handleInviteClick = async () => {
+    if (!currentUserId) {
+      toast({
+        title: 'Login Required',
+        description: 'Please login to share and earn rewards',
+        variant: 'destructive'
+      });
+      navigate('/login');
+      return;
+    }
+
+    // Generate URLs
+    const fullUrl = generateShareUrl();
+    setShareUrl(fullUrl);
+
+    const short = await generateShortLink();
+    setShortUrl(short);
+
+    setShowInviteModal(true);
+  };
+
+  const handleCopyLink = async () => {
+    const url = useShortLink ? shortUrl : shareUrl;
+    const fullMessage = `${shareMessage}\n${url}`;
+
+    try {
+      await navigator.clipboard.writeText(fullMessage);
+      setCopied(true);
+      toast({
+        title: 'Copied!',
+        description: 'Share link copied to clipboard'
+      });
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error('Copy error:', error);
+    }
+  };
+
+  const handleSocialShare = (platform: string) => {
+    const url = useShortLink ? shortUrl : shareUrl;
+    const message = encodeURIComponent(`${shareMessage}\n${url}`);
+    
+    let shareLink = '';
+    
+    switch (platform) {
+      case 'whatsapp':
+        shareLink = `https://wa.me/?text=${message}`;
+        break;
+      case 'facebook':
+        shareLink = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}&quote=${encodeURIComponent(shareMessage)}`;
+        break;
+      case 'twitter':
+        shareLink = `https://twitter.com/intent/tweet?text=${message}`;
+        break;
+      case 'discord':
+        handleCopyLink();
+        toast({
+          title: 'Ready to share',
+          description: 'Message copied! Paste it in Discord'
+        });
+        return;
+    }
+    
+    if (shareLink) {
+      window.open(shareLink, '_blank', 'width=600,height=400');
+    }
+  };
+
+  const fetchGame = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('games')
+        .select('*')
+        .eq('slug', gameSlug)
+        .eq('is_active', true)
+        .single();
+
+      if (error) throw error;
+      if (!data) {
+        navigate('/');
+        return;
+      }
+
+      setGame(data);
+    } catch (error: any) {
+      console.error('Fetch game error:', error);
+      toast({
+        title: 'Error',
+        description: 'Game not found',
+        variant: 'destructive',
+      });
+      navigate('/');
+    }
+  };
+
+  const fetchServers = async () => {
+    if (!game) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('game_servers')
+        .select('*')
+        .eq('game_id', game.id)
+        .eq('is_active', true)
+        .order('display_order');
+
+      if (error) throw error;
+
+      setServers(data || []);
+
+      if (data && data.length > 0) {
+        setSelectedServer(data[0].id);
+      }
+    } catch (error: any) {
+      console.error('Fetch servers error:', error);
+    }
+  };
+
+  const fetchProducts = async (serverId: string | null) => {
+    if (!game) return;
+
+    try {
+      let query = supabase
+        .from('game_products')
+        .select('*')
+        .eq('game_id', game.id)
+        .eq('is_active', true);
+
+      if (serverId) {
+        query = query.eq('server_id', serverId);
+      } else {
+        query = query.is('server_id', null);
+      }
+
+      const { data, error } = await query.order('display_order');
+
+      if (error) throw error;
+
+      setProducts(data || []);
+    } catch (error: any) {
+      console.error('Fetch products error:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load products',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleTopUpNow = () => {
-    if (!selectedSku) { toast.error("Please select a package first"); return; }
-    const finalSku = { ...selectedSku, price: applyMarkup(selectedSku.price || 0) };
-    if (needsVerification) {
-      // Pass game, sku, quantity to VerifyPlayerPage — extra info collected there
-      navigate("/verify-player", { state: { sku: finalSku, game, quantity } });
-    } else {
-      navigate("/checkout", { state: { sku: finalSku, game, quantity, extraInfo: extraInfoValues } });
+    if (!selectedProduct) {
+      toast({
+        title: 'Select a product',
+        description: 'Please select a product first',
+        variant: 'destructive',
+      });
+      return;
     }
+
+    navigate(`/player-id/${game!.id}?productId=${selectedProduct.id}&serverId=${selectedServer || ''}&quantity=${quantity}`);
   };
 
-  // Mobile: select SKU only — user must tap Continue/Top-up Now to proceed
-  const handleMobileSkuSelect = (sku: SkuItem) => {
-    setSelectedSku(sku);
-    setExtraInfoValues({});
-  };
-
-  const setFieldValue = (name: string, value: string) => {
-    setExtraInfoValues((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const ExtraInfoForm = ({ compact = false }: { compact?: boolean }) => (
-    <>
-      {extraInfoFields.map((field) => (
-        <div key={field.name} className={compact ? "mb-3" : "mb-4"}>
-          <label className={`block font-semibold text-gray-700 mb-1.5 ${compact ? "text-xs" : "text-sm"}`}>
-            {field.required && <span className="text-red-500 mr-0.5">*</span>}
-            {field.title}
-          </label>
-          {field.type === "select" && field.options && field.options.length > 0 ? (
-            <select
-              value={extraInfoValues[field.name] || ""}
-              onChange={(e) => setFieldValue(field.name, e.target.value)}
-              className="w-full border border-gray-300 focus:border-yellow-400 px-3 py-2.5 text-sm text-gray-900 outline-none bg-white rounded-xl"
-            >
-              <option value="">Please select {field.title}</option>
-              {field.options.map((opt) => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
-          ) : (
-            <input
-              type="text"
-              value={extraInfoValues[field.name] || ""}
-              onChange={(e) => setFieldValue(field.name, e.target.value)}
-              placeholder={field.placeholder || `Please enter your ${field.title}`}
-              className="w-full border border-gray-300 focus:border-yellow-400 px-3 py-2.5 text-sm text-gray-900 outline-none transition-colors rounded-xl"
-            />
-          )}
-        </div>
-      ))}
-    </>
-  );
-
-  // ── Manual product computed values ────────────────────────────────────────────
-  const filteredManualSkus = useMemo(() => {
-    if (!manualProduct?.requires_server) return manualSkus;
-    if (!selectedManualRegion) return manualSkus;
-    return manualSkus.filter(s => s.region_id === selectedManualRegion.id);
-  }, [manualSkus, selectedManualRegion, manualProduct]);
-
-  const manualTotalPrice = selectedManualSku
-    ? applyMarkup(Number(selectedManualSku.original_price)) * quantity
-    : 0;
-
-  const handleManualTopUp = (isMobile = false) => {
-    if (!selectedManualSku) { toast.error("Select a package first"); return; }
-    const productName = manualProduct?.product_name || "";
-    const regionName = selectedManualRegion?.region_name || "";
-    const skuData = {
-      sku_id: selectedManualSku.id,
-      sku_name: selectedManualSku.sku_name,
-      price: applyMarkup(Number(selectedManualSku.original_price)),
-      original_price: Number(selectedManualSku.original_price),
-      discount_amount: selectedManualSku.sale_price ? Number(selectedManualSku.original_price) - Number(selectedManualSku.sale_price) : 0,
-      image: selectedManualSku.photo_url || manualProduct?.photo_url || "",
-      attribute: [],
-      extra_info: [],
-    };
-    const gameData = {
-      game_id: gameId!,
-      game_name: productName + (regionName ? ` (${regionName})` : ""),
-      game_image: manualProduct?.photo_url || "",
-      category: manualProduct?.game_category || "Top Up",
-      rating: 5.0,
-      sold_count: "",
-      is_hot: false,
-      discount: 0,
-      min_price: null,
-    };
-    if (manualProduct?.requires_player_id && isMobile) {
-      navigate("/verify-player", { state: { sku: skuData, game: gameData, quantity, isManual: true } });
-    } else {
-      navigate("/checkout", { state: { sku: skuData, game: gameData, quantity, extraInfo: {}, isManual: true } });
-    }
-  };
-
-  // ── Manual product layout (────────────────────────────────────────────
-  if (isManual && (manualProduct || !isLoading)) {
-    const prod = manualProduct;
-    const cover = prod?.photo_url || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=200&h=200&fit=crop";
-    const displayName = prod?.product_name || "";
-
-    const ManualDesktop = () => (
-      <div className="hidden lg:block min-h-screen bg-[#f5f5f5]">
-        <DesktopHeader />
-        <div className="max-w-[1280px] mx-auto px-6 py-3 flex items-center gap-2 text-sm text-gray-500">
-          <button onClick={() => navigate("/")} className="hover:text-gray-700">Home</button>
-          <ChevronRight size={14} />
-          <button onClick={() => navigate("/categories")} className="hover:text-gray-700">{prod?.game_category || "Top Up"}</button>
-          <ChevronRight size={14} />
-          <span className="text-gray-800 font-medium">{displayName}</span>
-        </div>
-        <div className="max-w-[1280px] mx-auto px-6 pb-16">
-          <div className="flex gap-6 items-start">
-            {/* Left */}
-            <div className="flex-1 min-w-0">
-              {/* Game header */}
-              <div className="bg-white p-6 mb-4 border border-gray-100 rounded-xl">
-                <div className="flex items-start gap-5">
-                  <img src={cover} alt={displayName} className="w-24 h-24 rounded-2xl object-cover flex-shrink-0" />
-                  <div className="flex-1">
-                    <h1 className="text-2xl font-black text-gray-900 mb-1">{displayName}</h1>
-                    {prod?.short_description && <p className="text-sm text-gray-500 mt-1">{prod.short_description}</p>}
-                    <div className="flex flex-wrap gap-2 mt-3">
-                      {["Safe and Fast Top-Up", "24/7 Customer Service", "Instant Delivery"].map(tag => (
-                        <span key={tag} className="border border-gray-200 text-gray-600 text-xs px-3 py-1 rounded-full">{tag}</span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Region tabs */}
-              {prod?.requires_server && manualRegions.length > 0 && (
-                <div className="bg-white px-5 py-4 mb-4 border border-gray-100 rounded-xl">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Select Region</p>
-                  <div className="flex flex-wrap gap-2">
-                    {manualRegions.map(r => (
-                      <button key={r.id}
-                        onClick={() => { setSelectedManualRegion(r); setSelectedManualSku(null); }}
-                        className={`px-4 py-2 rounded-xl border text-sm font-semibold transition-all ${selectedManualRegion?.id === r.id ? "border-yellow-400 bg-yellow-50 text-yellow-700" : "border-gray-200 text-gray-600 hover:border-gray-300 bg-white"}`}>
-                        {r.region_name}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* SKU grid - each with own photo */}
-              <div className="bg-white p-5 mb-4 border border-gray-100 rounded-xl">
-                <p className="text-sm font-bold text-gray-700 mb-4">
-                  {prod?.requires_server && selectedManualRegion ? selectedManualRegion.region_name + " — " : ""}Packages
-                </p>
-                {isLoading ? (
-                  <div className="grid grid-cols-3 xl:grid-cols-4 gap-3">
-                    {Array.from({ length: 6 }).map((_, i) => <div key={i} className="shimmer h-36 rounded-xl" />)}
-                  </div>
-                ) : filteredManualSkus.length === 0 ? (
-                  <p className="text-sm text-gray-400 text-center py-8">
-                    {prod?.requires_server && !selectedManualRegion ? "Select a region above" : "No packages available"}
-                  </p>
-                ) : (
-                  <div className="grid grid-cols-3 xl:grid-cols-5 gap-3">
-                    {filteredManualSkus.map(sku => {
-                      const price = applyMarkup(Number(sku.original_price));
-                      const isSelected = selectedManualSku?.id === sku.id;
-                      const skuImg = sku.photo_url || cover;
-                      return (
-                        <button key={sku.id}
-                          onClick={() => setSelectedManualSku(sku)}
-                          className={`relative flex flex-col bg-white border-2 overflow-hidden transition-all hover:shadow-md text-left rounded-xl ${isSelected ? "border-yellow-400 shadow-md" : "border-gray-200 hover:border-gray-300"}`}>
-                          <div className="aspect-[4/3] bg-gray-100 relative overflow-hidden">
-                            <img src={skuImg} alt={sku.sku_name} className="w-full h-full object-cover"
-                              onError={e => { (e.target as HTMLImageElement).src = cover; }} />
-                            {isSelected && (
-                              <div className="absolute top-1.5 right-1.5 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center shadow-sm">
-                                <Check size={11} className="text-black" />
-                              </div>
-                            )}
-                            {sku.sale_price && (
-                              <div className="absolute top-1.5 left-1.5 bg-orange-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">SALE</div>
-                            )}
-                          </div>
-                          <div className="p-2.5">
-                            <p className="text-xs font-bold text-gray-900 leading-tight line-clamp-2 mb-1.5">{sku.sku_name}</p>
-                            <p className="text-sm font-black text-orange-500">${price.toFixed(2)}</p>
-                            {sku.sale_price && (
-                              <span className="text-[10px] text-gray-400 line-through">${Number(sku.sale_price).toFixed(2)}</span>
-                            )}
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              {/* Description */}
-              {(prod?.full_description || prod?.short_description) && (
-                <div className="bg-white p-6 border border-gray-100 rounded-xl">
-                  <h3 className="text-lg font-bold text-gray-900 mb-3">About this product</h3>
-                  <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">{prod.full_description || prod.short_description}</p>
-                </div>
-              )}
-            </div>
-
-            {/* Right: Order panel */}
-            <div className="w-72 flex-shrink-0">
-              <div style={{ position: "sticky", top: "70px" } as React.CSSProperties}>
-                <div className="border border-gray-200 shadow-sm bg-white rounded-xl overflow-hidden">
-                  <div className="px-5 py-4 border-b border-gray-100">
-                    <h3 className="font-bold text-gray-900 mb-1">Order Summary</h3>
-                    {selectedManualSku ? (
-                      <div className="flex items-center gap-3 mt-3 bg-yellow-50 border border-yellow-200 rounded-xl p-3">
-                        <img src={selectedManualSku.photo_url || cover} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
-                        <div>
-                          <p className="text-xs font-bold text-gray-900">{selectedManualSku.sku_name}</p>
-                          <p className="text-sm font-black text-orange-500">${applyMarkup(Number(selectedManualSku.original_price)).toFixed(2)}</p>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="bg-gray-50 p-3 text-center text-sm text-gray-400 border border-dashed border-gray-200 rounded-xl mt-3">
-                        ← Select a package
-                      </div>
-                    )}
-                  </div>
-                  <div className="px-5 py-4 border-b border-gray-100">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-semibold text-gray-700">Quantity</span>
-                      <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden">
-                        <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-50 border-r border-gray-300">−</button>
-                        <span className="text-sm font-bold w-10 text-center">{quantity}</span>
-                        <button onClick={() => setQuantity(quantity + 1)} className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-50 border-l border-gray-300">+</button>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="px-5 py-4">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm text-gray-500">Total</span>
-                      <span className="text-xl font-black text-orange-500">{selectedManualSku ? `$${manualTotalPrice.toFixed(2)}` : "—"}</span>
-                    </div>
-                    <button onClick={() => handleManualTopUp(false)} disabled={!selectedManualSku}
-                      className={`w-full py-3.5 font-bold text-base transition-all mt-3 rounded-xl ${selectedManualSku ? "bg-yellow-400 hover:bg-yellow-300 text-black" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>
-                      Top-up Now
-                    </button>
-                    <div className="flex items-center justify-center gap-1.5 mt-3">
-                      <Shield size={13} className="text-green-500" />
-                      <span className="text-xs text-gray-500">NoxyStore Security Guarantee</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <Footer />
-        <FloatingChat />
-      </div>
-    );
-
-    const ManualMobile = () => (
-      <div className="lg:hidden bg-white min-h-screen">
-        <Header showMenu />
-        <div className="pb-52">
-          {/* Game header */}
-          <div className="px-4 py-4 border-b border-gray-100">
-            <div className="flex items-center gap-3">
-              <img src={cover} alt={displayName} className="w-16 h-16 rounded-xl object-cover flex-shrink-0 shadow-sm" />
-              <div>
-                <h1 className="text-lg font-bold text-gray-900 leading-tight">{displayName}</h1>
-                {prod?.short_description && <p className="text-xs text-gray-500 mt-0.5">{prod.short_description}</p>}
-                <span className="text-xs text-gray-400">{prod?.game_category}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Region tabs */}
-          {prod?.requires_server && manualRegions.length > 0 && (
-            <div className="px-4 pt-4 pb-3 border-b border-gray-100">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Select Region</p>
-              <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
-                {manualRegions.map(r => (
-                  <button key={r.id}
-                    onClick={() => { setSelectedManualRegion(r); setSelectedManualSku(null); }}
-                    className={`flex-shrink-0 px-4 py-2 rounded-xl border text-sm font-semibold transition-all ${selectedManualRegion?.id === r.id ? "border-yellow-400 text-yellow-600 bg-yellow-50" : "border-gray-200 text-gray-600 bg-white"}`}>
-                    {r.region_name}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* SKU grid */}
-          <div className="px-4 pt-4">
-            {isLoading ? (
-              <div className="grid grid-cols-2 gap-3">{Array.from({length: 4}).map((_,i)=><div key={i} className="shimmer h-36 rounded-xl" />)}</div>
-            ) : filteredManualSkus.length === 0 ? (
-              <p className="text-sm text-gray-400 text-center py-10">
-                {prod?.requires_server && !selectedManualRegion ? "Select a region above" : "No packages available"}
-              </p>
-            ) : (
-              <div className="grid grid-cols-2 gap-3">
-                {filteredManualSkus.map(sku => {
-                  const price = applyMarkup(Number(sku.original_price));
-                  const isSelected = selectedManualSku?.id === sku.id;
-                  const skuImg = sku.photo_url || cover;
-                  return (
-                    <button key={sku.id}
-                      onClick={() => setSelectedManualSku(sku)}
-                      className={`relative flex flex-col bg-white rounded-xl border-2 overflow-hidden text-left transition-all ${isSelected ? "border-yellow-400 shadow-md" : "border-gray-200"}`}>
-                      <div className="aspect-[4/3] bg-gray-100 relative overflow-hidden">
-                        <img src={skuImg} alt={sku.sku_name} className="w-full h-full object-cover"
-                          onError={e => { (e.target as HTMLImageElement).src = cover; }} />
-                        {isSelected && (
-                          <div className="absolute top-1.5 right-1.5 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center">
-                            <Check size={10} className="text-black" />
-                          </div>
-                        )}
-                        {sku.sale_price && (
-                          <div className="absolute top-1.5 left-1.5 bg-orange-500 text-white text-[9px] font-bold px-1 py-0.5 rounded">SALE</div>
-                        )}
-                      </div>
-                      <div className="p-2.5">
-                        <p className="text-xs font-bold text-gray-900 leading-tight line-clamp-2 mb-1">{sku.sku_name}</p>
-                        <p className="text-sm font-black text-orange-500">${price.toFixed(2)}</p>
-                        {sku.sale_price && <span className="text-[10px] text-gray-400 line-through">${Number(sku.sale_price).toFixed(2)}</span>}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Bottom CTA */}
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 pt-3 pb-safe z-50" style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}>
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-600">Qty</span>
-            <div className="flex items-center gap-2">
-              <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-8 h-8 rounded-xl border border-gray-300 flex items-center justify-center">−</button>
-              <span className="text-base font-bold w-6 text-center">{quantity}</span>
-              <button onClick={() => setQuantity(quantity + 1)} className="w-8 h-8 rounded-xl border border-gray-300 flex items-center justify-center">+</button>
-            </div>
-          </div>
-          <div className="flex items-center justify-between">
-            <p className="text-xl font-black text-orange-500">{selectedManualSku ? `$${manualTotalPrice.toFixed(2)}` : "—"}</p>
-            <button onClick={() => handleManualTopUp(true)} disabled={!selectedManualSku}
-              className={`px-8 py-3 rounded-2xl font-bold text-base transition-all ${selectedManualSku ? "bg-yellow-400 text-black hover:bg-yellow-300" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>
-              Top-up Now
-            </button>
-          </div>
-          {!selectedManualSku && <p className="text-center text-xs text-gray-400 mt-1.5">Select a package to continue</p>}
-        </div>
-        <MobileFooter />
-        <FloatingChat />
-      </div>
-    );
-
+  if (isLoading || !game) {
     return (
-      <>
-        <ManualDesktop />
-        <ManualMobile />
-      </>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
     );
   }
 
-
-    return (
-      <div className="min-h-screen bg-[#f5f5f5]">
-        <div className="hidden lg:block"><DesktopHeader /></div>
-        <div className="lg:hidden sticky top-0 z-40 bg-[#0a0a0a] px-4 py-3 flex items-center gap-3">
-          <button onClick={() => navigate(-1)} className="text-white">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M19 12H5M12 5l-7 7 7 7" /></svg>
-          </button>
-          <span className="text-white font-bold text-sm">Top-up</span>
-        </div>
-        <div className="px-4 pt-4 space-y-4 max-w-[1280px] mx-auto">
-          <div className="shimmer h-40 rounded-2xl" />
-          <div className="shimmer h-12 rounded-2xl" />
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            {Array.from({ length: 8 }).map((_, i) => <div key={i} className="shimmer h-36 rounded-xl" />)}
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Mobile Header */}
+      <div className="lg:hidden bg-white border-b sticky top-0 z-40">
+        <div className="container mx-auto px-4 py-3">
+          <div className="flex items-center mb-3">
+            <button onClick={() => navigate(-1)} className="text-2xl mr-3">←</button>
+            <h1 className="text-lg font-bold">Top-up</h1>
+          </div>
+          
+          {/* Fast/Safe/24-7 Indicators - Mobile */}
+          <div className="flex items-center justify-center gap-4 text-sm">
+            <div className="flex items-center gap-1">
+              <Zap className="h-4 w-4 text-yellow-500" />
+              <span className="font-medium">Fast</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Shield className="h-4 w-4 text-green-500" />
+              <span className="font-medium">Safe</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Headphones className="h-4 w-4 text-blue-500" />
+              <span className="font-medium">24/7</span>
+            </div>
           </div>
         </div>
       </div>
-    );
 
-  // ─── Desktop Layout ─────────────────────────────────────────────────────────
-  const DesktopLayout = () => (
-    <div className="hidden lg:block min-h-screen bg-[#f5f5f5]">
-      <DesktopHeader />
-
-      <div className="max-w-[1280px] mx-auto px-6 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-2 text-sm text-gray-500">
-          <button onClick={() => navigate("/")} className="hover:text-gray-700">Home</button>
-          <ChevronRight size={14} />
-          <button onClick={() => navigate("/categories")} className="hover:text-gray-700">{game?.category || "Top Up"}</button>
-          <ChevronRight size={14} />
-          <span className="text-gray-800 font-medium">{game?.game_name}</span>
-        </div>
-        <a
-          href="https://www.trustpilot.com/review/noxystore.com"
-          target="_blank" rel="noopener noreferrer"
-          className="flex items-center gap-3 hover:opacity-75 transition-opacity"
-        >
-          <span className="text-sm text-gray-600 font-semibold">Excellent</span>
-          <div className="flex gap-0.5">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="w-5 h-5 bg-green-500 rounded-sm flex items-center justify-center">
-                <Star size={10} fill="white" stroke="none" />
+      {/* Desktop Header */}
+      <div className="hidden lg:block bg-white border-b sticky top-0 z-40">
+        <div className="container mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
+              <ArrowLeft className="h-5 w-5" />
+              Back
+            </button>
+            
+            {/* Fast/Safe/24-7 Indicators - Desktop */}
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2">
+                <Zap className="h-5 w-5 text-yellow-500" />
+                <span className="font-semibold">Fast</span>
               </div>
-            ))}
+              <div className="flex items-center gap-2">
+                <Shield className="h-5 w-5 text-green-500" />
+                <span className="font-semibold">Safe</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Headphones className="h-5 w-5 text-blue-500" />
+                <span className="font-semibold">24/7</span>
+              </div>
+            </div>
           </div>
-          <span className="text-sm text-gray-500">44,884 reviews on Trustpilot</span>
-        </a>
+        </div>
       </div>
 
-      <div className="max-w-[1280px] mx-auto px-6 pb-16">
-        <div className="flex gap-6 items-start">
-          {/* Left panel */}
-          <div className="flex-1 min-w-0 overflow-y-auto" style={{ maxHeight: "calc(100vh - 130px)", scrollbarWidth: "none" } as React.CSSProperties}>
-            {/* Game header */}
-            <div className="bg-white p-6 mb-4 border border-gray-100 rounded-xl">
-              <div className="flex items-start gap-5">
-                <img
-                  src={imgError ? "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=100&h=100&fit=crop" : (game?.game_image || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=100&h=100&fit=crop")}
-                  alt={game?.game_name}
-                  className="w-24 h-24 rounded-2xl object-cover flex-shrink-0"
-                  onError={() => setImgError(true)}
-                />
-                <div className="flex-1">
-                  <h1 className="text-2xl font-black text-gray-900 mb-1">{game?.game_name}</h1>
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className="bg-yellow-400 text-black text-xs font-bold px-1.5 py-0.5 rounded">{(game?.rating ?? 5.0).toFixed(1)}</span>
-                    <div className="flex">{Array.from({ length: 5 }).map((_, i) => <Star key={i} size={14} fill="#FFD200" stroke="none" />)}</div>
-                    <span className="text-sm text-gray-400">346 reviews</span>
-                    <span className="text-gray-300">|</span>
-                    <span className="text-sm text-gray-500">{game?.sold_count}</span>
-                  </div>
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    {["7-Day After-Sales Guarantee", "Safe and Fast Top-Up", "24/7 Customer Service"].map((tag) => (
-                      <span key={tag} className="border border-gray-200 text-gray-600 text-xs px-3 py-1 rounded-full">{tag}</span>
-                    ))}
-                  </div>
-                  <div className="flex items-center gap-4 text-sm">
-                    <span className="flex items-center gap-1.5 text-gray-600"><Zap size={14} className="text-yellow-500" /> Fast</span>
-                    <span className="flex items-center gap-1.5 text-gray-600"><Shield size={14} className="text-green-500" /> Safe</span>
-                    <span className="flex items-center gap-1.5 text-gray-600"><Clock size={14} className="text-blue-500" /> 24/7</span>
-                  </div>
+      {/* Game Info Header */}
+      <div className="bg-white border-b">
+        <div className="container mx-auto px-4 lg:px-6 py-4 lg:py-6">
+          <div className="flex items-center gap-4 mb-4">
+            <img src={game.image} alt={game.name} className="w-16 h-16 lg:w-20 lg:h-20 rounded-lg object-cover shadow-md" />
+            <div className="flex-1">
+              <h2 className="text-lg lg:text-2xl font-bold">{game.name}</h2>
+              <div className="flex items-center gap-2 mt-1">
+                <div className="bg-yellow-400 text-white px-2.5 py-0.5 rounded font-bold text-sm">
+                  {game.rating.toFixed(1)}
+                </div>
+                <div className="flex items-center gap-1">
+                  {[...Array(5)].map((_, i) => (
+                    <Star
+                      key={i}
+                      className={`h-4 w-4 ${
+                        i < Math.floor(game.rating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
+                      }`}
+                    />
+                  ))}
+                </div>
+                <span className="text-sm text-gray-600">{game.total_reviews.toLocaleString()}</span>
+              </div>
+              <div className="text-sm text-muted-foreground mt-1">
+                {game.total_sold}k+ Sold
+              </div>
+            </div>
+          </div>
+
+          {/* Invite Friends Banner with Countdown */}
+          <button
+            onClick={handleInviteClick}
+            className="w-full bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white rounded-xl p-4 mb-4 transition-all shadow-lg hover:shadow-xl"
+          >
+            <div className="flex items-center gap-3">
+              <div className="bg-white/20 p-2 rounded-lg">
+                <Gift className="h-8 w-8" />
+              </div>
+              <div className="flex-1 text-left">
+                <div className="font-bold text-lg">
+                  Invite Friends and Get <span className="text-yellow-200">3*10%</span> OFF Discount
+                </div>
+                <div className="text-sm text-orange-100 mt-0.5">
+                  Share with friends to unlock exclusive rewards
                 </div>
               </div>
+              <div className="bg-amber-800/50 px-4 py-2 rounded-lg">
+                <div className="text-2xl font-bold font-mono tracking-wider">
+                  {formatCountdown(countdown)}
+                </div>
+              </div>
+            </div>
+          </button>
 
-              {/* Gift card notice */}
-              {isGiftCard && selectedRegion && (
-                <div className="mt-4 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-start gap-2">
-                  <Info size={15} className="text-amber-600 flex-shrink-0 mt-0.5" />
-                  <p className="text-sm text-amber-800 font-medium">
-                    ONLY for {regions.find(r => r.value === selectedRegion)?.label || selectedRegion} account registered users. Non-Returnable and Non-Refundable.
-                  </p>
+          {/* Server Tabs */}
+          {game.requires_server && servers.length > 0 && (
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+              {servers.map((server) => (
+                <button
+                  key={server.id}
+                  onClick={() => setSelectedServer(server.id)}
+                  className={`px-4 py-2 rounded-full whitespace-nowrap text-sm font-medium transition-all flex-shrink-0 ${
+                    selectedServer === server.id
+                      ? 'bg-yellow-400 text-black'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {server.name}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 lg:px-6 py-4 pb-32">
+        {/* Products Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 lg:gap-4">
+          {products.map((product) => (
+            <div
+              key={product.id}
+              onClick={() => setSelectedProduct(product)}
+              className={`relative bg-white rounded-xl overflow-hidden border-2 cursor-pointer transition-all hover:shadow-lg ${
+                selectedProduct?.id === product.id
+                  ? 'border-yellow-400 shadow-lg'
+                  : 'border-gray-200'
+              }`}
+            >
+              {product.description && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedProduct(product);
+                    setShowInfoModal(true);
+                  }}
+                  className="absolute top-2 right-2 z-10 w-8 h-8 bg-gray-800/70 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-gray-800"
+                >
+                  <Info className="h-4 w-4" />
+                </button>
+              )}
+
+              <div className="aspect-square bg-gradient-to-br from-gray-50 to-gray-100">
+                <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+              </div>
+
+              <div className="p-3 lg:p-4">
+                <h3 className="font-semibold text-sm lg:text-base mb-2 line-clamp-2 min-h-[2.8rem]">
+                  {product.name}
+                </h3>
+
+                <div className="flex items-baseline gap-1.5 mb-2">
+                  <span className="text-red-500 font-bold text-base lg:text-lg">
+                    ${product.sale_price.toFixed(2)}
+                  </span>
+                  {product.original_price > product.sale_price && (
+                    <span className="text-gray-400 line-through text-xs">
+                      ${product.original_price.toFixed(2)}
+                    </span>
+                  )}
+                </div>
+
+                {product.discount_percent > 0 && (
+                  <span className="inline-block bg-orange-500 text-white px-2.5 py-1 rounded text-xs font-medium">
+                    -{product.discount_percent}%
+                  </span>
+                )}
+              </div>
+
+              {selectedProduct?.id === product.id && (
+                <div className="absolute top-2 left-2 bg-yellow-400 text-black rounded-full w-7 h-7 flex items-center justify-center font-bold">
+                  ✓
                 </div>
               )}
             </div>
+          ))}
+        </div>
 
-            {notice && (
-              <div className="bg-amber-50 border border-amber-200 px-4 py-2.5 flex items-center justify-between mb-4 rounded-xl">
-                <div className="flex items-center gap-2">
-                  <AlertCircle size={14} className="text-amber-600 flex-shrink-0" />
-                  <p className="text-sm text-amber-800">{notice}</p>
-                </div>
-                <button onClick={() => setNotice(null)} className="text-gray-400 hover:text-gray-600 ml-2"><X size={14} /></button>
+        {products.length === 0 && (
+          <div className="text-center py-12 text-gray-500">
+            <p>No products available for this {game.requires_server && selectedServer ? 'server' : 'game'}.</p>
+          </div>
+        )}
+
+        {/* Game Description Section */}
+        {(game.short_description || game.full_description || game.how_to_topup) && (
+          <div className="mt-8 bg-white rounded-xl border border-gray-200 p-6">
+            <h2 className="text-xl font-bold mb-4">Top-up Instructions</h2>
+            
+            {game.short_description && (
+              <div className="mb-4">
+                <p className="text-gray-700 whitespace-pre-wrap">{game.short_description}</p>
               </div>
             )}
 
-            {/* Region selector — dropdown with flags for gift cards, tabs for others */}
-            {regions.length > 1 && (
-              <div className="bg-white px-5 py-4 mb-4 border border-gray-100 rounded-xl">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
-                  {skus[0]?.attribute?.[0]?.key_text || "Region"}
-                </p>
-                {isGiftCard ? (
-                  <RegionDropdown
-                    regions={regions}
-                    selected={selectedRegion}
-                    onSelect={(v) => { setSelectedRegion(v); setSelectedSku(null); setExtraInfoValues({}); }}
-                  />
-                ) : (
-                  <div className="flex flex-wrap gap-2">
-                    {regions.map((r) => (
-                      <button
-                        key={r.value}
-                        onClick={() => { setSelectedRegion(r.value); setSelectedSku(null); setExtraInfoValues({}); }}
-                        className={`px-4 py-2 rounded-xl border text-sm font-semibold transition-all ${
-                          selectedRegion === r.value
-                            ? "border-yellow-400 bg-yellow-50 text-yellow-700"
-                            : "border-gray-200 text-gray-600 hover:border-gray-300 bg-white"
-                        }`}
-                      >
-                        {r.label}
-                      </button>
-                    ))}
+            {game.platform_info && (
+              <div className="mb-4">
+                <h3 className="font-semibold text-gray-900 mb-2">Applicable Platform</h3>
+                <p className="text-gray-700">{game.platform_info}</p>
+              </div>
+            )}
+
+            {game.server_info && (
+              <div className="mb-4">
+                <h3 className="font-semibold text-gray-900 mb-2">Applicable Server</h3>
+                <p className="text-gray-700 whitespace-pre-wrap">{game.server_info}</p>
+              </div>
+            )}
+
+            {game.how_to_topup && (
+              <div className="mb-4">
+                <h3 className="font-semibold text-gray-900 mb-2">How to Top-up</h3>
+                <div className="text-gray-700 whitespace-pre-wrap">{game.how_to_topup}</div>
+              </div>
+            )}
+
+            {game.full_description && (
+              <div>
+                {!showFullDescription && (
+                  <button
+                    onClick={() => setShowFullDescription(true)}
+                    className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-2"
+                  >
+                    Show More
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                )}
+                
+                {showFullDescription && (
+                  <div>
+                    <div className="text-gray-700 whitespace-pre-wrap mb-4">
+                      {game.full_description}
+                    </div>
+                    <button
+                      onClick={() => setShowFullDescription(false)}
+                      className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-2"
+                    >
+                      Show Less
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                      </svg>
+                    </button>
                   </div>
                 )}
               </div>
             )}
 
-            {/* SKU grid */}
-            <div className="bg-white p-5 mb-4 border border-gray-100 rounded-xl">
-              {isLoading ? (
-                <div className="grid grid-cols-3 xl:grid-cols-4 gap-3">
-                  {Array.from({ length: 8 }).map((_, i) => <div key={i} className="shimmer h-36 rounded-xl" />)}
-                </div>
-              ) : (
-                <div className="grid grid-cols-3 xl:grid-cols-4 gap-3">
-                  {filteredSkus.map((sku) => {
-                    const markedPrice = applyMarkup(sku.price || 0);
-                    const savings = sku.discount_amount || 0;
-                    const isSelected = selectedSku?.sku_id === sku.sku_id;
-                    return (
-                      <button
-                        key={sku.sku_id}
-                        onClick={() => { setSelectedSku(sku); setExtraInfoValues({}); }}
-                        className={`relative flex flex-col bg-white border-2 overflow-hidden transition-all hover:shadow-md text-left rounded-xl ${
-                          isSelected ? "border-yellow-400 shadow-md" : "border-gray-200 hover:border-gray-300"
+            <div className="mt-6 pt-6 border-t border-gray-200">
+              <div className="flex items-center gap-4">
+                <div className="text-center">
+                  <div className="text-4xl font-bold text-gray-900">{game.rating.toFixed(1)}</div>
+                  <div className="flex items-center justify-center gap-1 mt-1">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`h-4 w-4 ${
+                          i < Math.floor(game.rating)
+                            ? 'fill-yellow-400 text-yellow-400'
+                            : 'text-gray-300'
                         }`}
-                      >
-                        <div className="aspect-[4/3] bg-gradient-to-b from-blue-100 to-purple-100 relative">
-                          <img
-                            src={sku.image || game?.game_image || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=200&h=150&fit=crop"}
-                            alt={sku.sku_name}
-                            className="w-full h-full object-cover"
-                            onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=200&h=150&fit=crop"; }}
-                          />
-                          {isSelected && (
-                            <div className="absolute top-1.5 right-1.5 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center shadow-sm">
-                              <Check size={11} className="text-black" />
-                            </div>
-                          )}
-                          {savings > 0 && (
-                            <div className="absolute top-1.5 left-1.5 bg-orange-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">
-                              -{savings.toFixed(0)}%
-                            </div>
-                          )}
-                        </div>
-                        <div className="p-2.5">
-                          <p className="text-xs font-bold text-gray-900 leading-tight line-clamp-2 mb-1.5">{sku.sku_name}</p>
-                          <p className="text-sm font-black text-orange-500">${markedPrice.toFixed(2)}</p>
-                          {savings > 0 && (
-                            <div className="flex items-center gap-1 mt-0.5">
-                              <span className="text-[10px] text-gray-400 line-through">${(sku.original_price || sku.price || 0).toFixed(2)}</span>
-                              <span className="bg-orange-500 text-white text-[9px] font-bold px-1 py-0.5 rounded">-${savings.toFixed(2)}</span>
-                            </div>
-                          )}
-                        </div>
-                      </button>
-                    );
-                  })}
+                      />
+                    ))}
+                  </div>
+                  <div className="text-sm text-gray-600 mt-1">
+                    {game.total_reviews.toLocaleString()} reviews
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Fixed Bottom Action Bar */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t shadow-2xl">
+        <div className="container mx-auto px-4 py-3 lg:py-4">
+          <div className="flex items-center gap-3 lg:gap-4">
+            <div className="flex items-center border-2 rounded-xl border-gray-200">
+              <button
+                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                className="px-4 py-3 text-lg font-bold hover:bg-gray-50 transition-colors"
+                disabled={quantity <= 1}
+              >
+                −
+              </button>
+              <span className="px-4 font-semibold min-w-[3rem] text-center">{quantity}</span>
+              <button
+                onClick={() => setQuantity(quantity + 1)}
+                className="px-4 py-3 text-lg font-bold hover:bg-gray-50 transition-colors"
+              >
+                +
+              </button>
+            </div>
+
+            <div className="flex-1">
+              {selectedProduct && selectedProduct.discount_percent > 0 && (
+                <div className="text-xs lg:text-sm text-orange-500 mb-1">
+                  Savings ${((selectedProduct.original_price - selectedProduct.sale_price) * quantity).toFixed(2)} →
                 </div>
               )}
-            </div>
-
-            {/* Instructions */}
-            <div className="bg-white p-6 border border-gray-100 rounded-xl">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">Top-up Instructions</h3>
-              <div className="grid grid-cols-2 gap-4 mb-5 pb-5 border-b border-gray-100">
-                {[
-                  { label: "Category", value: game?.category || "Top Up" },
-                  { label: "Delivery Method", value: "Direct top-up via API" },
-                  { label: "Processing Time", value: "3–5 minutes" },
-                  { label: "Security", value: "NoxyStore Guarantee" },
-                ].map((item) => (
-                  <div key={item.label}>
-                    <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-0.5">{item.label}</p>
-                    <p className="text-sm text-gray-800 font-medium">{item.value}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="space-y-5">
-                {(instructions.length > 0 ? instructions : [
-                  { step: 1, title: "Select your package", description: "Choose the top-up amount that suits you from the list above.", image: undefined },
-                  { step: 2, title: "Fill in your player information", description: "Enter your Player ID or UID accurately. Double-check before proceeding.", image: undefined },
-                  { step: 3, title: "Complete your payment", description: "Choose a payment method and complete the transaction securely.", image: undefined },
-                  { step: 4, title: "Receive your items", description: "Top-up is processed automatically. Items arrive within 3–5 minutes.", image: undefined },
-                ]).map((inst) => (
-                  <div key={inst.step} className="flex gap-4">
-                    <div className="flex-shrink-0 w-7 h-7 bg-yellow-400 rounded-lg flex items-center justify-center font-black text-sm text-black">{inst.step}</div>
-                    <div className="flex-1">
-                      <p className="font-bold text-gray-900 text-sm mb-1">{inst.title}</p>
-                      {inst.description && <p className="text-sm text-gray-600 leading-relaxed">{inst.description}</p>}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Right: Order panel */}
-          <div className="w-72 flex-shrink-0">
-            <div style={{ position: "sticky", top: "70px", maxHeight: "calc(100vh - 90px)", overflowY: "auto" } as React.CSSProperties}>
-              <div className="border border-gray-200 shadow-sm bg-white rounded-xl overflow-hidden">
-                <div className="px-5 pt-5 pb-4 border-b border-gray-200">
-                  <h3 className="font-bold text-gray-900 mb-4">Order Information</h3>
-                  {selectedSku ? (
-                    <ExtraInfoForm />
-                  ) : (
-                    <div className="bg-gray-50 p-3 text-center text-sm text-gray-400 border border-dashed border-gray-200 rounded-xl">
-                      ← Select a package
-                    </div>
-                  )}
+              
+              <div className="flex items-center justify-between gap-4">
+                <div className="text-red-500 text-xl lg:text-2xl font-bold">
+                  ${selectedProduct ? (selectedProduct.sale_price * quantity).toFixed(2) : '0.00'}
                 </div>
-                <div className="px-5 py-4 border-b border-gray-200">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold text-gray-700">Quantity</span>
-                    <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden">
-                      <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-50 border-r border-gray-300">−</button>
-                      <span className="text-sm font-bold w-10 text-center">{quantity}</span>
-                      <button onClick={() => setQuantity(quantity + 1)} className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-50 border-l border-gray-300">+</button>
-                    </div>
-                  </div>
-                </div>
-                <div className="px-5 py-4">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm text-gray-500">Price</span>
-                    <span className="text-xl font-black text-orange-500">{selectedSku ? `$${totalPrice.toFixed(2)}` : "—"}</span>
-                  </div>
-                  {totalSavings > 0 && (
-                    <p className="text-xs text-orange-500 text-right mb-2 font-semibold">Savings ${totalSavings.toFixed(2)}</p>
-                  )}
-                  <button
-                    onClick={handleDesktopTopUp}
-                    disabled={!selectedSku}
-                    className={`w-full py-3.5 font-bold text-base transition-all mt-3 rounded-xl ${selectedSku ? "bg-yellow-400 hover:bg-yellow-300 text-black" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}
-                  >
-                    Top-up Now
-                  </button>
-                  <div className="flex items-center justify-center gap-1.5 mt-3">
-                    <Shield size={13} className="text-green-500" />
-                    <span className="text-xs text-gray-500">NoxyStore Security Guarantee</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <Footer />
-      <FloatingChat />
-    </div>
-  );
-
-  // ─── Mobile Layout ──────────────────────────────────────────────────────────
-  const MobileLayout = () => (
-    <div className="lg:hidden bg-white min-h-screen">
-      {/* Mobile Header — real layout component */}
-      <Header showMenu />
-
-      <div className="pb-52">
-        {/* Game info */}
-        <div className="px-4 py-4 border-b border-gray-100">
-          <div className="flex items-center gap-3 mb-3">
-            <img
-              src={imgError ? "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=80&h=80&fit=crop" : (game?.game_image || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=80&h=80&fit=crop")}
-              alt={game?.game_name}
-              className="w-16 h-16 rounded-xl object-cover flex-shrink-0 shadow-sm"
-              onError={() => setImgError(true)}
-            />
-            <div>
-              <h1 className="text-lg font-bold text-gray-900 leading-tight">{game?.game_name}</h1>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="bg-yellow-400 text-black text-xs font-bold px-1.5 py-0.5 rounded">{(game?.rating ?? 5.0).toFixed(1)}</span>
-                <div className="flex">{Array.from({ length: 5 }).map((_, i) => <Star key={i} size={12} fill="#FFD200" stroke="none" />)}</div>
-                <span className="text-xs text-gray-400">346</span>
-              </div>
-              <p className="text-xs text-gray-500 mt-0.5">{game?.sold_count}</p>
-            </div>
-          </div>
-
-          {/* Tags */}
-          <div className="flex flex-wrap gap-1.5 mb-3">
-            {["7-Day After-Sales Guarantee", "Safe and Fast Top-Up", "24/7 Customer Service"].map((tag) => (
-              <span key={tag} className="border border-gray-200 text-gray-600 text-[11px] px-2.5 py-1 rounded-full">{tag}</span>
-            ))}
-          </div>
-
-          {/* Gift card notice */}
-          {isGiftCard && selectedRegion && (
-            <div className="bg-amber-50 border border-amber-100 rounded-xl px-3 py-2.5 flex items-start gap-2">
-              <Info size={14} className="text-amber-600 flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-amber-800 font-medium leading-relaxed">
-                ONLY for {regions.find(r => r.value === selectedRegion)?.label || selectedRegion} accounts. Non-Returnable and Non-Refundable.
-              </p>
-            </div>
-          )}
-        </div>
-
-        {notice && (
-          <div className="mx-4 mt-3 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2 flex items-center justify-between">
-            <p className="text-xs text-amber-700 leading-relaxed">{notice}</p>
-            <button onClick={() => setNotice(null)}><X size={12} className="text-gray-400 flex-shrink-0 ml-2" /></button>
-          </div>
-        )}
-
-        {/* Region selector */}
-        {regions.length > 1 && (
-          <div className="px-4 pt-4 pb-3 border-b border-gray-100">
-            {isGiftCard ? (
-              <button
-                onClick={() => setShowRegionSheet(true)}
-                className="w-full flex items-center justify-between bg-gray-50 border border-gray-200 rounded-xl px-4 py-3"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl leading-none">{getFlag(regions.find(r => r.value === selectedRegion)?.label || selectedRegion)}</span>
-                  <span className="text-sm font-semibold text-gray-800">{regions.find(r => r.value === selectedRegion)?.label || selectedRegion}</span>
-                </div>
-                <ChevronDown size={16} className="text-gray-400" />
-              </button>
-            ) : (
-              <div>
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                  {skus[0]?.attribute?.[0]?.key_text || "Region"}
-                </p>
-                <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
-                  {regions.map((r) => (
-                    <button
-                      key={r.value}
-                      onClick={() => { setSelectedRegion(r.value); setSelectedSku(null); setExtraInfoValues({}); }}
-                      className={`flex-shrink-0 px-4 py-2 rounded-xl border text-sm font-semibold transition-all ${
-                        selectedRegion === r.value ? "border-yellow-400 text-yellow-600 bg-yellow-50" : "border-gray-200 text-gray-600 bg-white"
-                      }`}
-                    >
-                      {r.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* SKU grid */}
-        <div className="px-4 pt-3">
-          {isLoading ? (
-            <div className="grid grid-cols-2 gap-3">
-              {Array.from({ length: 6 }).map((_, i) => <div key={i} className="shimmer h-36 rounded-xl" />)}
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-3">
-              {filteredSkus.map((sku) => {
-                const markedPrice = applyMarkup(sku.price || 0);
-                const savings = sku.discount_amount || 0;
-                const isSelected = selectedSku?.sku_id === sku.sku_id;
-                return (
-                  <button
-                    key={sku.sku_id}
-                    onClick={() => handleMobileSkuSelect(sku)}
-                    className={`relative flex flex-col bg-white rounded-xl border-2 overflow-hidden text-left transition-all ${isSelected ? "border-yellow-400 shadow-md" : "border-gray-200"}`}
-                  >
-                    <div className="aspect-[4/3] bg-gradient-to-b from-blue-100 to-purple-100 relative">
-                      <img
-                        src={sku.image || game?.game_image || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=200&h=150&fit=crop"}
-                        alt={sku.sku_name}
-                        className="w-full h-full object-cover"
-                        onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=200&h=150&fit=crop"; }}
-                      />
-                      {isSelected && (
-                        <div className="absolute top-1.5 right-1.5 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center">
-                          <Check size={10} className="text-black" />
-                        </div>
-                      )}
-                      {savings > 0 && (
-                        <div className="absolute top-1.5 left-1.5 bg-orange-500 text-white text-[9px] font-bold px-1 py-0.5 rounded">-{savings.toFixed(0)}%</div>
-                      )}
-                    </div>
-                    <div className="p-2.5">
-                      <p className="text-xs font-bold text-gray-900 leading-tight line-clamp-2 mb-1">{sku.sku_name}</p>
-                      <p className="text-sm font-black text-orange-500">${markedPrice.toFixed(2)}</p>
-                      {savings > 0 && (
-                        <div className="flex items-center gap-1 mt-0.5">
-                          <span className="text-[10px] text-gray-400 line-through">${(sku.original_price || sku.price || 0).toFixed(2)}</span>
-                          <span className="bg-orange-500 text-white text-[9px] font-bold px-1 py-0.5 rounded">-${savings.toFixed(2)}</span>
-                        </div>
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Bottom CTA */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 pt-3 pb-safe z-50" style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}>
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-gray-600">Quantity</span>
-          <div className="flex items-center gap-2">
-            <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-8 h-8 rounded-xl border border-gray-300 flex items-center justify-center text-gray-600">−</button>
-            <span className="text-base font-bold w-6 text-center">{quantity}</span>
-            <button onClick={() => setQuantity(quantity + 1)} className="w-8 h-8 rounded-xl border border-gray-300 flex items-center justify-center text-gray-600">+</button>
-          </div>
-        </div>
-        <div className="flex items-center justify-between">
-          <div>
-            {totalSavings > 0 && (
-              <p className="text-xs text-orange-500 font-semibold flex items-center gap-1">
-                Savings ${totalSavings.toFixed(2)} <ChevronRight size={12} />
-              </p>
-            )}
-            <p className="text-xl font-black text-orange-500">{selectedSku ? `$${totalPrice.toFixed(2)}` : "—"}</p>
-          </div>
-          <button
-            onClick={handleTopUpNow}
-            disabled={!selectedSku}
-            className={`px-8 py-3 rounded-2xl font-bold text-base transition-all ${selectedSku ? "bg-yellow-400 text-black hover:bg-yellow-300" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}
-          >
-            {needsVerification ? "Continue" : "Top-up Now"}
-          </button>
-        </div>
-        {!selectedSku && (
-          <p className="text-center text-xs text-gray-400 mt-1.5">Select a package above to continue</p>
-        )}
-      </div>
-
-      <MobileFooter />
-      <FloatingChat />
-
-      {/* Region bottom sheet for gift cards */}
-      {showRegionSheet && (
-        <RegionSheet
-          regions={regions}
-          selected={selectedRegion}
-          onSelect={(v) => { setSelectedRegion(v); setSelectedSku(null); setExtraInfoValues({}); }}
-          onClose={() => setShowRegionSheet(false)}
-        />
-      )}
-
-      {/* Invite Modal */}
-      {showInviteModal && (
-        <div className="fixed inset-0 z-50 flex items-end">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setShowInviteModal(false)} />
-          <div className="relative bg-white rounded-t-3xl w-full shadow-2xl max-h-[85vh] overflow-y-auto">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-              <button onClick={() => setShowInviteModal(false)}><X size={20} className="text-gray-700" /></button>
-              <h3 className="font-black text-gray-900">Invite Friends</h3>
-              <div className="w-6" />
-            </div>
-            <div className="px-5 py-4">
-              <div className="flex gap-2 mb-3">
-                <div className="flex-1 bg-gray-100 rounded-xl px-3 py-3 text-sm text-gray-500 font-mono truncate">
-                  {useShorterInvite ? `noxystore.gg/s/${referralCode || "..."}` : `noxystore.gg?ref=${referralCode || "..."}`}
-                </div>
-                <button
-                  onClick={async () => {
-                    const link = useShorterInvite ? `https://noxystore.gg/s/${referralCode}` : `https://noxystore.gg?ref=${referralCode}`;
-                    await navigator.clipboard.writeText(link);
-                    setInviteCopied(true);
-                    setTimeout(() => setInviteCopied(false), 2000);
-                  }}
-                  className="bg-yellow-400 text-black font-bold px-4 py-3 rounded-xl flex items-center gap-1.5 text-sm"
+                
+                <Button
+                  onClick={handleTopUpNow}
+                  className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold py-3 px-6 lg:px-8 text-base lg:text-lg rounded-xl shadow-lg"
+                  disabled={!selectedProduct}
                 >
-                  {inviteCopied ? <Check size={14} /> : "Copy"}
+                  Top-up Now
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Product Info Modal */}
+      <Dialog open={showInfoModal} onOpenChange={setShowInfoModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{selectedProduct?.name || 'Product Details'}</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {selectedProduct?.image && (
+              <img src={selectedProduct.image} alt={selectedProduct.name} className="w-full rounded-lg" />
+            )}
+
+            {selectedProduct?.description && (
+              <p className="text-sm text-gray-600 whitespace-pre-wrap">
+                {selectedProduct.description}
+              </p>
+            )}
+
+            {selectedProduct && (
+              <div className="text-center py-4 bg-accent rounded-lg">
+                <div className="text-lg font-bold">{selectedProduct.name}</div>
+                <div className="text-gray-600 text-sm mt-1">${selectedProduct.sale_price.toFixed(2)}</div>
+              </div>
+            )}
+
+            <Button
+              onClick={() => setShowInfoModal(false)}
+              className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-bold"
+            >
+              Got it
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Invite Friends Modal */}
+      <Dialog open={showInviteModal} onOpenChange={setShowInviteModal}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-2xl">
+              <Users className="h-6 w-6 text-orange-500" />
+              Invite Friends
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-6">
+            {/* Reward Claim Progress */}
+            <div>
+              <h3 className="font-semibold mb-3 text-center">Reward Claim Progress</h3>
+              <div className="flex justify-center items-center gap-4">
+                {[1, 2, 3].map((slot) => (
+                  <div key={slot} className="text-center">
+                    <div className={`w-20 h-20 rounded-full border-4 flex items-center justify-center mb-2 ${
+                      referralStats.completed >= slot
+                        ? 'border-green-500 bg-green-50'
+                        : 'border-gray-300 bg-gray-50'
+                    }`}>
+                      {referralStats.completed >= slot ? (
+                        <Check className="h-8 w-8 text-green-500" />
+                      ) : (
+                        <Users className="h-8 w-8 text-gray-400" />
+                      )}
+                    </div>
+                    <div className="text-xs text-gray-600">
+                      {referralStats.completed >= slot ? 'Claimed' : 'to be claimed'}
+                    </div>
+                    <div className="text-sm font-bold text-orange-500">10% OFF</div>
+                  </div>
+                ))}
+              </div>
+              <div className="text-center text-sm text-muted-foreground mt-4">
+                {referralStats.completed}/3 rewards claimed
+              </div>
+            </div>
+
+            {/* Share Options */}
+            <div>
+              <h3 className="font-semibold mb-3 text-center">Share to</h3>
+              <div className="grid grid-cols-4 gap-4">
+                <button
+                  onClick={() => handleSocialShare('twitter')}
+                  className="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  <div className="w-12 h-12 rounded-full bg-black flex items-center justify-center">
+                    <svg className="h-6 w-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                    </svg>
+                  </div>
+                  <span className="text-xs font-medium">X</span>
+                </button>
+
+                <button
+                  onClick={() => handleSocialShare('facebook')}
+                  className="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center">
+                    <svg className="h-6 w-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                    </svg>
+                  </div>
+                  <span className="text-xs font-medium">Facebook</span>
+                </button>
+
+                <button
+                  onClick={() => handleSocialShare('whatsapp')}
+                  className="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  <div className="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center">
+                    <svg className="h-6 w-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+                    </svg>
+                  </div>
+                  <span className="text-xs font-medium">WhatsApp</span>
+                </button>
+
+                <button
+                  onClick={() => handleSocialShare('discord')}
+                  className="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  <div className="w-12 h-12 rounded-full bg-indigo-600 flex items-center justify-center">
+                    <svg className="h-6 w-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515a.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0a12.64 12.64 0 0 0-.617-1.25a.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057a19.9 19.9 0 0 0 5.993 3.03a.078.078 0 0 0 .084-.028a14.09 14.09 0 0 0 1.226-1.994a.076.076 0 0 0-.041-.106a13.107 13.107 0 0 1-1.872-.892a.077.077 0 0 1-.008-.128a10.2 10.2 0 0 0 .372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127a12.299 12.299 0 0 1-1.873.892a.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028a19.839 19.839 0 0 0 6.002-3.03a.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.956-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.955-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.946 2.418-2.157 2.418z"/>
+                    </svg>
+                  </div>
+                  <span className="text-xs font-medium">Discord</span>
                 </button>
               </div>
-              <button onClick={() => setUseShorterInvite(!useShorterInvite)} className="flex items-center gap-2 text-sm text-gray-500 mb-4">
-                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${useShorterInvite ? "bg-yellow-400 border-yellow-400" : "border-gray-300"}`}>
-                  {useShorterInvite && <Check size={11} className="text-black" />}
-                </div>
-                Share with a shorter link
-              </button>
+            </div>
+
+            {/* Copy Link Section */}
+            <div>
+              <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-3">
+                <input
+                  type="text"
+                  value={useShortLink ? shortUrl : shareUrl}
+                  readOnly
+                  className="flex-1 bg-transparent text-sm outline-none"
+                />
+                <Button
+                  onClick={handleCopyLink}
+                  size="sm"
+                  className="bg-yellow-400 hover:bg-yellow-500 text-black gap-2"
+                >
+                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  {copied ? 'Copied' : 'Copy Link'}
+                </Button>
+              </div>
+
+              <label className="flex items-center gap-2 mt-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={useShortLink}
+                  onChange={(e) => setUseShortLink(e.target.checked)}
+                  className="w-4 h-4 accent-orange-500"
+                />
+                <span className="text-sm">Share with a shorter link</span>
+              </label>
+            </div>
+
+            {/* Rules */}
+            <div className="bg-orange-50 rounded-lg p-4">
+              <h4 className="font-semibold text-sm mb-2">Rules:</h4>
+              <ol className="text-xs text-gray-700 space-y-1 list-decimal list-inside">
+                <li>After successfully inviting a friend to register on NoxyStore, both the inviter and the newly registered user receive a 10% OFF coupon (max $10 discount).</li>
+                <li>Inviter can receive up to 3 coupons.</li>
+                <li>Invited user must be a brand-new NoxyStore user.</li>
+                <li>Invited user's Game ID must never have been recharged before.</li>
+              </ol>
             </div>
           </div>
-        </div>
-      )}
-    </div>
-  );
+        </DialogContent>
+      </Dialog>
 
-  return (
-    <>
-      <DesktopLayout />
-      <MobileLayout />
-    </>
-  );
-}
+      {/* Footer - Mobile */}
+      <div className="block lg:hidden">
+        <MobileFooter />
+      </div>
+
+      {/* Footer - Desktop */}
+      <div className="hidden lg:block">
+        <Footer />
+      </div>
+      please remove lootbar function and all related code, also remove the lootbar component from the imports.

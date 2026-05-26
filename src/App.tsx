@@ -34,6 +34,14 @@ import { LanguageCurrencyPage } from "@/pages/LanguageCurrencyPage";
 import { ContactPage } from "@/pages/ContactPage";
 import { MessagesPage } from "@/pages/MessagesPage";
 // Admin pages — each is its own dedicated page
+import AdminDashboard from './pages/admin/AdminDashboard';
+import GameManagement from './pages/admin/GameManagement';
+import ServerManagement from './pages/admin/ServerManagement';
+import GameProductManagement from './pages/admin/GameProductManagement';
+import ProductManagement from './pages/admin/ProductManagement';
+import AddProductPage from './pages/admin/AddProductPage';
+import EditProductPage from './pages/admin/EditProductPage';
+import EditRegionalPricing from './pages/admin/EditRegionalPricing';
 import { supabase } from "@/lib/supabase";
 import { useAuthStore, mapSupabaseUser } from "@/stores/authStore";
 import { AuthProvider } from "@/lib/AuthContext";
@@ -216,6 +224,23 @@ function App() {
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/messages" element={<MessagesPage />} />
 
+          
+        {/* Dynamic Game Top-Up Routes */}
+        <Route path="/top-up/:gameSlug" element={<GameTopUpPage />} />
+        <Route path="/top-up/:slug" element={<ProductPage />} />
+        <Route path="/gift-card/:slug" element={<ProductPage />} />
+        <Route path="/player-id/:gameId" element={<PlayerIdPage />} />
+
+           {/* Admin Routes */}
+        <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/admin/games" element={<GameManagement />} />
+        <Route path="/admin/games/:gameId/servers" element={<ServerManagement />} />
+        <Route path="/admin/games/:gameId/servers/:serverId/products" element={<GameProductManagement />} />
+        <Route path="/admin/games/:gameId/products" element={<GameProductManagement />} />
+        <Route path="/admin/products" element={<ProductManagement />} />
+        <Route path="/admin/products/add" element={<AddProductPage />} />
+        <Route path="/admin/products/edit/:id" element={<EditProductPage />} />
+        <Route path="/admin/products/regional-pricing/:id" element={<EditRegionalPricing />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </div>

@@ -1,125 +1,221 @@
-// ======================================
-// LOOTBAR API TYPES
-// ======================================
-
-export interface LootbarToken {
-  token: string;
-  callback_key: string;
-  expire_at: number;
-}
-
-export interface LootbarGame {
-  game_id: string;
-  game_name: string;
-  game_image?: string;
-  category?: string;
-  rating?: number;
-  sold_count?: string;
-  is_hot?: boolean;
-  discount?: number;
-  min_price?: number | null;
-}
-
-export interface SkuAttribute {
-  key: string;
-  key_text: string;
-  value: string;
-  value_text: string;
-}
-
-export interface SkuExtraInfo {
+export interface Product {
+  id: string;
   name: string;
-  title: string;
-  type: "input" | "select" | "text";
-  required: boolean;
-  options?: { value: string; label: string }[];
-  placeholder?: string;
+  nameColor?: string;
+  category: 'top-up' | 'gift-card' | 'game-items' | 'cdkey' | 'game-coins';
+  image: string;
+  discount: number;
+  rating: number;
+  reviewCount: number;
+  soldCount: string;
+  originalPrice: number;
+  salePrice: number;
+  sku: string;
+  isInstant: boolean;
+  shortDescription: string;
+  fullDescription: string;
+  howToUse: string;
+  howToUseLong?: string;
+  
+  // Product Info Modal
+  infoModalContent?: InfoModalContent;
+  
+  // Advanced Description System
+  descriptionBlocks?: DescriptionBlock[];
+  
+  // ID/Server System
+  requiresPlayerId: boolean;
+  playerIdLabel?: string;
+  requiresServer: boolean;
+  pricingType: 'quantity' | 'server';
+  
+  // NEW: Product Denominations/Variants System
+  denominations?: ProductDenomination[];
+  
+  // Quantity-based pricing (ID only)
+  quantityOptions?: QuantityOption[];
+  
+  // Server-based pricing (ID + Server)
+  servers?: ProductServer[];
+  
+  // NEW: Multi-Region System
+  requiresRegion: boolean;
+  availableRegions?: ProductRegion[];
+  regionalPricing?: RegionalPricing[];
+  
+  // Price Adjustment
+  priceAdjustment?: {
+    type: 'percentage' | 'fixed';
+    value: number;
+  };
+  
+  isActive: boolean;
+  regions?: string[];
+  variants?: ProductVariant[];
+  similarProducts?: string[];
+  visibilityTags: ('top-selling' | 'best-seller' | 'new-product' | 'home-page' | 'gift-card-page')[];
+  verifyEndpoint?: string;
+  
+  reviews?: Review[];
+  
+  createdAt: string;
+  updatedAt: string;
 }
 
-export interface SkuItem {
-  sku_id: string;
-  sku_name: string;
-  attribute: SkuAttribute[];
-  extra_info: SkuExtraInfo[];
-  price?: number;
-  original_price?: number;
-  discount_amount?: number;
+// NEW: Product Denomination (e.g., 100 Diamonds, 200 Diamonds)
+export interface ProductDenomination {
+  id: string;
+  name: string; // e.g., "LEGENDARY DREAMSPACE 50 PULLS"
+  image: string; // Unique image for this denomination
+  quantity?: number;
+  originalPrice: number;
+  salePrice: number;
+  discount: number;
+  sku?: string;
+  isAvailable: boolean;
+  order: number; // Display order
+}
+
+// NEW: Info Modal Content
+export interface InfoModalContent {
+  title?: string;
+  description: string;
   image?: string;
-  game_id?: string;
+  steps?: string[];
 }
 
-export interface OrderProduct {
-  sku_id: string;
-  num: number;
+// NEW: Product Region
+export interface ProductRegion {
+  id: string;
+  name: string; // e.g., "USA&Latam", "Brazil", "Malaysia/Singapore"
+  code: string; // e.g., "usa", "brazil", "malaysia"
+  isAvailable: boolean;
 }
 
-export interface CreateOrderRequest {
-  reference_id: string;
-  game_id: string;
-  product: OrderProduct[];
-  extra_info: Record<string, string>;
-  callback_url: string;
+export interface DescriptionBlock {
+  id: string;
+  type: 'heading' | 'paragraph' | 'text-block' | 'image' | 'image-with-instruction';
+  content: string;
+  imageUrl?: string;
+  instruction?: string;
+}
+
+export interface RegionalPricing {
+  region: string;
+  products: RegionalProduct[];
+}
+
+export interface RegionalProduct {
+  id: string;
+  name: string; // e.g., "100 Diamonds", "200 Diamonds"
+  quantity: number;
+  originalPrice: number;
+  salePrice: number;
+  isAvailable: boolean;
+}
+
+export interface QuantityOption {
+  id: string;
+  name: string; // e.g., "100 Diamonds"
+  quantity: number;
+  price: number;
+}
+
+export interface ProductServer {
+  id: string;
+  name: string;
+  price: number;
+}
+
+export interface ProductVariant {
+  id: string;
+  name: string;
+  originalPrice: number;
+  salePrice: number;
+  discount: number;
+  image?: string;
+}
+
+export interface Review {
+  id: string;
+  userId: string;
+  userName: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+  isVerified: boolean;
+}
+
+export interface User {
+  id: string;
+  email: string;
+  fullName: string;
+  nickname?: string;
+  nicknameLastChanged?: string;
+  birthday?: string;
+  emailVerified?: boolean;
+  role: 'user' | 'admin' | 'owner' | 'chat-agent' | 'settings-manager';
+  permissions?: UserPermissions;
+  balance: number;
+  pendingBalance: number;
+  points: number;
+  coupons: number;
+  vipLevel: number;
+  totalSpent: number;
+  createdAt: string;
+  bindings?: {
+    google?: string;
+    facebook?: string;
+    apple?: string;
+    vk?: string;
+  };
 }
 
 export interface Order {
   id: string;
-  reference_id: string;
-  order_id: string;
-  game_id: string;
-  game_name: string;
-  sku_name: string;
-  price: number;
-  state: OrderState;
-  created_at: string;
-  updated_at: string;
-  extra_info: Record<string, string>;
-}
-
-export type OrderState = 1 | 2 | 3 | 4 | 5 | 6 | 7;
-
-export const ORDER_STATE_MAP: Record<OrderState, { label: string; color: string; bg: string }> = {
-  1: { label: "In Transaction", color: "text-blue-600", bg: "bg-blue-50" },
-  2: { label: "Success", color: "text-green-600", bg: "bg-green-50" },
-  3: { label: "Failed", color: "text-red-600", bg: "bg-red-50" },
-  4: { label: "Settlement", color: "text-purple-600", bg: "bg-purple-50" },
-  5: { label: "Partially Successful", color: "text-orange-600", bg: "bg-orange-50" },
-  6: { label: "Cancelled", color: "text-gray-600", bg: "bg-gray-100" },
-  7: { label: "Deleted", color: "text-gray-400", bg: "bg-gray-50" },
-};
-
-// ======================================
-// APP TYPES
-// ======================================
-
-export interface User {
-  id: string;
-  nickname: string;
-  email: string;
-  avatar?: string;
-  balance: number;
-  points: number;
-  coupons: number;
-  role: "user" | "admin";
-}
-
-export interface CartItem {
-  sku: SkuItem;
-  game: LootbarGame;
+  userId: string;
+  productId: string;
+  productName: string;
+  productImage: string;
+  variantName?: string;
+  serverId?: string;
+  serverName?: string;
+  region?: string;
   quantity: number;
-  extra_info: Record<string, string>;
+  totalAmount: number;
+  playerId?: string;
+  characterName?: string;
+  status: 'pending' | 'processing' | 'completed' | 'refund' | 'failed';
+  createdAt: string;
+  updatedAt: string;
 }
 
-export interface Notification {
+export interface VIPLevel {
+  level: number;
+  name: string;
+  spendRequired: number;
+  benefits: {
+    pointsCoupon: boolean;
+    pointsItem: boolean;
+    fastDelivery: boolean;
+    birthdayGift: boolean;
+    pointAsMoney: boolean;
+    vipService: boolean;
+    higherDiscount: boolean;
+    morePoints: boolean;
+    exclusiveService: boolean;
+    priorityDelivery: boolean;
+  };
+  rewards: {
+    freeProducts?: number;
+    bonusCoins?: number;
+  };
+}
+
+export interface PlayerObject {
   id: string;
-  type: "success" | "error" | "info" | "warning";
-  title: string;
-  message: string;
-  timestamp: string;
-  read: boolean;
-}
-
-export interface ApiResponse<T> {
-  status: "ok" | "error";
-  msg?: string;
-  data: T;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+  patchVersion: string;
 }

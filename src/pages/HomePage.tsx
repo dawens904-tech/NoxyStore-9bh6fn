@@ -17,6 +17,7 @@ import { supabase } from "@/lib/supabase";
 import { trackEvent } from "@/lib/analytics";
 import { NewUserCouponModal } from "@/components/features/NewUserCouponModal";
 import { useAuthStore } from "@/stores/authStore";
+import { useProductStore } from '@/stores/productStore';
 import { Footer } from "@/components/layout/Footer";
 import { MobileFooter } from "@/components/layout/MobileFooter";
 import gameKeysBg from "@/assets/game-keys-bg.jpg";
