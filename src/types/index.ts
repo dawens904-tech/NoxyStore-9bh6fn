@@ -149,45 +149,31 @@ export interface Review {
 export interface User {
   id: string;
   email: string;
-  fullName: string;
-  nickname?: string;
-  nicknameLastChanged?: string;
-  birthday?: string;
-  emailVerified?: boolean;
-  role: 'user' | 'admin' | 'owner' | 'chat-agent' | 'settings-manager';
-  permissions?: UserPermissions;
+  nickname: string;
+  fullName?: string;
+  avatar?: string;
+  role: 'user' | 'admin' | 'moderator';
   balance: number;
-  pendingBalance: number;
   points: number;
   coupons: number;
-  vipLevel: number;
-  totalSpent: number;
-  createdAt: string;
-  bindings?: {
-    google?: string;
-    facebook?: string;
-    apple?: string;
-    vk?: string;
-  };
 }
 
 export interface Order {
   id: string;
-  userId: string;
-  productId: string;
-  productName: string;
-  productImage: string;
-  variantName?: string;
-  serverId?: string;
-  serverName?: string;
-  region?: string;
+  reference_id: string;
+  order_id?: string;
+  game_id: string;
+  game_name: string;
+  sku_id: string;
+  sku_name: string;
   quantity: number;
-  totalAmount: number;
-  playerId?: string;
-  characterName?: string;
-  status: 'pending' | 'processing' | 'completed' | 'refund' | 'failed';
-  createdAt: string;
-  updatedAt: string;
+  price: number;
+  state: 1 | 2 | 3 | 4;
+  extra_info?: Record<string, unknown>;
+  user_email?: string;
+  user_id?: string;
+  created_at: string;
+  updated_at?: string;
 }
 
 export interface VIPLevel {
@@ -218,4 +204,32 @@ export interface PlayerObject {
   createdAt: string;
   updatedAt: string;
   patchVersion: string;
+}
+
+// ── Lootbar / API types ──────────────────────────────────────────────────────
+export interface LootbarGame {
+  game_id: string;
+  game_name: string;
+  game_image: string;
+  category: string;
+  rating: number | null;
+  sold_count: string | null;
+  is_hot: boolean;
+  discount: number;
+  min_price: number | null;
+  short_description?: string;
+  full_description?: string;
+  requires_server?: boolean;
+  requires_player_id?: boolean;
+}
+
+export interface SkuItem {
+  sku_id: string | number;
+  sku_name: string;
+  price: number;
+  original_price?: number | null;
+  discount_amount?: number | null;
+  image?: string | null;
+  attribute?: unknown[];
+  extra_info?: unknown[];
 }

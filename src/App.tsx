@@ -224,14 +224,7 @@ function App() {
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/messages" element={<MessagesPage />} />
 
-          
-        {/* Dynamic Game Top-Up Routes */}
-        <Route path="/top-up/:gameSlug" element={<GameTopUpPage />} />
-        <Route path="/top-up/:slug" element={<ProductPage />} />
-        <Route path="/gift-card/:slug" element={<ProductPage />} />
-        <Route path="/player-id/:gameId" element={<PlayerIdPage />} />
-
-           {/* Admin Routes */}
+             {/* Admin Routes */}
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/admin/games" element={<GameManagement />} />
         <Route path="/admin/games/:gameId/servers" element={<ServerManagement />} />
