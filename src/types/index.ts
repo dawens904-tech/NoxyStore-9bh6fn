@@ -198,6 +198,13 @@ export interface VIPLevel {
   };
 }
 
+export const ORDER_STATE_MAP: Record<number, { label: string; color: string }> = {
+  1: { label: 'Pending', color: 'text-yellow-600' },
+  2: { label: 'Processing', color: 'text-blue-600' },
+  3: { label: 'Completed', color: 'text-green-600' },
+  4: { label: 'Failed', color: 'text-red-600' },
+};
+
 export interface PlayerObject {
   id: string;
   name: string;
