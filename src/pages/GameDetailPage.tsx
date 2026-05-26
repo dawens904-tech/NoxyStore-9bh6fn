@@ -750,6 +750,7 @@ export function GameDetailPage() {
   }
 
 
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-[#f5f5f5]">
         <div className="hidden lg:block"><DesktopHeader /></div>
