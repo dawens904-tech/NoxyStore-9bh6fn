@@ -592,4 +592,5 @@ export default function LootbarSkuManagement() {
     </div>
   );
 }
+fist before show sku show all region fetch by lootbar example region usa-and show sku product per region after auto set in gamedetail functoon example region malasya-sku 100diamond edit name,phoot,price.
 
