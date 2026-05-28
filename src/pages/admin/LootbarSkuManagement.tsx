@@ -550,3 +550,4 @@ create policy "service_role_all_sku_overrides" on public.sku_overrides for all t
     </div>
   );
 }
+can you please in section     {/* SKU notice for sku_overrides table */} can you run this fir me or explain how i can run it.
