@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Gamepad2, Box, PlusCircle, LogOut, Joystick } from 'lucide-react';
+import { LayoutDashboard, Gamepad2, Box, PlusCircle, LogOut, Joystick, Layers } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { supabase } from '@/lib/supabase';
 
@@ -11,6 +11,7 @@ const navItems = [
   { label: 'Lootbar Games', path: `${BASE}/lootbar-games`, icon: Joystick },
   { label: 'Products', path: `${BASE}/products`, icon: Box },
   { label: 'Add Product', path: `${BASE}/products/add`, icon: PlusCircle },
+  { label: 'SKU Overrides', path: `${BASE}/lootbar-games`, icon: Layers },
 ];
 
 export default function AdminSidebar() {
