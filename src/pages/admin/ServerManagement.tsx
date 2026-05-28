@@ -365,4 +365,4 @@ export default function ServerManagement() {
     </div>
   );
 }
-create lootbar server manage also product manage per sku example in server usa 190diamnt with own photo and price for all game.
+
