@@ -47,10 +47,6 @@ interface GameInfo {
   category: string | null;
 }
 
-// ─── Ensure sku_overrides table exists ──────────────────────────────────────
-// We store SKU-level overrides in a separate table. Check DB Context — if not
-// present, the upsert will fail gracefully and show an error toast.
-
 export default function LootbarSkuManagement() {
   const { gameId } = useParams<{ gameId: string }>();
   const navigate = useNavigate();
@@ -129,13 +125,36 @@ export default function LootbarSkuManagement() {
     });
   };
 
+  // Group SKUs by attribute (server/region if present)
+  const getRegionLabel = (sku: MergedSku): string => {
+    const attrs = sku.attributes ?? [];
+    for (const attr of attrs) {
+      const val = attr["server"] || attr["region"] || attr["zone"] || attr["area"];
+      if (val) return String(val);
+    }
+    return "Default";
+  };
+
+  const filtered = skus.filter(s =>
+    (s.override?.custom_name ?? s.sku_name).toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Group by region, sorted by override sort_order
+  const grouped: Record<string, MergedSku[]> = {};
+  filtered.forEach(sku => {
+    const region = getRegionLabel(sku);
+    if (!grouped[region]) grouped[region] = [];
+    grouped[region].push(sku);
+  });
+  Object.keys(grouped).forEach(region => {
+    grouped[region].sort((a, b) => (a.override?.sort_order ?? 999) - (b.override?.sort_order ?? 999));
+  });
+
   // Move SKU up or down in sort order within its region group
   const moveSku = async (sku: MergedSku, direction: "up" | "down") => {
     if (!gameId) return;
     const region = getRegionLabel(sku);
-    const regionSkus = [...(grouped[region] || [])].sort(
-      (a, b) => (a.override?.sort_order ?? 0) - (b.override?.sort_order ?? 0)
-    );
+    const regionSkus = [...(grouped[region] || [])];
     const idx = regionSkus.findIndex(s => s.sku_id === sku.sku_id);
     const swapIdx = direction === "up" ? idx - 1 : idx + 1;
     if (swapIdx < 0 || swapIdx >= regionSkus.length) return;
@@ -189,11 +208,7 @@ export default function LootbarSkuManagement() {
       .upsert(payload, { onConflict: "game_id,sku_id" });
 
     if (error) {
-      if (error.message.includes("does not exist") || error.message.includes("relation")) {
-        toast.error("sku_overrides table not found. Please create it first — see instructions below.");
-      } else {
-        toast.error("Save failed: " + error.message);
-      }
+      toast.error("Save failed: " + error.message);
       return;
     }
 
@@ -227,32 +242,6 @@ export default function LootbarSkuManagement() {
       )
     );
   };
-
-  // Group SKUs by attribute (server/region if present)
-  const getRegionLabel = (sku: MergedSku): string => {
-    const attrs = sku.attributes ?? [];
-    for (const attr of attrs) {
-      const val = attr["server"] || attr["region"] || attr["zone"] || attr["area"];
-      if (val) return String(val);
-    }
-    return "Default";
-  };
-
-  const filtered = skus.filter(s =>
-    (s.override?.custom_name ?? s.sku_name).toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  // Group by region, sorted by override sort_order
-  const grouped: Record<string, MergedSku[]> = {};
-  filtered.forEach(sku => {
-    const region = getRegionLabel(sku);
-    if (!grouped[region]) grouped[region] = [];
-    grouped[region].push(sku);
-  });
-  // Sort each group by sort_order
-  Object.keys(grouped).forEach(region => {
-    grouped[region].sort((a, b) => (a.override?.sort_order ?? 999) - (b.override?.sort_order ?? 999));
-  });
 
   const stats = {
     total: skus.length,
@@ -322,8 +311,6 @@ export default function LootbarSkuManagement() {
               className="pl-10 rounded-xl bg-white"
             />
           </div>
-
-
 
           {/* Content */}
           {isLoading ? (
@@ -592,5 +579,3 @@ export default function LootbarSkuManagement() {
     </div>
   );
 }
-fist before show sku show all region fetch by lootbar example region usa-and show sku product per region after auto set in gamedetail functoon example region malasya-sku 100diamond edit name,phoot,price.
-
