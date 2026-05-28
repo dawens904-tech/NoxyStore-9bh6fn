@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Gamepad2, Box, PlusCircle, LogOut } from 'lucide-react';
+import { LayoutDashboard, Gamepad2, Box, PlusCircle, LogOut, Joystick } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { supabase } from '@/lib/supabase';
 
@@ -8,6 +8,7 @@ const BASE = '/secure-dashboard-92x2011';
 const navItems = [
   { label: 'Dashboard', path: BASE, icon: LayoutDashboard, exact: true },
   { label: 'Games', path: `${BASE}/games`, icon: Gamepad2 },
+  { label: 'Lootbar Games', path: `${BASE}/lootbar-games`, icon: Joystick },
   { label: 'Products', path: `${BASE}/products`, icon: Box },
   { label: 'Add Product', path: `${BASE}/products/add`, icon: PlusCircle },
 ];
