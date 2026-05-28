@@ -685,3 +685,4 @@ export function HomePage() {
     </div>
   );
 }
+please ai fix lootbar function calling with new website https://api.lootbar.com remove old.
