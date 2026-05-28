@@ -605,3 +605,4 @@ export default function LootbarSkuManagement() {
     </div>
   );
 }
+ease ai region and sku must come from lootbar edg function proxy dont display them like that.
