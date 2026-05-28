@@ -277,28 +277,7 @@ export default function LootbarSkuManagement() {
             />
           </div>
 
-          {/* SKU notice for sku_overrides table */}
-          <div className="mb-5 bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-sm text-yellow-800">
-            <strong>Setup required:</strong> Run this SQL once in your Cloud dashboard to enable SKU overrides:
-            <code className="block mt-2 bg-yellow-100 rounded px-3 py-2 text-xs font-mono whitespace-pre-wrap">
-{`create table if not exists public.sku_overrides (
-  id uuid default gen_random_uuid() primary key,
-  game_id text not null,
-  sku_id text not null,
-  custom_name text,
-  custom_price numeric(10,2),
-  custom_image_url text,
-  is_hidden boolean default false,
-  sort_order integer default 0,
-  created_at timestamptz default now(),
-  unique(game_id, sku_id)
-);
-alter table public.sku_overrides enable row level security;
-create policy "anon_select_sku_overrides" on public.sku_overrides for select to anon using (true);
-create policy "authenticated_select_sku_overrides" on public.sku_overrides for select to authenticated using (true);
-create policy "service_role_all_sku_overrides" on public.sku_overrides for all to service_role using (true) with check (true);`}
-            </code>
-          </div>
+
 
           {/* Content */}
           {isLoading ? (
@@ -550,4 +529,4 @@ create policy "service_role_all_sku_overrides" on public.sku_overrides for all t
     </div>
   );
 }
-can you please in section     {/* SKU notice for sku_overrides table */} can you run this fir me or explain how i can run it.
+
