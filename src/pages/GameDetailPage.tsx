@@ -325,8 +325,36 @@ export function GameDetailPage() {
           }
         });
 
-      lootbarApi.getSkus(gameId).then((data) => {
-        const sorted = [...data].sort((a, b) => (a.price || 0) - (b.price || 0));
+      // Fetch SKUs and overrides in parallel
+      Promise.all([
+        lootbarApi.getSkus(gameId),
+        supabase.from("sku_overrides").select("*").eq("game_id", gameId),
+      ]).then(([data, { data: overrides }]) => {
+        const overrideMap = new Map<string, { custom_name: string | null; custom_price: number | null; custom_image_url: string | null; is_hidden: boolean; sort_order: number }>(); 
+        (overrides || []).forEach((o: { sku_id: string; custom_name: string | null; custom_price: number | null; custom_image_url: string | null; is_hidden: boolean; sort_order: number }) => overrideMap.set(o.sku_id, o));
+
+        // Apply overrides and filter hidden
+        const merged: SkuItem[] = data
+          .filter(s => !overrideMap.get(String(s.sku_id))?.is_hidden)
+          .map(s => {
+            const ov = overrideMap.get(String(s.sku_id));
+            return {
+              ...s,
+              sku_name: ov?.custom_name ?? s.sku_name,
+              price: ov?.custom_price ?? s.price,
+              image: ov?.custom_image_url ?? s.image,
+              _sort_order: ov?.sort_order ?? 9999,
+            } as SkuItem & { _sort_order: number };
+          });
+
+        // Sort: first by override sort_order, then by price
+        const sorted = merged.sort((a, b) => {
+          const ao = (a as SkuItem & { _sort_order?: number })._sort_order ?? 9999;
+          const bo = (b as SkuItem & { _sort_order?: number })._sort_order ?? 9999;
+          if (ao !== bo) return ao - bo;
+          return (a.price || 0) - (b.price || 0);
+        });
+
         setSkus(sorted);
         if (sorted.length > 0) {
           const firstRegion = sorted[0]?.attribute?.[0]?.value || "global";

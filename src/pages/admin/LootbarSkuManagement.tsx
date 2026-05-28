@@ -10,7 +10,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import AdminSidebar from "./AdminSidebar";
 import {
   ArrowLeft, Search, Edit2, DollarSign, Image, Star,
-  Loader2, AlertCircle, RefreshCw, Package, Tag
+  Loader2, AlertCircle, RefreshCw, Package, Tag, ChevronUp, ChevronDown
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -129,6 +129,48 @@ export default function LootbarSkuManagement() {
     });
   };
 
+  // Move SKU up or down in sort order within its region group
+  const moveSku = async (sku: MergedSku, direction: "up" | "down") => {
+    if (!gameId) return;
+    const region = getRegionLabel(sku);
+    const regionSkus = [...(grouped[region] || [])].sort(
+      (a, b) => (a.override?.sort_order ?? 0) - (b.override?.sort_order ?? 0)
+    );
+    const idx = regionSkus.findIndex(s => s.sku_id === sku.sku_id);
+    const swapIdx = direction === "up" ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= regionSkus.length) return;
+
+    const current = regionSkus[idx];
+    const swap = regionSkus[swapIdx];
+    const currentOrder = current.override?.sort_order ?? idx;
+    const swapOrder = swap.override?.sort_order ?? swapIdx;
+
+    await Promise.all([
+      supabase.from("sku_overrides").upsert(
+        { game_id: gameId, sku_id: current.sku_id, sort_order: swapOrder,
+          custom_price: current.override?.custom_price ?? null,
+          custom_name: current.override?.custom_name ?? null,
+          custom_image_url: current.override?.custom_image_url ?? null,
+          is_hidden: current.override?.is_hidden ?? false },
+        { onConflict: "game_id,sku_id" }
+      ),
+      supabase.from("sku_overrides").upsert(
+        { game_id: gameId, sku_id: swap.sku_id, sort_order: currentOrder,
+          custom_price: swap.override?.custom_price ?? null,
+          custom_name: swap.override?.custom_name ?? null,
+          custom_image_url: swap.override?.custom_image_url ?? null,
+          is_hidden: swap.override?.is_hidden ?? false },
+        { onConflict: "game_id,sku_id" }
+      ),
+    ]);
+
+    setSkus(prev => prev.map(s => {
+      if (s.sku_id === current.sku_id) return { ...s, override: { ...(s.override ?? { game_id: gameId, sku_id: s.sku_id, custom_name: null, custom_price: null, custom_image_url: null, is_hidden: false }), sort_order: swapOrder } };
+      if (s.sku_id === swap.sku_id) return { ...s, override: { ...(s.override ?? { game_id: gameId, sku_id: s.sku_id, custom_name: null, custom_price: null, custom_image_url: null, is_hidden: false }), sort_order: currentOrder } };
+      return s;
+    }));
+  };
+
   const handleSaveOverride = async () => {
     if (!editSku || !gameId) return;
 
@@ -200,12 +242,16 @@ export default function LootbarSkuManagement() {
     (s.override?.custom_name ?? s.sku_name).toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Group by region
+  // Group by region, sorted by override sort_order
   const grouped: Record<string, MergedSku[]> = {};
   filtered.forEach(sku => {
     const region = getRegionLabel(sku);
     if (!grouped[region]) grouped[region] = [];
     grouped[region].push(sku);
+  });
+  // Sort each group by sort_order
+  Object.keys(grouped).forEach(region => {
+    grouped[region].sort((a, b) => (a.override?.sort_order ?? 999) - (b.override?.sort_order ?? 999));
   });
 
   const stats = {
@@ -378,7 +424,7 @@ export default function LootbarSkuManagement() {
                             <p className="text-[9px] text-gray-400 font-mono mb-2 truncate">ID: {sku.sku_id}</p>
 
                             {/* Actions */}
-                            <div className="grid grid-cols-2 gap-1">
+                            <div className="grid grid-cols-2 gap-1 mb-1">
                               <button
                                 onClick={() => openEditModal(sku)}
                                 className="flex items-center justify-center gap-0.5 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-[10px] font-bold transition-all"
@@ -392,6 +438,23 @@ export default function LootbarSkuManagement() {
                                 }`}
                               >
                                 {isHidden ? "Show" : "Hide"}
+                              </button>
+                            </div>
+                            {/* Move up/down */}
+                            <div className="grid grid-cols-2 gap-1">
+                              <button
+                                onClick={() => moveSku(sku, "up")}
+                                className="flex items-center justify-center gap-0.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 text-[10px] font-bold transition-all"
+                                title="Move up"
+                              >
+                                <ChevronUp size={11} /> Up
+                              </button>
+                              <button
+                                onClick={() => moveSku(sku, "down")}
+                                className="flex items-center justify-center gap-0.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 text-[10px] font-bold transition-all"
+                                title="Move down"
+                              >
+                                <ChevronDown size={11} /> Down
                               </button>
                             </div>
                           </div>
@@ -529,4 +592,4 @@ export default function LootbarSkuManagement() {
     </div>
   );
 }
-also fix if product example 100 diamant show after 200 diamant i want the 100 take place of 200 and 200 take after 100 i can just move the sku product and also when i do it like this its auto set in gamedetail page and if i save photo auto set in game detail never unsavee only if i delete or change.
+
