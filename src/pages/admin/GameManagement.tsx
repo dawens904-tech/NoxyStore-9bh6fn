@@ -627,3 +627,4 @@ export default function GameManagement() {
     </div>
   );
 }
+please ai create another page manage lootbar game with same model with this page.
