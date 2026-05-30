@@ -194,6 +194,17 @@ export default function GameManagement() {
 
         if (error) throw error;
 
+        // Persist custom image to game_overrides so GameDetailPage & HomePage
+        // always show the updated photo (works for both Lootbar & manual games)
+        if (gameForm.image) {
+          await supabase
+            .from('game_overrides')
+            .upsert(
+              { game_id: String(editingGame.id), custom_image_url: gameForm.image },
+              { onConflict: 'game_id' }
+            );
+        }
+
         await updateGameCategories(editingGame.id);
 
         toast({
@@ -214,6 +225,15 @@ export default function GameManagement() {
         if (error) throw error;
 
         if (data) {
+          // Persist custom image for the new game as well
+          if (gameForm.image) {
+            await supabase
+              .from('game_overrides')
+              .upsert(
+                { game_id: String(data.id), custom_image_url: gameForm.image },
+                { onConflict: 'game_id' }
+              );
+          }
           await updateGameCategories(data.id);
         }
 
@@ -627,4 +647,4 @@ export default function GameManagement() {
     </div>
   );
 }
-fix error when i change a game photo auto load it from home page and gamedetail page just change that photo to lootbar function never unchange only if i remove ut.
+
