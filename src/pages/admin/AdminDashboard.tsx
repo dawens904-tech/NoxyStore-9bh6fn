@@ -510,3 +510,4 @@ export default function AdminDashboard() {
     </div>
   );
 }
+make this page more fastest also fix admin side in desktop better and you can close side admin bar.
