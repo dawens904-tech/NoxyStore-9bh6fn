@@ -627,4 +627,4 @@ export default function GameManagement() {
     </div>
   );
 }
-
+fix error when i change a game photo auto load it from home page and gamedetail page just change that photo to lootbar function never unchange only if i remove ut.
