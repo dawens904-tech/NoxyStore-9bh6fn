@@ -627,5 +627,4 @@ export default function GameManagement() {
     </div>
   );
 }
-fix error Failed to save override: new row violates row-level security policy for table "game_overrides"
-overrides, make sure all game can saved real time and never unsaved save the save in database.
+
