@@ -509,7 +509,7 @@ export function VipBenefitsPage() {
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
         {[
           { label: "Buy History", path: "/account" },
-          { label: "Coupon", path: "/account", badge: "1397" },
+          { label: "Coupon", path: "/account", badge: "" },
           { label: "Settings", path: "/account" },
           { label: "Help Center", path: "/support" },
           { label: "Feedback", path: "/feedback" },
