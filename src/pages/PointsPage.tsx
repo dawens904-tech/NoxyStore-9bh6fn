@@ -56,11 +56,8 @@ function DesktopSidebar({ user, points }: { user: any; points: number }) {
     <div className="w-60 flex-shrink-0 sticky top-24 self-start max-h-[calc(100vh-6rem)] overflow-y-auto">
       <div className="bg-white rounded-lg border border-gray-200 p-5 mb-4">
         <div className="flex items-center gap-3 mb-4">
-          <div className="relative">
-            <div className="w-12 h-12 rounded-full bg-gray-400 flex items-center justify-center text-white text-lg font-bold">
-              {user?.nickname?.[0]?.toUpperCase() || "U"}
-            </div>
-            </div>
+          <div className="w-12 h-12 rounded-full bg-gray-400 flex items-center justify-center text-white text-lg font-bold">
+            {user?.nickname?.[0]?.toUpperCase() || "U"}
           </div>
           <div>
             <p className="font-bold text-gray-900 text-sm">{user?.nickname || user?.email?.split("@")[0]}</p>
