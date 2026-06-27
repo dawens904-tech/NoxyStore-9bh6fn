@@ -1355,3 +1355,4 @@ export function AccountPage() {
     </>
   );
 }
+hello ai make all page square remove border only square.
