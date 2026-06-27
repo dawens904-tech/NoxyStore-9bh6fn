@@ -484,10 +484,9 @@ export function VipBenefitsPage() {
     <div className="w-60 flex-shrink-0">
       <div className="bg-white rounded-lg border border-gray-200 p-5 mb-4">
         <div className="flex items-center gap-3 mb-4">
-          <div className="relative">
-            <div className="w-12 h-12 rounded-full bg-gray-400 flex items-center justify-center text-white text-lg font-bold">
-              {user?.nickname?.[0]?.toUpperCase() || "U"}
-            </div>
+          <div className="w-12 h-12 rounded-full bg-gray-400 flex items-center justify-center text-white text-lg font-bold">
+            {user?.nickname?.[0]?.toUpperCase() || "U"}
+          </div>
           <div>
             <p className="font-bold text-gray-900 text-sm">{user?.nickname || user?.email?.split("@")[0]}</p>
             <button onClick={() => navigate("/account")} className="text-xs text-gray-500 flex items-center gap-0.5 hover:text-gray-700">
