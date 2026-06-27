@@ -63,43 +63,46 @@ export function Footer() {
 function DesktopFooter() {
   return (
     <footer className="hidden lg:block bg-background border-t mt-24">
-      {/* Why Choose Us Section */}
-      <div className="bg-gray-50 dark:bg-gray-900/30 py-12">
+      {/* Why Choose Us Section - White background like screenshot */}
+      <div className="bg-white py-12">
         <div className="container mx-auto px-6">
-          <h2 className="text-2xl font-bold mb-8">Why Choose Us?</h2>
+          <h2 className="text-2xl font-bold mb-8 text-gray-900">Why Choose Us?</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="flex items-start gap-4">
-              <div className="p-3 bg-white dark:bg-card border rounded-lg">
-                <Shield className="h-8 w-8" />
+            {/* Card 1 - 100% Safe Transaction */}
+            <div className="flex items-start gap-4 p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+              <div className="flex-shrink-0 w-14 h-14 flex items-center justify-center rounded-full border border-gray-300 bg-white">
+                <Shield className="h-6 w-6 text-gray-700" strokeWidth={1.5} />
               </div>
               <div>
-                <h3 className="font-bold text-lg mb-2">100% Safe Transaction</h3>
-                <p className="text-sm text-muted-foreground">
+                <h3 className="font-bold text-lg mb-2 text-gray-900">100% Safe Transaction</h3>
+                <p className="text-sm text-gray-600 leading-relaxed">
                   We ensure efficient, professional, and secure transactions with full protection of your data—100% safe.
                 </p>
               </div>
             </div>
 
-            <div className="flex items-start gap-4">
-              <div className="p-3 bg-white dark:bg-card border rounded-lg">
-                <Headphones className="h-8 w-8" />
+            {/* Card 2 - 24/7 Customer Service */}
+            <div className="flex items-start gap-4 p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+              <div className="flex-shrink-0 w-14 h-14 flex items-center justify-center rounded-full border border-gray-300 bg-white">
+                <Headphones className="h-6 w-6 text-gray-700" strokeWidth={1.5} />
               </div>
               <div>
-                <h3 className="font-bold text-lg mb-2">24/7 Customer Service</h3>
-                <p className="text-sm text-muted-foreground">
+                <h3 className="font-bold text-lg mb-2 text-gray-900">24/7 Customer Service</h3>
+                <p className="text-sm text-gray-600 leading-relaxed">
                   Our reliable customer service team is available anytime, offering fast and convenient assistance before, during, and after your purchase.
                 </p>
               </div>
             </div>
 
-            <div className="flex items-start gap-4">
-              <div className="p-3 bg-white dark:bg-card border rounded-lg">
-                <CreditCard className="h-8 w-8" />
+            {/* Card 3 - Full Refund Guarantee */}
+            <div className="flex items-start gap-4 p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+              <div className="flex-shrink-0 w-14 h-14 flex items-center justify-center rounded-full border border-gray-300 bg-white">
+                <CreditCard className="h-6 w-6 text-gray-700" strokeWidth={1.5} />
               </div>
               <div>
-                <h3 className="font-bold text-lg mb-2">Full Refund Guarantee</h3>
-                <p className="text-sm text-muted-foreground">
-                  NoxyStore offers most competitive prices and efficient delivery. If goods are undelivered or unusable, we promise a 100% refund and financial security.
+                <h3 className="font-bold text-lg mb-2 text-gray-900">Full Refund Guarantee</h3>
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  LootBar offers most competitive prices and efficient delivery. If goods are undelivered or unusable, we promise a 100% refund and financial security.
                 </p>
               </div>
             </div>
@@ -107,8 +110,8 @@ function DesktopFooter() {
         </div>
       </div>
 
-      {/* Payment Methods Carousel */}
-      <div className="border-y">
+      {/* Payment Methods Carousel - Same white background */}
+      <div className="bg-white border-y">
         <Carousel />
       </div>
 
@@ -192,4 +195,3 @@ function DesktopFooter() {
     </footer>
   );
 }
-
