@@ -53,7 +53,7 @@ function DesktopSidebar({ user, points }: { user: any; points: number }) {
     { label: "Affiliate Program", path: "/affiliate", highlight: true },
   ];
   return (
-    <div className="w-60 flex-shrink-0">
+    <div className="w-60 flex-shrink-0 sticky top-24 self-start max-h-[calc(100vh-6rem)] overflow-y-auto">
       <div className="bg-white rounded-lg border border-gray-200 p-5 mb-4">
         <div className="flex items-center gap-3 mb-4">
           <div className="relative">
@@ -537,4 +537,4 @@ export function PointsPage() {
     </>
   );
 }
-fix left panel sticky no scroll.
+
