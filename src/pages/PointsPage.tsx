@@ -60,8 +60,6 @@ function DesktopSidebar({ user, points }: { user: any; points: number }) {
             <div className="w-12 h-12 rounded-full bg-gray-400 flex items-center justify-center text-white text-lg font-bold">
               {user?.nickname?.[0]?.toUpperCase() || "U"}
             </div>
-            <div className="absolute -bottom-1 -right-1 bg-yellow-500 text-black text-[9px] font-black px-1.5 py-0.5 rounded-sm border border-white">
-              V{vip}
             </div>
           </div>
           <div>
