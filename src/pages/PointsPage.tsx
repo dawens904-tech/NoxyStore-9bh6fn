@@ -537,3 +537,4 @@ export function PointsPage() {
     </>
   );
 }
+fix left panel sticky no scroll.
