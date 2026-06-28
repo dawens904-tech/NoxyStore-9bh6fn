@@ -1361,4 +1361,5 @@ export function AccountPage() {
     </>
   );
 }
+fucking read language constants/translationsand add all language from constants/translations.
 
