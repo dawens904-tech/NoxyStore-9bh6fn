@@ -94,4 +94,5 @@ export function AccountSidebar({ activePage, balanceOverride, pointsOverride, cl
     </div>
   );
 }
+hello ai auto load user money from balance also in account page the user photo make it round and the login button make it border  and for all user new+exist  auto set a avatar logo create a logo avatar people and auto set from people who dont have and fetch their google avatar when their login.
 
