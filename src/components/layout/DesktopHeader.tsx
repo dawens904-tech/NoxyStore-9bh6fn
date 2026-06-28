@@ -454,5 +454,5 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
     </>
   );
 }
-
+fetch user photo perfile and show it in  user d name example.
 
