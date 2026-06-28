@@ -46,6 +46,7 @@ import EditProductPage from './pages/admin/EditProductPage';
 import EditRegionalPricing from './pages/admin/EditRegionalPricing';
 import LootbarGameManagement from './pages/admin/LootbarGameManagement';
 import LootbarSkuManagement from './pages/admin/LootbarSkuManagement';
+import AdminOrdersPage from './pages/admin/AdminOrdersPage';
 import { supabase } from "@/lib/supabase";
 import { SupportChatButton } from "@/components/features/SupportChatButton";
 import { useAuthStore, mapSupabaseUser } from "@/stores/authStore";
@@ -242,6 +243,7 @@ function App() {
         <Route path="/secure-dashboard-92x2011/products/regional-pricing/:id" element={<AdminRoute><EditRegionalPricing /></AdminRoute>} />
         <Route path="/secure-dashboard-92x2011/lootbar-games" element={<AdminRoute><LootbarGameManagement /></AdminRoute>} />
         <Route path="/secure-dashboard-92x2011/lootbar-games/:gameId/skus" element={<AdminRoute><LootbarSkuManagement /></AdminRoute>} />
+        <Route path="/secure-dashboard-92x2011/orders" element={<AdminRoute><AdminOrdersPage /></AdminRoute>} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </div>
