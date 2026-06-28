@@ -471,4 +471,5 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
     </>
   );
 }
+please when tap avatar go to acountpage but when you like pase mouse lan souli show User Dropdown (photo 10) please.
 
