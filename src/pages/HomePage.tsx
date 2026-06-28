@@ -685,3 +685,4 @@ export function HomePage() {
     </div>
   );
 }
+hello ai fix lootbar game when i edit a photo auto save the photo to database and auto set that photo in homepage and gamedetail page please dont never unchnge.
