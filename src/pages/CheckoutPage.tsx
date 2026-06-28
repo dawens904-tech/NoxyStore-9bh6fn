@@ -971,3 +971,12 @@ export function CheckoutPage() {
     </>
   );
 }
+hello ai please fix error Order Failed Something went wrong Please try again and {
+  "eventMessage": "POST | 502 | http://lcfbkgryqwjlbtowlcfb.backend.onspace.ai/functions/v1/lootbar-proxy | Bad Gateway",
+  "functionId": "lootbar-proxy",
+  "id": "62db59c3-8056-4600-a7d1-6fab3b0d1178",
+  "logLevel": "ERROR",
+  "method": "POST",
+  "statusCode": 502,
+  "timestamp": 1782630973
+}.
