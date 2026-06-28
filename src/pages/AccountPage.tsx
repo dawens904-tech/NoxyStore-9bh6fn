@@ -832,6 +832,9 @@ export function AccountPage() {
   const [showPasskeyModal, setShowPasskeyModal] = useState(false);
   const [hasPassword, setHasPassword] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [realBalance, setRealBalance] = useState<number | null>(null);
+  const [realPoints, setRealPoints] = useState<number | null>(null);
+  const [realCouponCount, setRealCouponCount] = useState<number | null>(null);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isEditingNickname, setIsEditingNickname] = useState(false);
   const [nicknameInput, setNicknameInput] = useState("");
@@ -839,6 +842,31 @@ export function AccountPage() {
   const nicknameInputRef = useRef<HTMLInputElement>(null);
 
   const hasEmail = !!(user?.email && user.email.includes("@"));
+
+  // Fetch real balance, points, coupon count
+  useEffect(() => {
+    if (!user?.email) return;
+    supabase.from("wallet_transactions").select("type, amount, status").eq("user_email", user.email).eq("status", "completed").then(({ data }) => {
+      if (!data) return;
+      const CREDIT = ["topup", "refund", "bonus"];
+      const DEBIT = ["purchase", "withdraw"];
+      const bal = data.reduce((acc, tx) => {
+        if (CREDIT.includes(tx.type)) return acc + Math.abs(Number(tx.amount));
+        if (DEBIT.includes(tx.type)) return acc - Math.abs(Number(tx.amount));
+        return acc;
+      }, 0);
+      setRealBalance(Math.max(0, parseFloat(bal.toFixed(2))));
+      const pts = data.reduce((acc, tx) => {
+        if (tx.type === "points_earned") return acc + Math.abs(Number(tx.amount));
+        if (tx.type === "points_redeemed") return acc - Math.abs(Number(tx.amount));
+        return acc;
+      }, 0);
+      setRealPoints(Math.max(0, Math.round(pts)));
+    });
+    supabase.from("user_coupons").select("id", { count: "exact", head: true }).eq("user_email", user.email).eq("is_used", false).then(({ count }) => {
+      if (count !== null) setRealCouponCount(count);
+    });
+  }, [user?.email]);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -998,6 +1026,30 @@ export function AccountPage() {
                       </div>
                     ))}
                   </div>
+                  {/* Social Accounts */}
+                  <div className="mt-8 pt-6 border-t border-gray-100">
+                    <h3 className="text-base font-bold text-gray-900 mb-4">Social Accounts</h3>
+                    <div className="space-y-0">
+                      {[
+                        { label: "Google", icon: <svg viewBox="0 0 24 24" className="w-5 h-5"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>, bound: user?.email ? "Connected" : false },
+                        { label: "Steam", icon: <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-gray-700"><path d="M11.979 0C5.678 0 .511 4.86.022 11.037l6.432 2.658c.545-.371 1.203-.59 1.912-.59.063 0 .125.004.188.006l2.861-4.142V8.91c0-2.495 2.028-4.524 4.524-4.524 2.494 0 4.524 2.031 4.524 4.527s-2.03 4.525-4.524 4.525h-.105l-4.076 2.911c0 .052.004.105.004.159 0 1.875-1.515 3.396-3.39 3.396-1.635 0-3.016-1.173-3.331-2.727L.436 15.27C1.862 20.307 6.486 24 11.979 24c6.627 0 11.999-5.373 11.999-12S18.605 0 11.979 0z"/></svg>, bound: false },
+                        { label: "Facebook", icon: <svg viewBox="0 0 24 24" fill="#1877F2" className="w-5 h-5"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>, bound: false },
+                        { label: "Twitter / X", icon: <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-black"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.843L1.254 2.25H8.08l4.257 5.629L18.244 2.25z"/></svg>, bound: false },
+                        { label: "Apple", icon: <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-black"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>, bound: false },
+                        { label: "TikTok", icon: <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-black"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.2 8.2 0 0 0 4.79 1.52V6.69a4.85 4.85 0 0 1-1.02-.0z"/></svg>, bound: false },
+                      ].map((social, i, arr) => (
+                        <div key={social.label} className={`flex items-center justify-between py-4 ${i < arr.length - 1 ? "border-b border-gray-100" : ""}`}>
+                          <div className="flex items-center gap-3">{social.icon}<span className="text-sm font-medium text-gray-800">{social.label}</span></div>
+                          {social.bound ? (
+                            <span className="text-sm text-green-600 font-semibold">{typeof social.bound === "string" ? social.bound : "Connected"}</span>
+                          ) : (
+                            <button onClick={() => toast.info(`${social.label} binding coming soon`)} className="text-sm text-gray-400 hover:text-gray-600 flex items-center gap-1">Bind <ChevronRight size={14} /></button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
                   {/* Preferences Settings */}
                   <div className="mt-8 pt-6 border-t border-gray-100">
                     <h3 className="text-base font-bold text-gray-900 mb-4">Preferences Settings</h3>
@@ -1011,7 +1063,7 @@ export function AccountPage() {
                       <div className="flex items-center gap-6 py-2">
                         <span className="w-36 text-sm text-gray-500 flex-shrink-0">Language</span>
                         <select value={language} onChange={e => setLanguage(e.target.value as any)} className="border border-gray-200 px-3 py-2 text-sm text-gray-800 outline-none focus:border-yellow-400 bg-white">
-                          {[{code:"en",label:"English"},{code:"es",label:"Español"},{code:"fr",label:"Français"},{code:"id",label:"Bahasa Indonesia"},{code:"ms",label:"Bahasa Melayu"},{code:"ja",label:"日本語"},{code:"zh-TW",label:"中文(繁體)"},{code:"ko",label:"한국어"},{code:"th",label:"ภาษาไทย"},{code:"vi",label:"Tiếng Việt"},{code:"ar",label:"العربية"}].map(l => <option key={l.code} value={l.code}>{l.label}</option>)}
+                          {[{code:"en",label:"English"},{code:"id",label:"Bahasa Indonesia"},{code:"ms",label:"Bahasa Melayu"},{code:"th",label:"ภาษาไทย"},{code:"vi",label:"Tiếng Việt"},{code:"zh-TW",label:"中文(繁體)"},{code:"ko",label:"한국어"},{code:"ja",label:"日本語"}].map(l => <option key={l.code} value={l.code}>{l.label}</option>)}
                         </select>
                       </div>
                     </div>
@@ -1094,9 +1146,9 @@ export function AccountPage() {
               </div>
               <div className="grid grid-cols-3 gap-2 mb-4">
                 {[
-                  { label: t("balance"), value: `$${(user?.balance ?? 0).toFixed(2)}`, path: "/balance" },
-                  { label: t("points"), value: user?.points ?? 0, path: "/points" },
-                  { label: t("coupons"), value: `${user?.coupons ?? 0}`, path: "/coupons" },
+                  { label: t("balance"), value: `$${(realBalance ?? user?.balance ?? 0).toFixed(2)}`, path: "/balance" },
+                  { label: t("points"), value: realPoints ?? user?.points ?? 0, path: "/points" },
+                  { label: t("coupons"), value: `${realCouponCount ?? user?.coupons ?? 0}`, path: "/coupons" },
                 ].map(item => (
                   <button key={item.label} onClick={() => (item as any).path && navigate((item as any).path)} className="bg-white/15 backdrop-blur-sm p-3 text-center hover:bg-white/25 transition-colors">
                     <p className="text-lg font-bold">{item.value}</p><p className="text-white/70 text-xs">{item.label}</p>
@@ -1144,7 +1196,7 @@ export function AccountPage() {
               <button onClick={() => navigate("/secure-dashboard-92x2011")} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-4 font-bold flex items-center justify-center gap-2 shadow-md"><LayoutDashboard size={18} />{t("adminDashboard")}</button>
             )}
 
-            <button onClick={handleLogout} className="w-full py-4 border-2 border-red-400 bg-white text-red-500 font-bold flex items-center justify-center gap-2 hover:bg-red-50 hover:border-red-500 transition-colors">
+            <button onClick={handleLogout} className="w-full py-4 rounded-xl border-2 border-red-400 bg-white text-red-500 font-bold flex items-center justify-center gap-2 hover:bg-red-50 hover:border-red-500 transition-colors">
               <LogOut size={18} /> Log out
             </button>
           </div>
@@ -1309,4 +1361,4 @@ export function AccountPage() {
     </>
   );
 }
-for mobile fetch real balance real point real coupon and in desktop add social account from mobile in desktop settings tabs please remove language that not exist and for mobile the logout button make it border not square.
+
