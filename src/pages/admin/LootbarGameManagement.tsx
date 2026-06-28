@@ -96,14 +96,83 @@ export default function LootbarGameManagement() {
     setIsLoading(false);
   };
 
+  /**
+   * Fetch ONLY new games from Lootbar — never overwrite existing images.
+   * For each new game detected: download its image to Supabase Storage (banners bucket),
+   * save the stored URL permanently in games_cache, and upsert game_overrides
+   * so the stored URL is always displayed — even if Lootbar changes their CDN.
+   */
   const handleSyncCache = async () => {
     setIsSyncing(true);
+    toast.info("Fetching new games from Lootbar...");
     try {
-      const { error } = await supabase.functions.invoke("lootbar-proxy", {
+      // Step 1: Get current game IDs in our DB (to detect new ones)
+      const { data: existingRows } = await supabase.from("games_cache").select("game_id, game_image");
+      const existingIds = new Set((existingRows || []).map((r: any) => r.game_id));
+      // Only games that already have a stored image (non-lootbar URL saved to our storage)
+      const storedImages = new Map<string, string>();
+      (existingRows || []).forEach((r: any) => {
+        if (r.game_image && r.game_image.includes(import.meta.env.VITE_SUPABASE_URL)) {
+          storedImages.set(r.game_id, r.game_image);
+        }
+      });
+
+      // Step 2: Sync game list from Lootbar proxy
+      const { data: proxyData, error } = await supabase.functions.invoke("lootbar-proxy", {
         body: { action: "get_games", params: {} },
       });
       if (error) throw error;
-      toast.success("Games cache refreshed from Lootbar API");
+
+      // Step 3: Get all games from cache after sync
+      const { data: allGames } = await supabase.from("games_cache").select("game_id, game_name, game_image");
+      const newGames = (allGames || []).filter((g: any) => !existingIds.has(g.game_id));
+
+      if (newGames.length === 0) {
+        toast.success(`No new games found. Cache refreshed (${existingIds.size} existing games unchanged).`);
+        await fetchGames();
+        setIsSyncing(false);
+        return;
+      }
+
+      toast.info(`Found ${newGames.length} new games. Saving images permanently...`);
+
+      // Step 4: For each new game, download & store image permanently
+      let savedCount = 0;
+      for (const game of newGames) {
+        if (!game.game_image) continue;
+        try {
+          // Download original Lootbar image
+          const imgResp = await fetch(game.game_image);
+          if (!imgResp.ok) continue;
+          const blob = await imgResp.blob();
+          const ext = game.game_image.split(".").pop()?.split("?")[0] || "jpg";
+          const storagePath = `games/${game.game_id}.${ext}`;
+
+          // Upload to Supabase Storage (banners bucket)
+          const { error: uploadErr } = await supabase.storage.from("banners")
+            .upload(storagePath, blob, { contentType: blob.type || "image/jpeg", upsert: false });
+
+          if (!uploadErr) {
+            const { data: urlData } = supabase.storage.from("banners").getPublicUrl(storagePath);
+            const storedUrl = urlData.publicUrl;
+
+            // Save stored URL permanently in games_cache
+            await supabase.from("games_cache").update({ game_image: storedUrl }).eq("game_id", game.game_id);
+
+            // Also save in game_overrides so it never gets overwritten by future syncs
+            await supabase.from("game_overrides").upsert(
+              { game_id: game.game_id, custom_image_url: storedUrl,
+                is_featured: false, is_hidden: false, sort_order: 0 },
+              { onConflict: "game_id", ignoreDuplicates: true }
+            );
+            savedCount++;
+          }
+        } catch (imgErr) {
+          console.warn(`Failed to store image for ${game.game_name}:`, imgErr);
+        }
+      }
+
+      toast.success(`✅ ${newGames.length} new games added, ${savedCount} images stored permanently. ${existingIds.size} existing games untouched.`);
       await fetchGames();
     } catch (err: any) {
       toast.error("Sync failed: " + (err.message || "Unknown error"));

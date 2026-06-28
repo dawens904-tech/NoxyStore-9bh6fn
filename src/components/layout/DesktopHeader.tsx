@@ -265,11 +265,28 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showGamesMenu, setShowGamesMenu] = useState(false);
   const [showHelpMenu, setShowHelpMenu] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [unreadCount, setUnreadCount] = useState(0);
   const gamesTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const helpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Poll unread messages every 30 seconds
+  useEffect(() => {
+    if (!isAuthenticated || !user?.email) return;
+    const fetchUnread = async () => {
+      const { count } = await supabase
+        .from("chat_messages")
+        .select("id", { count: "exact", head: true })
+        .neq("sender", "user")
+        .eq("is_read", false)
+        .or(`user_email.eq.${user.email},user_id.eq.${user.id}`);
+      if (count !== null) setUnreadCount(count);
+    };
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 30000);
+    return () => clearInterval(interval);
+  }, [isAuthenticated, user]);
 
   const langDisplay = language.toUpperCase().slice(0, 2);
   const currDisplay = currency;
@@ -299,6 +316,13 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
     setShowUserMenu(false);
     navigate("/");
   };
+
+  // close menus when navigating away
+  useEffect(() => {
+    setShowGamesMenu(false);
+    setShowHelpMenu(false);
+    setShowUserMenu(false);
+  }, [location.pathname]);
 
   return (
     <>
@@ -387,15 +411,19 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
             {langDisplay} / {currDisplay}
           </button>
 
-          {/* Mail/Notifications icon */}
+          {/* Mail/Notifications icon → navigate to /messages */}
           {isAuthenticated && (
             <div className="relative">
-              <button onClick={() => { setShowNotifications(!showNotifications); setShowUserMenu(false); }}
+              <button onClick={() => navigate("/messages")}
                 className="relative p-2 text-gray-400 hover:text-white transition-colors">
                 <Mail size={20} />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 bg-red-500 rounded-full flex items-center justify-center text-white text-[9px] font-bold px-0.5">
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </span>
+                )}
+                {unreadCount === 0 && <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />}
               </button>
-              {showNotifications && <NotificationsPanel onClose={() => setShowNotifications(false)} />}
             </div>
           )}
 
@@ -429,4 +457,4 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
     </>
   );
 }
-hello ai please fix mail show full page when click and Implement LootBar game image persistence system: when admin clicks Fetch, download each new game's image to Supabase Storage (banners bucket), save the stored URL in games_cache, and always display the stored image. Never re-fetch from LootBar. Existing game images must never change automatically Add real-time unread notification badge to the mail icon in DesktopHeader - count unread chat_messages where sender != 'user' and is_read = false for the current user, show red badge with count number, auto-refresh every 30 seconds using polling Update PointsPage Earn tab to show on-site tasks (Visit daily, Write a review, Complete email binding, Install app) and off-site tasks (Join Discord, Subscribe YouTube, Connect Discord account) with proper point values and Go Complete buttons linking to the right pages like in LootBar.
+
