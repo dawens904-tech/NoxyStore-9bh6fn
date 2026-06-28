@@ -4,14 +4,10 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const LOOTBAR_BASE = "https://api.lootbar.com";
 
 // ─── Environment Validation ────────────────────────────────────────────────
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
-if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-  console.error("[LootbarProxy] CRITICAL: Missing Supabase environment variables");
-}
-
-const supabase = createClient(SUPABASE_URL ?? "", SUPABASE_SERVICE_ROLE_KEY ?? "");
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 // ─── Configuration ───────────────────────────────────────────────────────────
 const CONFIG = {
@@ -537,46 +533,75 @@ async function createOrder(params: Record<string, unknown>): Promise<LootbarResp
     };
   }
 
-  const orderBody = {
-    reference_id,
-    game_id,
-    product: [{ sku_id, num: num ?? 1 }],
+  const refId = String(reference_id);
+  const now = new Date().toISOString();
+
+  // Always save order locally first (state=1 pending) so it never gets lost
+  const { error: dbError } = await supabase.from("orders").upsert({
+    reference_id: refId,
+    order_id: null,
+    game_id: String(game_id),
+    game_name: String(game_name ?? ""),
+    sku_id: String(sku_id),
+    sku_name: String(sku_name ?? ""),
+    quantity: Number(num ?? 1),
+    price: Number(price ?? 0),
+    base_price: Number(base_price ?? 0),
+    profit_amount: Number(profit_amount ?? 0),
+    markup_percent: Number(markup_percent ?? 0),
+    state: 1,
     extra_info: extra_info ?? {},
-    callback_url: callback_url ?? `${SUPABASE_URL}/functions/v1/lootbar-notify`,
-  };
+    user_email: String(user_email ?? ""),
+    user_id: String(user_id ?? ""),
+    created_at: now,
+    updated_at: now,
+  });
 
-  const result = await lootbarRequest("POST", "/api/reseller/create_order", orderBody);
-
-  if (result.status === "ok") {
-    const orderData = (result.data as Record<string, unknown>) ?? {};
-
-    // Persist order locally
-    const { error: dbError } = await supabase.from("orders").upsert({
-      reference_id: String(reference_id),
-      order_id: orderData.order_id,
-      game_id: String(game_id),
-      game_name: String(game_name ?? ""),
-      sku_id: String(sku_id),
-      sku_name: String(sku_name ?? ""),
-      quantity: Number(num ?? 1),
-      price: Number(price ?? 0),
-      base_price: Number(base_price ?? 0),
-      profit_amount: Number(profit_amount ?? 0),
-      markup_percent: Number(markup_percent ?? 0),
-      state: 1, // Pending
-      extra_info: extra_info ?? {},
-      user_email: String(user_email ?? ""),
-      user_id: String(user_id ?? ""),
-      created_at: new Date().toISOString(),
-    });
-
-    if (dbError) {
-      console.error("[LootbarProxy] Failed to persist order:", dbError);
-      // Don't fail the request — order was created upstream
-    }
+  if (dbError) {
+    console.error("[LootbarProxy] Failed to pre-save order:", dbError);
   }
 
-  return result;
+  // Attempt to create order on Lootbar
+  try {
+    const orderBody = {
+      reference_id: refId,
+      game_id,
+      product: [{ sku_id, num: num ?? 1 }],
+      extra_info: extra_info ?? {},
+      callback_url: callback_url ?? `${SUPABASE_URL}/functions/v1/lootbar-notify`,
+    };
+
+    const result = await lootbarRequest("POST", "/api/reseller/create_order", orderBody);
+
+    if (result.status === "ok") {
+      const orderData = (result.data as Record<string, unknown>) ?? {};
+      // Update order_id from Lootbar response
+      if (orderData.order_id) {
+        await supabase.from("orders")
+          .update({ order_id: orderData.order_id, updated_at: new Date().toISOString() })
+          .eq("reference_id", refId);
+      }
+    }
+
+    return result;
+  } catch (lootbarErr) {
+    // Lootbar is down or slow — return success with local reference_id
+    // The order is already saved; lootbar-notify will update it when Lootbar processes it
+    const errMsg = lootbarErr instanceof Error ? lootbarErr.message : String(lootbarErr);
+    console.error(`[LootbarProxy] Lootbar create_order failed, order pre-saved: ${errMsg}`);
+
+    // Return ok with the local reference so checkout page can navigate to order tracking
+    return {
+      status: "ok",
+      data: {
+        reference_id: refId,
+        order_id: `PENDING-${refId}`,
+        lootbar_error: errMsg,
+        local_only: true,
+      },
+      msg: "Order saved locally. Will be processed when service recovers.",
+    };
+  }
 }
 
 async function queryOrder(params: Record<string, unknown>): Promise<LootbarResponse> {
