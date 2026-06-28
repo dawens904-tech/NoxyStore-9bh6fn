@@ -33,6 +33,7 @@ import { VipBenefitsPage } from "@/pages/VipBenefitsPage";
 import { LanguageCurrencyPage } from "@/pages/LanguageCurrencyPage";
 import { ContactPage } from "@/pages/ContactPage";
 import { MessagesPage } from "@/pages/MessagesPage";
+import { BuyHistoryPage } from "@/pages/BuyHistoryPage";
 import AdminRoute from "@/components/features/AdminRoute";
 // Admin pages — each is its own dedicated page
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -46,6 +47,7 @@ import EditRegionalPricing from './pages/admin/EditRegionalPricing';
 import LootbarGameManagement from './pages/admin/LootbarGameManagement';
 import LootbarSkuManagement from './pages/admin/LootbarSkuManagement';
 import { supabase } from "@/lib/supabase";
+import { SupportChatButton } from "@/components/features/SupportChatButton";
 import { useAuthStore, mapSupabaseUser } from "@/stores/authStore";
 import { AuthProvider } from "@/lib/AuthContext";
 import { trackEvent } from "@/lib/analytics";
@@ -226,6 +228,7 @@ function App() {
           <Route path="/language-currency" element={<LanguageCurrencyPage />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/messages" element={<MessagesPage />} />
+          <Route path="/buy-history" element={<BuyHistoryPage />} />
 
              {/* Secure Admin Routes — guarded by AdminRoute */}
         <Route path="/secure-dashboard-92x2011" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
@@ -245,6 +248,7 @@ function App() {
 
       </ErrorBoundary>
       </AuthProvider>
+      <SupportChatButton />
       <Toaster
         position="top-center"
         toastOptions={{

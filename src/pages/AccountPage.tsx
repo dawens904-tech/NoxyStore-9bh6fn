@@ -937,7 +937,7 @@ export function AccountPage() {
 
   const vipLevel = 1;
 
-  const sidebarItems: { key: DesktopSection; icon: any; label: string; badge?: string; dot?: boolean; highlight?: boolean }[] = [
+  const sidebarItems: { key: DesktopSection; icon: any; label: string; badge?: string; dot?: boolean; highlight?: boolean; inline?: boolean }[] = [
     { key: "buyHistory", icon: ShoppingBag, label: t("buyHistory") },
     { key: "coupon", icon: Tag, label: t("coupons"), badge: "1397" },
     { key: "settings", icon: Settings, label: t("settings") },
