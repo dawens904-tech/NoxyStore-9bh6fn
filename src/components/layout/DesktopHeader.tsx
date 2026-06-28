@@ -274,6 +274,7 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
   const [unreadCount, setUnreadCount] = useState(0);
   const gamesTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const helpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const userMenuTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Poll unread messages every 30 seconds
   useEffect(() => {
@@ -435,9 +436,20 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
 
           {/* Auth */}
           {isAuthenticated ? (
-            <div className="relative">
-              <button onClick={() => setShowUserMenu(v => !v)}
-                className="flex items-center gap-2 group">
+            <div
+              className="relative"
+              onMouseEnter={() => {
+                if (userMenuTimerRef.current) clearTimeout(userMenuTimerRef.current);
+                setShowUserMenu(true);
+              }}
+              onMouseLeave={() => {
+                userMenuTimerRef.current = setTimeout(() => setShowUserMenu(false), 200);
+              }}
+            >
+              <button
+                onClick={() => navigate("/account")}
+                className="flex items-center gap-2 group"
+              >
                 <div className="relative w-9 h-9 flex-shrink-0">
                   {user?.avatar ? (
                     <img src={user.avatar} alt={user.nickname ?? "avatar"} className="w-9 h-9 rounded-full object-cover" />
@@ -471,5 +483,4 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
     </>
   );
 }
-please when tap avatar go to acountpage but when you like pase mouse lan souli show User Dropdown (photo 10) please.
 
