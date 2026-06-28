@@ -122,4 +122,4 @@ export function AccountSidebar({ activePage, balanceOverride, pointsOverride, cl
   );
 }
 
-
+fetch real point please and in account page the logout button make it border for mobile desktop.
