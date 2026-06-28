@@ -458,3 +458,4 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
   );
 }
 
+when fe komsi wp tape user D name its show modal lan but when tap the d name auto open account page desktop and please in all page remove sidebar use one sidebar for both put the sidebar in component and also balance,point,vipbeefit,accountpage use only one.
