@@ -429,3 +429,4 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
     </>
   );
 }
+hello ai please fix mail show full page when click and Implement LootBar game image persistence system: when admin clicks Fetch, download each new game's image to Supabase Storage (banners bucket), save the stored URL in games_cache, and always display the stored image. Never re-fetch from LootBar. Existing game images must never change automatically Add real-time unread notification badge to the mail icon in DesktopHeader - count unread chat_messages where sender != 'user' and is_read = false for the current user, show red badge with count number, auto-refresh every 30 seconds using polling Update PointsPage Earn tab to show on-site tasks (Visit daily, Write a review, Complete email binding, Install app) and off-site tasks (Join Discord, Subscribe YouTube, Connect Discord account) with proper point values and Go Complete buttons linking to the right pages like in LootBar.
