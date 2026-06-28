@@ -1309,3 +1309,4 @@ export function AccountPage() {
     </>
   );
 }
+for mobile fetch real balance real point real coupon and in desktop add social account from mobile in desktop settings tabs please remove language that not exist and for mobile the logout button make it border not square.
