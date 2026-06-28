@@ -460,5 +460,5 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
     </>
   );
 }
-
+hello ai when you fe komsi u pral tap avatr profile show User Dropdown (photo 10) but remove fake emoji add only icon from accountpage.
 
