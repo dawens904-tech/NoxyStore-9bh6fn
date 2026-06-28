@@ -308,22 +308,27 @@ export function GameDetailPage() {
       // ── Load Lootbar product ──
       // Note: game_guide not supported in current proxy version — skip
 
-      supabase.from("games_cache").select("*").eq("game_id", gameId).single()
-        .then(({ data: cached }) => {
-          if (cached) {
-            setGame({
-              game_id: cached.game_id,
-              game_name: cached.game_name,
-              game_image: cached.game_image || "",
-              category: cached.category || "Top Up",
-              rating: cached.rating ?? 5.0,
-              sold_count: cached.sold_count || "100k+ Sold",
-              is_hot: cached.is_hot ?? false,
-              discount: cached.discount ?? 0,
-              min_price: cached.min_price ?? null,
-            });
-          }
-        });
+      // Load game info + override in parallel so custom image is always used
+      Promise.all([
+        supabase.from("games_cache").select("*").eq("game_id", gameId).single(),
+        supabase.from("game_overrides").select("custom_image_url").eq("game_id", gameId).single(),
+      ]).then(([{ data: cached }, { data: overrideData }]) => {
+        if (cached) {
+          // custom_image_url from game_overrides takes priority — admin-set photo is permanent
+          const resolvedImage = overrideData?.custom_image_url || cached.game_image || "";
+          setGame({
+            game_id: cached.game_id,
+            game_name: cached.game_name,
+            game_image: resolvedImage,
+            category: cached.category || "Top Up",
+            rating: cached.rating ?? 5.0,
+            sold_count: cached.sold_count || "100k+ Sold",
+            is_hot: cached.is_hot ?? false,
+            discount: cached.discount ?? 0,
+            min_price: cached.min_price ?? null,
+          });
+        }
+      });
 
       // Fetch SKUs and overrides in parallel
       Promise.all([

@@ -203,10 +203,25 @@ export function HomePage() {
 
   useEffect(() => {
     trackEvent("page_view", { page: "/" });
-    lootbarApi.getGames().then((data) => {
-      setGames(data);
+
+    // Load games + overrides in parallel, then merge custom images
+    Promise.all([
+      lootbarApi.getGames(),
+      supabase.from("game_overrides").select("game_id, custom_image_url, is_hidden"),
+    ]).then(([data, { data: overrides }]) => {
+      const overrideMap = new Map<string, string>();
+      (overrides || []).forEach((o: any) => {
+        if (o.custom_image_url) overrideMap.set(o.game_id, o.custom_image_url);
+      });
+      // Apply custom_image_url from game_overrides — this is the admin-set photo
+      const merged = data.map(g => ({
+        ...g,
+        game_image: overrideMap.get(String(g.game_id)) || g.game_image,
+      }));
+      setGames(merged);
       setIsLoading(false);
     }).catch(() => setIsLoading(false));
+
     supabase.from("home_sections").select("*").eq("is_active", true).order("sort_order")
       .then(({ data }) => { if (data) setSections(data as HomeSection[]); });
     supabase.from("home_banners").select("*").eq("is_active", true).order("sort_order")
@@ -685,4 +700,4 @@ export function HomePage() {
     </div>
   );
 }
-hello ai fix lootbar game when i edit a photo auto save the photo to database and auto set that photo in homepage and gamedetail page please dont never unchnge.
+

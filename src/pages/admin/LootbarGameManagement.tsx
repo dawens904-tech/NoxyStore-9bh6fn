@@ -195,6 +195,7 @@ export default function LootbarGameManagement() {
 
   const handleSaveOverride = async () => {
     if (!editGame) return;
+    const customImageUrl = overrideForm.custom_image_url || null;
     const payload: Partial<GameOverride> = {
       game_id: editGame.game_id,
       custom_price: overrideForm.custom_price !== "" ? Number(overrideForm.custom_price) : null,
@@ -202,7 +203,7 @@ export default function LootbarGameManagement() {
       is_featured: overrideForm.is_featured,
       is_hidden: overrideForm.is_hidden,
       sort_order: Number(overrideForm.sort_order),
-      custom_image_url: overrideForm.custom_image_url || null,
+      custom_image_url: customImageUrl,
     };
 
     const { error } = await supabase
@@ -213,6 +214,16 @@ export default function LootbarGameManagement() {
       toast.error("Failed to save override: " + error.message);
       return;
     }
+
+    // When a custom photo is set, also persist it in games_cache so all
+    // queries that read games_cache directly also show the admin-set image.
+    if (customImageUrl) {
+      await supabase
+        .from("games_cache")
+        .update({ game_image: customImageUrl })
+        .eq("game_id", editGame.game_id);
+    }
+
     toast.success(`Override saved for ${editGame.game_name}`);
     setEditGame(null);
     await fetchGames();
