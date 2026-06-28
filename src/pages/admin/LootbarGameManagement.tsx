@@ -37,6 +37,7 @@ interface GameOverride {
   game_id: string;
   custom_price: number | null;
   category_override: string | null;
+  custom_name: string | null;
   is_featured: boolean;
   is_hidden: boolean;
   sort_order: number;
@@ -63,6 +64,7 @@ export default function LootbarGameManagement() {
   // Override modal
   const [editGame, setEditGame] = useState<MergedGame | null>(null);
   const [overrideForm, setOverrideForm] = useState({
+    custom_name: "",
     custom_price: "",
     category_override: "",
     is_featured: false,
@@ -184,6 +186,7 @@ export default function LootbarGameManagement() {
   const openOverrideModal = (game: MergedGame) => {
     setEditGame(game);
     setOverrideForm({
+      custom_name: game.override?.custom_name ?? "",
       custom_price: game.override?.custom_price != null ? String(game.override.custom_price) : "",
       category_override: game.override?.category_override ?? "",
       is_featured: game.override?.is_featured ?? false,
@@ -196,8 +199,10 @@ export default function LootbarGameManagement() {
   const handleSaveOverride = async () => {
     if (!editGame) return;
     const customImageUrl = overrideForm.custom_image_url || null;
+    const customName = overrideForm.custom_name.trim() || null;
     const payload: Partial<GameOverride> = {
       game_id: editGame.game_id,
+      custom_name: customName,
       custom_price: overrideForm.custom_price !== "" ? Number(overrideForm.custom_price) : null,
       category_override: overrideForm.category_override || null,
       is_featured: overrideForm.is_featured,
@@ -215,12 +220,14 @@ export default function LootbarGameManagement() {
       return;
     }
 
-    // When a custom photo is set, also persist it in games_cache so all
-    // queries that read games_cache directly also show the admin-set image.
-    if (customImageUrl) {
+    // Persist custom image + custom name in games_cache so all pages show the admin-set values.
+    const cacheUpdate: Record<string, unknown> = {};
+    if (customImageUrl) cacheUpdate.game_image = customImageUrl;
+    if (customName) cacheUpdate.game_name = customName;
+    if (Object.keys(cacheUpdate).length > 0) {
       await supabase
         .from("games_cache")
-        .update({ game_image: customImageUrl })
+        .update(cacheUpdate)
         .eq("game_id", editGame.game_id);
     }
 
@@ -540,6 +547,18 @@ export default function LootbarGameManagement() {
                   </div>
                 </div>
               )}
+
+              {/* Custom Game Name */}
+              <div>
+                <Label className="flex items-center gap-1.5 mb-1.5"><Edit2 size={13} /> Custom Game Name</Label>
+                <Input
+                  value={overrideForm.custom_name}
+                  onChange={(e) => setOverrideForm(f => ({ ...f, custom_name: e.target.value }))}
+                  placeholder={`Original: ${editGame?.game_name}`}
+                  className="text-sm"
+                />
+                <p className="text-xs text-gray-400 mt-1">Overrides the game name everywhere (Home, Categories, Detail page).</p>
+              </div>
 
               {/* Custom Image URL */}
               <div>
