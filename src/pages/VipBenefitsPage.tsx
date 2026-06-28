@@ -14,6 +14,7 @@ import { Header } from "@/components/layout/Header";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/stores/authStore";
+import { AccountSidebar } from "@/components/features/AccountSidebar";
 
 // ─── VIP Themes (exactly matching LootBar screenshots) ────────────────────
 const VIP_THEMES: Record<number, {
@@ -479,50 +480,7 @@ export function VipBenefitsPage() {
     );
   };
 
-  // ─── Sidebar — AccountPage style ─────────────────────────────────────────
-  const Sidebar = () => (
-    <div className="w-72 flex-shrink-0">
-      <div className="bg-white shadow-sm p-5 mb-4">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xl font-bold">
-            {user?.nickname?.[0]?.toUpperCase() || "U"}
-          </div>
-          <div>
-            <p className="font-bold text-gray-900 text-sm">{user?.nickname || user?.email?.split("@")[0]}</p>
-            <button onClick={() => navigate("/vip")} className="text-xs text-yellow-600 font-medium flex items-center gap-1 hover:underline">Check VIP Benefits <ChevronRight size={12} /></button>
-          </div>
-        </div>
-        <div className="flex items-center gap-4 py-3 border-y border-gray-100">
-          <button onClick={() => navigate("/balance")} className="hover:opacity-80 transition-opacity">
-            <p className="text-lg font-bold text-gray-900">${user?.balance?.toFixed(2) || "0.00"}</p>
-            <p className="text-xs text-gray-500">Balance</p>
-          </button>
-          <div className="h-8 w-px bg-gray-200" />
-          <button onClick={() => navigate("/points")} className="hover:opacity-80 transition-opacity">
-            <p className="text-lg font-bold text-gray-900 flex items-center gap-1"><span className="text-yellow-500">●</span> {points}</p>
-            <p className="text-xs text-gray-500">Points</p>
-          </button>
-        </div>
-      </div>
-      <div className="bg-white shadow-sm overflow-hidden">
-        {[
-          { label: "Buy History", path: "/account", active: false },
-          { label: "Coupon", path: "/account", active: false },
-          { label: "Settings", path: "/account", active: false },
-          { label: "Help Center", path: "/support", active: false },
-          { label: "Feedback", path: "/feedback", active: false },
-          { label: "VIP Benefits", path: "/vip", active: true },
-          { label: "Invite for Coupons", path: "/invite", active: false },
-          { label: "Affiliate Program", path: "/affiliate", active: false, highlight: true },
-        ].map((item: any) => (
-          <button key={item.label} onClick={() => navigate(item.path)} className={`w-full flex items-center justify-between px-4 py-3.5 text-sm font-medium transition-colors border-b border-gray-50 last:border-0 ${item.active ? "bg-yellow-50 text-yellow-700 border-l-4 border-l-yellow-400" : item.highlight ? "text-yellow-500 hover:bg-yellow-50" : "text-gray-700 hover:bg-gray-50"}`}>
-            <span>{item.label}</span>
-            <ChevronRight size={14} className="text-gray-400" />
-          </button>
-        ))}
-      </div>
-    </div>
-  );
+
 
   // ─── Desktop Layout ────────────────────────────────────────────────────────
   const DesktopLayout = () => (
@@ -538,9 +496,7 @@ export function VipBenefitsPage() {
         </div>
       </div>
       <div className="max-w-[1280px] mx-auto px-6 pb-12 flex gap-6 items-start">
-        <div className="sticky top-[72px] self-start">
-          <Sidebar />
-        </div>
+        <AccountSidebar activePage="vip" pointsOverride={points} className="sticky top-[72px] self-start" />
         <div className="flex-1 min-h-0 overflow-y-auto" style={{ maxHeight: "calc(100vh - 88px)" }}>
           <div className={`rounded-lg border overflow-hidden ${isV5 ? "border-gray-800 bg-gray-900" : "border-gray-200 bg-white"}`}>
             <div className="px-8 py-6">

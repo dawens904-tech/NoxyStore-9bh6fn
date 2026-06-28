@@ -324,6 +324,8 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
     setShowUserMenu(false);
   }, [location.pathname]);
 
+  const [showNotifications, setShowNotifications] = useState(false);
+
   return (
     <>
       <LanguageCurrencyModal isOpen={showLangModal} onClose={() => setShowLangModal(false)} />
@@ -430,19 +432,13 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
           {/* Auth */}
           {isAuthenticated ? (
             <div className="relative">
-              <button onClick={() => { setShowUserMenu(!showUserMenu); setShowNotifications(false); }}
+              <button onClick={() => navigate("/account")}
                 className="flex items-center gap-2 group">
                 <div className="relative w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                   {user?.nickname?.[0]?.toUpperCase() ?? "U"}
                   <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#0a0a0a]" />
                 </div>
               </button>
-              {showUserMenu && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setShowUserMenu(false)} />
-                  <UserDropdown user={user} onClose={() => setShowUserMenu(false)} onLogout={handleLogout} />
-                </>
-              )}
             </div>
           ) : (
             <button onClick={() => navigate("/login")} className="flex items-center gap-2 group">
@@ -458,4 +454,4 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
   );
 }
 
-when fe komsi wp tape user D name its show modal lan but when tap the d name auto open account page desktop and please in all page remove sidebar use one sidebar for both put the sidebar in component and also balance,point,vipbeefit,accountpage use only one.
+

@@ -6,6 +6,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, ChevronRight } from "lucide-react";
+import { AccountSidebar } from "@/components/features/AccountSidebar";
 import { DesktopHeader } from "@/components/layout/DesktopHeader";
 import { Header } from "@/components/layout/Header";
 import { BottomNav } from "@/components/layout/BottomNav";
@@ -39,60 +40,7 @@ const REDEEM_ITEMS = [
   { id: 11, name: "$50.00 off coupon, not applicable to Genshin Impact, Honkai: Star Rail, or Zenless Zone Zero.", cost: 4500, limit: 1, redeemed: 0, color: "#10b981", vipRequired: 5, icon: "🎟️" },
 ];
 
-// ─── Sidebar (desktop) — AccountPage style ────────────────────────────────────
-function DesktopSidebar({ user, points }: { user: any; points: number }) {
-  const navigate = useNavigate();
-  const sidebarItems = [
-    { label: "Buy History", path: "/account", active: false },
-    { label: "Coupon", path: "/account", active: false },
-    { label: "Settings", path: "/account", active: false },
-    { label: "Help Center", path: "/support", active: false },
-    { label: "Feedback", path: "/feedback", active: false },
-    { label: "Points", path: "/points", active: true },
-    { label: "Invite for Coupons", path: "/invite", active: false },
-    { label: "Affiliate Program", path: "/affiliate", active: false, highlight: true },
-  ];
-  return (
-    <div className="w-72 flex-shrink-0 sticky top-24 self-start max-h-[calc(100vh-6rem)] overflow-y-auto">
-      <div className="bg-white shadow-sm p-5 mb-4">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xl font-bold">
-            {user?.nickname?.[0]?.toUpperCase() || "U"}
-          </div>
-          <div>
-            <p className="font-bold text-gray-900 text-sm">{user?.nickname || user?.email?.split("@")[0]}</p>
-            <button onClick={() => navigate("/vip")} className="text-xs text-yellow-600 font-medium flex items-center gap-1 hover:underline">Check VIP Benefits <ChevronRight size={12} /></button>
-          </div>
-        </div>
-        <div className="flex items-center gap-4 py-3 border-y border-gray-100">
-          <button onClick={() => navigate("/balance")} className="hover:opacity-80 transition-opacity">
-            <p className="text-lg font-bold text-gray-900">${user?.balance?.toFixed(2) || "0.00"}</p>
-            <p className="text-xs text-gray-500">Balance</p>
-          </button>
-          <div className="h-8 w-px bg-gray-200" />
-          <button onClick={() => navigate("/points")} className="hover:opacity-80 transition-opacity">
-            <p className="text-lg font-bold text-gray-900 flex items-center gap-1">
-              <span className="text-yellow-500">●</span> {points}
-            </p>
-            <p className="text-xs text-gray-500">Points</p>
-          </button>
-        </div>
-      </div>
-      <div className="bg-white shadow-sm overflow-hidden">
-        {sidebarItems.map((item: any) => (
-          <button
-            key={item.label}
-            onClick={() => navigate(item.path)}
-            className={`w-full flex items-center justify-between px-4 py-3.5 text-sm font-medium transition-colors border-b border-gray-50 last:border-0 ${item.active ? "bg-yellow-50 text-yellow-700 border-l-4 border-l-yellow-400" : item.highlight ? "text-yellow-500 hover:bg-yellow-50" : "text-gray-700 hover:bg-gray-50"}`}
-          >
-            <span>{item.label}</span>
-            <ChevronRight size={14} className="text-gray-400" />
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
+
 
 // ─── Earn Points Tab (LootBar style with on-site + off-site tasks) ─────────
 function EarnTab({ vipLevel, points }: { vipLevel: number; points: number }) {
@@ -466,7 +414,7 @@ export function PointsPage() {
         </div>
       </div>
       <div className="max-w-[1280px] mx-auto px-6 pb-12 flex gap-6 items-start">
-        <DesktopSidebar user={user} points={points} />
+        <AccountSidebar activePage="points" pointsOverride={points} className="sticky top-24 self-start max-h-[calc(100vh-6rem)] overflow-y-auto" />
         {/* Main content */}
         <div className="flex-1">
           {/* Points banner */}

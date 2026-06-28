@@ -9,6 +9,7 @@ import { BottomNav } from "@/components/layout/BottomNav";
 import { DesktopHeader } from "@/components/layout/DesktopHeader";
 import { Header } from "@/components/layout/Header";
 import { AgeRangeModal } from "@/components/features/AgeRangeModal";
+import { AccountSidebar } from "@/components/features/AccountSidebar";
 import { useAuthStore } from "@/stores/authStore";
 import { useSettingsStore } from "@/stores/settingsStore";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -960,49 +961,8 @@ export function AccountPage() {
       </div>
       <div className="max-w-[1280px] mx-auto px-6" style={{ height: "calc(100vh - 110px)" }}>
         <div className="flex gap-6 h-full">
-          {/* Sidebar */}
-          <div className="w-72 flex-shrink-0 overflow-hidden" style={{ position: "sticky", top: 0, alignSelf: "flex-start", maxHeight: "calc(100vh - 110px)", overflowY: "auto", scrollbarWidth: "none" } as React.CSSProperties}>
-            <div className="bg-white shadow-sm p-5 mb-4">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="relative">
-                  {avatarUrl ? <img src={avatarUrl} alt="avatar" className="w-14 h-14 rounded-full object-cover" /> : <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xl font-bold">{user?.nickname?.[0]?.toUpperCase()}</div>}
-                </div>
-                <div>
-                  <p className="font-bold text-gray-900 text-sm">{user?.nickname}</p>
-                  <button onClick={() => navigate("/vip")} className="text-xs text-yellow-600 font-medium flex items-center gap-1 hover:underline">Check VIP Benefits <ChevronRight size={12} /></button>
-                </div>
-              </div>
-              <div className="flex items-center gap-4 py-3 border-y border-gray-100">
-                <button onClick={() => navigate("/balance")} className="hover:opacity-80 transition-opacity">
-                  <p className="text-lg font-bold text-gray-900">${(user?.balance ?? 0).toFixed(2)}</p>
-                  <p className="text-xs text-gray-500">{t("balance")}</p>
-                </button>
-                <div className="h-8 w-px bg-gray-200" />
-                <button onClick={() => navigate("/points")} className="hover:opacity-80 transition-opacity">
-                  <p className="text-lg font-bold text-gray-900 flex items-center gap-1"><span className="text-yellow-500">●</span> {user?.points ?? 39}</p>
-                  <p className="text-xs text-gray-500">{t("points")}</p>
-                </button>
-              </div>
-            </div>
-            <div className="bg-white shadow-sm overflow-hidden">
-              {sidebarItems.map((item) => (
-                <button key={item.key} onClick={() => {
-                  if (item.key === "helpCenter") { navigate("/support"); return; }
-                  if (item.key === "earn") { setDesktopSection("earn"); return; }
-                  setDesktopSection(item.key);
-                }} className={`w-full flex items-center justify-between px-4 py-3.5 text-sm font-medium transition-colors border-b border-gray-50 last:border-0 ${desktopSection === item.key ? "bg-yellow-50 text-yellow-700 border-l-4 border-l-yellow-400" : item.highlight ? "text-yellow-500 hover:bg-yellow-50" : "text-gray-700 hover:bg-gray-50"}`}>
-                  <span className="flex items-center gap-3">
-                    <item.icon size={18} className={item.highlight ? "text-yellow-500" : "text-gray-400"} />
-                    {item.label}
-                  </span>
-                  <span className="flex items-center gap-2">
-                    {item.badge && <span className="text-gray-500 text-xs">{item.badge}</span>}
-                    {item.dot && <span className="w-2 h-2 bg-red-500 rounded-full" />}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
+          {/* Sidebar — shared AccountSidebar component */}
+          <AccountSidebar activePage={desktopSection === "buyHistory" ? "buyHistory" : desktopSection === "coupon" ? "coupon" : desktopSection === "invite" ? "invite" : desktopSection === "earn" ? "affiliate" : desktopSection === "feedback" ? "feedback" : "settings"} className="sticky top-0 self-start" />
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto pb-12" style={{ scrollbarWidth: "none", msOverflowStyle: "none" } as React.CSSProperties}>
