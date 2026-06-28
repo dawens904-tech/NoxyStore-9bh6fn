@@ -434,8 +434,14 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
             <div className="relative">
               <button onClick={() => navigate("/account")}
                 className="flex items-center gap-2 group">
-                <div className="relative w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                  {user?.nickname?.[0]?.toUpperCase() ?? "U"}
+                <div className="relative w-9 h-9 flex-shrink-0">
+                  {user?.avatar ? (
+                    <img src={user.avatar} alt={user.nickname ?? "avatar"} className="w-9 h-9 rounded-full object-cover" />
+                  ) : (
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center text-white font-bold text-sm">
+                      {user?.nickname?.[0]?.toUpperCase() ?? "U"}
+                    </div>
+                  )}
                   <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#0a0a0a]" />
                 </div>
               </button>
@@ -454,5 +460,5 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
     </>
   );
 }
-fetch user photo perfile and show it in  user d name example.
+
 
