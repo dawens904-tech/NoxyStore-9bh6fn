@@ -23,9 +23,6 @@ const NAV_ITEMS: { label: string; path: string; key: ActivePage; highlight?: boo
   { label: "Settings", path: "/account", key: "settings" },
   { label: "Help Center", path: "/support", key: "helpCenter" },
   { label: "Feedback", path: "/feedback", key: "feedback" },
-  { label: "Balance", path: "/balance", key: "balance" },
-  { label: "Points", path: "/points", key: "points" },
-  { label: "VIP Benefits", path: "/vip", key: "vip" },
   { label: "Invite for Coupons", path: "/invite", key: "invite" },
   { label: "Affiliate Program", path: "/affiliate", key: "affiliate", highlight: true },
 ];
