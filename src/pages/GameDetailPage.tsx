@@ -840,7 +840,7 @@ export function GameDetailPage() {
           {/* Left panel */}
           <div className="flex-1 min-w-0 overflow-y-auto" style={{ maxHeight: "calc(100vh - 130px)", scrollbarWidth: "none" } as React.CSSProperties}>
             {/* Game header */}
-            <div className="mb-4">
+            <div className="bg-white border border-gray-100 p-5 mb-4">
               <div className="flex items-start gap-5">
                 <img
                   src={imgError ? "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=100&h=100&fit=crop" : (game?.game_image || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=100&h=100&fit=crop")}
@@ -939,7 +939,7 @@ export function GameDetailPage() {
                       <button
                         key={sku.sku_id}
                         onClick={() => { setSelectedSku(sku); setExtraInfoValues({}); }}
-                        className={`relative flex flex-col bg-white border-2 overflow-hidden transition-all hover:shadow-md text-left rounded-xl ${
+                        className={`relative flex flex-col bg-white border-2 overflow-hidden transition-all hover:shadow-md text-left ${
                           isSelected ? "border-yellow-400 shadow-md" : "border-gray-200 hover:border-gray-300"
                         }`}
                       >
@@ -1210,35 +1210,24 @@ export function GameDetailPage() {
       </div>
 
       {/* Bottom CTA */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 pt-3 pb-safe z-50" style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}>
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-gray-600">Quantity</span>
-          <div className="flex items-center gap-2">
-            <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-8 h-8 rounded-xl border border-gray-300 flex items-center justify-center text-gray-600">−</button>
-            <span className="text-base font-bold w-6 text-center">{quantity}</span>
-            <button onClick={() => setQuantity(quantity + 1)} className="w-8 h-8 rounded-xl border border-gray-300 flex items-center justify-center text-gray-600">+</button>
-          </div>
-        </div>
-        <div className="flex items-center justify-between">
-          <div>
-            {totalSavings > 0 && (
-              <p className="text-xs text-orange-500 font-semibold flex items-center gap-1">
-                Savings ${totalSavings.toFixed(2)} <ChevronRight size={12} />
-              </p>
-            )}
-            <p className="text-xl font-black text-orange-500">{selectedSku ? `$${totalPrice.toFixed(2)}` : "—"}</p>
+      <div className="fixed bottom-0 left-0 right-0 bg-white z-50" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
+        <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center border border-gray-300 divide-x divide-gray-300">
+              <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-50">−</button>
+              <span className="text-sm font-bold w-8 text-center">{quantity}</span>
+              <button onClick={() => setQuantity(quantity + 1)} className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-50">+</button>
+            </div>
+            <p className="text-lg font-black text-orange-500">{selectedSku ? `$${totalPrice.toFixed(2)}` : "—"}</p>
           </div>
           <button
             onClick={handleTopUpNow}
             disabled={!selectedSku}
-            className={`px-8 py-3 rounded-2xl font-bold text-base transition-all ${selectedSku ? "bg-yellow-400 text-black hover:bg-yellow-300" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}
+            className={`px-8 py-3 font-bold text-base transition-all ${selectedSku ? "bg-yellow-400 text-black hover:bg-yellow-300" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}
           >
             {needsVerification ? "Continue" : "Top-up Now"}
           </button>
         </div>
-        {!selectedSku && (
-          <p className="text-center text-xs text-gray-400 mt-1.5">Select a package above to continue</p>
-        )}
       </div>
 
       <MobileFooter />
@@ -1302,4 +1291,4 @@ export function GameDetailPage() {
   );
 }
 
-add background square to the game header and make game card square also fix down and up more clean just down dont have to enter in a white side when down.
+
