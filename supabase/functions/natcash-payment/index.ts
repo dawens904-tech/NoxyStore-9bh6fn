@@ -72,8 +72,8 @@ serve(async (req) => {
         currency: "HTG", // Haitian Gourde — adjust if USD supported
         phone_number: phoneNumber || "",
         description: `NoxyStore Order ${referenceId}`,
-        return_url: returnUrl || "https://noxystore.gg/checkout/success",
-        cancel_url: "https://noxystore.gg/checkout/cancel",
+        return_url: returnUrl || "https://www.noxystore.com/checkout/success",
+        cancel_url: "https://www.noxystore.com/checkout/cancel",
         webhook_url: `${Deno.env.get("SUPABASE_URL")}/functions/v1/natcash-callback`,
       }),
     });
