@@ -905,7 +905,7 @@ export function GameDetailPage() {
       <div className="max-w-[1280px] mx-auto px-6 pb-16">
         <div className="flex gap-6 items-start">
           {/* Left panel */}
-          <div className="flex-1 min-w-0 overflow-y-auto" style={{ maxHeight: "calc(100vh - 130px)", scrollbarWidth: "none" } as React.CSSProperties}>
+          <div className="flex-1 min-w-0">
             {/* Game header */}
             <div className="bg-white border border-gray-100 p-5 mb-4">
               <div className="flex items-start gap-5">
@@ -1357,6 +1357,5 @@ export function GameDetailPage() {
     </>
   );
 }
-hello ai fix header sticky in mobile,desktop like the accountpage sticky even if i scroll down in all pages homes,categories,cart,checkout please in all app tsx that import header.
 
 
