@@ -840,7 +840,7 @@ export function GameDetailPage() {
           {/* Left panel */}
           <div className="flex-1 min-w-0 overflow-y-auto" style={{ maxHeight: "calc(100vh - 130px)", scrollbarWidth: "none" } as React.CSSProperties}>
             {/* Game header */}
-            <div className="bg-white p-6 mb-4 border border-gray-100 rounded-xl">
+            <div className="mb-4">
               <div className="flex items-start gap-5">
                 <img
                   src={imgError ? "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=100&h=100&fit=crop" : (game?.game_image || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=100&h=100&fit=crop")}
@@ -882,7 +882,7 @@ export function GameDetailPage() {
             </div>
 
             {notice && (
-              <div className="bg-amber-50 border border-amber-200 px-4 py-2.5 flex items-center justify-between mb-4 rounded-xl">
+              <div className="bg-amber-50 border border-amber-200 px-4 py-2.5 flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <AlertCircle size={14} className="text-amber-600 flex-shrink-0" />
                   <p className="text-sm text-amber-800">{notice}</p>
@@ -893,7 +893,7 @@ export function GameDetailPage() {
 
             {/* Region selector — dropdown with flags for gift cards, tabs for others */}
             {regions.length > 1 && (
-              <div className="bg-white px-5 py-4 mb-4 border border-gray-100 rounded-xl">
+              <div className="mb-4 py-4">
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
                   {skus[0]?.attribute?.[0]?.key_text || "Region"}
                 </p>
@@ -909,7 +909,7 @@ export function GameDetailPage() {
                       <button
                         key={r.value}
                         onClick={() => { setSelectedRegion(r.value); setSelectedSku(null); setExtraInfoValues({}); }}
-                        className={`px-4 py-2 rounded-xl border text-sm font-semibold transition-all ${
+                        className={`px-4 py-2 border text-sm font-semibold transition-all ${
                           selectedRegion === r.value
                             ? "border-yellow-400 bg-yellow-50 text-yellow-700"
                             : "border-gray-200 text-gray-600 hover:border-gray-300 bg-white"
@@ -924,7 +924,7 @@ export function GameDetailPage() {
             )}
 
             {/* SKU grid */}
-            <div className="bg-white p-5 mb-4 border border-gray-100 rounded-xl">
+            <div className="mb-4">
               {isLoading ? (
                 <div className="grid grid-cols-3 xl:grid-cols-4 gap-3">
                   {Array.from({ length: 8 }).map((_, i) => <div key={i} className="shimmer h-36 rounded-xl" />)}
@@ -979,7 +979,7 @@ export function GameDetailPage() {
             </div>
 
             {/* Instructions */}
-            <div className="bg-white p-6 border border-gray-100 rounded-xl">
+            <div className="bg-white p-6 border border-gray-100">
               <h3 className="text-lg font-bold text-gray-900 mb-4">Top-up Instructions</h3>
               <div className="grid grid-cols-2 gap-4 mb-5 pb-5 border-b border-gray-100">
                 {[
@@ -1016,7 +1016,7 @@ export function GameDetailPage() {
           {/* Right: Order panel */}
           <div className="w-72 flex-shrink-0">
             <div style={{ position: "sticky", top: "70px", maxHeight: "calc(100vh - 90px)", overflowY: "auto" } as React.CSSProperties}>
-              <div className="border border-gray-200 shadow-sm bg-white rounded-xl overflow-hidden">
+              <div className="border border-gray-200 shadow-sm bg-white overflow-hidden">
                 <div className="px-5 pt-5 pb-4 border-b border-gray-200">
                   <h3 className="font-bold text-gray-900 mb-4">Order Information</h3>
                   {selectedSku ? (
@@ -1030,7 +1030,7 @@ export function GameDetailPage() {
                 <div className="px-5 py-4 border-b border-gray-200">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-semibold text-gray-700">Quantity</span>
-                    <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden">
+                    <div className="flex items-center border border-gray-300 overflow-hidden">
                       <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-50 border-r border-gray-300">−</button>
                       <span className="text-sm font-bold w-10 text-center">{quantity}</span>
                       <button onClick={() => setQuantity(quantity + 1)} className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-50 border-l border-gray-300">+</button>
@@ -1048,7 +1048,7 @@ export function GameDetailPage() {
                   <button
                     onClick={handleDesktopTopUp}
                     disabled={!selectedSku}
-                    className={`w-full py-3.5 font-bold text-base transition-all mt-3 rounded-xl ${selectedSku ? "bg-yellow-400 hover:bg-yellow-300 text-black" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}
+                    className={`w-full py-3.5 font-bold text-base transition-all mt-3 ${selectedSku ? "bg-yellow-400 hover:bg-yellow-300 text-black" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}
                   >
                     Top-up Now
                   </button>
@@ -1301,4 +1301,4 @@ export function GameDetailPage() {
     </>
   );
 }
-hello ai remove all game card in white background remove it just display in the page pa mete yon lot background again also the region section and make region square and order ingo right make it square and ceparate it to the quantity for desktop let them self and square.
+
