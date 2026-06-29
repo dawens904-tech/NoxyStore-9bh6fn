@@ -29,19 +29,19 @@ function GamesDropdown({ onClose }: { onClose: () => void }) {
   ];
 
   return (
-    <div className="fixed left-0 right-0 z-[9999]" style={{ top: 56 }} onClick={onClose}>
-      <div className="bg-[#1a1a1a] border-t border-gray-700 shadow-2xl" onClick={e => e.stopPropagation()}>
-        <div className="max-w-[1280px] mx-auto px-6 py-6 flex gap-8">
+    <div className="absolute left-0 top-full z-[9999] pt-1" onClick={onClose}>
+      <div className="bg-[#1a1a1a] border border-gray-700 rounded-lg shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+        <div className="flex gap-0">
           {/* Popular Games */}
-          <div className="flex-1">
+          <div className="w-[420px] p-5">
             <div className="flex items-center gap-2 mb-4">
               <span className="text-orange-500 text-base">🔥</span>
               <h3 className="text-white font-bold text-sm">Popular Games</h3>
             </div>
-            <div className="grid grid-cols-2 gap-1">
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1">
               {popularGames.slice(0, 8).map(game => (
                 <button key={game.game_id} onClick={() => { navigate(`/game/${game.game_id}`); onClose(); }}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/10 text-left transition-colors group">
+                  className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-white/10 text-left transition-colors group">
                   <img src={game.game_image || `https://images.unsplash.com/photo-1542751371-adc38448a05e?w=32&h=32&fit=crop`}
                     alt={game.game_name}
                     className="w-8 h-8 rounded-lg object-cover flex-shrink-0"
@@ -51,7 +51,7 @@ function GamesDropdown({ onClose }: { onClose: () => void }) {
               ))}
               {popularGames.slice(8, 16).map(game => (
                 <button key={game.game_id} onClick={() => { navigate(`/game/${game.game_id}`); onClose(); }}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/10 text-left transition-colors group">
+                  className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-white/10 text-left transition-colors group">
                   <img src={game.game_image || `https://images.unsplash.com/photo-1542751371-adc38448a05e?w=32&h=32&fit=crop`}
                     alt={game.game_name}
                     className="w-8 h-8 rounded-lg object-cover flex-shrink-0"
@@ -66,7 +66,7 @@ function GamesDropdown({ onClose }: { onClose: () => void }) {
           <div className="w-px bg-gray-700" />
 
           {/* All Games */}
-          <div className="w-56">
+          <div className="w-52 p-5">
             <button onClick={() => { navigate("/categories"); onClose(); }}
               className="flex items-center justify-between w-full mb-4 hover:opacity-80 transition-opacity">
               <div className="flex items-center gap-2">
@@ -96,21 +96,19 @@ function GamesDropdown({ onClose }: { onClose: () => void }) {
 function HelpDropdown({ onClose }: { onClose: () => void }) {
   const navigate = useNavigate();
   return (
-    <div className="fixed left-0 right-0 z-[9999]" style={{ top: 56 }} onClick={onClose}>
-      <div className="bg-[#1a1a1a] border-t border-gray-700 shadow-2xl" onClick={e => e.stopPropagation()}>
-        <div className="max-w-[1280px] mx-auto px-6 py-4">
-          <div className="w-52">
-            {[
-              { label: "NoxyStore FAQs", path: "/support" },
-              { label: "Feedback", path: "/feedback" },
-            ].map(item => (
-              <button key={item.label} onClick={() => { navigate(item.path); onClose(); }}
-                className="w-full flex items-center justify-between px-3 py-3 text-gray-300 hover:text-white hover:bg-white/10 rounded-lg text-sm font-medium transition-colors group">
-                <span>{item.label}</span>
-                <ChevronDown size={14} className="text-gray-500 -rotate-90 group-hover:text-gray-300" />
-              </button>
-            ))}
-          </div>
+    <div className="absolute left-0 top-full z-[9999] pt-1" onClick={onClose}>
+      <div className="bg-[#1a1a1a] border border-gray-700 rounded-lg shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+        <div className="w-52 p-2">
+          {[
+            { label: "NoxyStore FAQs", path: "/support" },
+            { label: "Feedback", path: "/feedback" },
+          ].map(item => (
+            <button key={item.label} onClick={() => { navigate(item.path); onClose(); }}
+              className="w-full flex items-center justify-between px-3 py-3 text-gray-300 hover:text-white hover:bg-white/10 rounded-lg text-sm font-medium transition-colors group">
+              <span>{item.label}</span>
+              <ChevronDown size={14} className="text-gray-500 -rotate-90 group-hover:text-gray-300" />
+            </button>
+          ))}
         </div>
       </div>
     </div>
@@ -516,4 +514,3 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
     </>
   );
 }
-
