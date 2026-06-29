@@ -4,10 +4,9 @@ import { Search, Star } from "lucide-react";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { DesktopHeader } from "@/components/layout/DesktopHeader";
 import { Header } from "@/components/layout/Header";
-import { lootbarApi } from "@/lib/lootbar-api";
 import { useTranslation } from "@/hooks/useTranslation";
 import type { LootbarGame } from "@/types";
-import { supabase } from "@/lib/supabase";
+import { loadGames, loadManualGames, mergeGamesWithOverrides } from "@/lib/gameCache";
 import { FloatingChat } from "@/components/features/FloatingChat";
 import { Footer } from "@/components/layout/Footer";
 import { MobileFooter } from "@/components/layout/MobileFooter";
@@ -31,57 +30,13 @@ export function CategoriesPage() {
   const [sortMode, setSortMode] = useState<SortMode>("recommended");
 
   useEffect(() => {
-    // Load Lootbar games + overrides (image + name) in parallel
-    Promise.all([
-      lootbarApi.getGames(),
-      supabase.from("game_overrides").select("game_id, custom_image_url, custom_name, is_hidden"),
-    ]).then(([data, { data: overrides }]) => {
-      const overrideMap = new Map<string, { image?: string; name?: string }>();
-      (overrides || []).forEach((o: any) => {
-        overrideMap.set(o.game_id, {
-          image: o.custom_image_url || undefined,
-          name: o.custom_name || undefined,
-        });
-      });
-      const merged = data
-        .filter(g => {
-          const ov = overrides?.find((o: any) => o.game_id === String(g.game_id));
-          return !ov?.is_hidden;
-        })
-        .map(g => ({
-          ...g,
-          game_image: overrideMap.get(String(g.game_id))?.image || g.game_image,
-          game_name: overrideMap.get(String(g.game_id))?.name || g.game_name,
-        }));
+    // Load games with 3-day localStorage cache — instant on repeat visits
+    loadGames((rawGames, overrides) => {
+      const merged = mergeGamesWithOverrides(rawGames, overrides);
       setGames(merged);
       setIsLoading(false);
-    }).catch(() => setIsLoading(false));
-
-    // Fetch manual products
-    Promise.all([
-      supabase.from("manual_products").select("*").eq("is_active", true).order("sort_order"),
-      supabase.from("manual_skus").select("product_id, original_price, sale_price").eq("is_active", true),
-    ]).then(([{ data: prods }, { data: skuData }]) => {
-      if (!prods) return;
-      const skuMap = new Map<string, number>();
-      (skuData || []).forEach(s => {
-        const price = Number(s.sale_price ?? s.original_price);
-        const existing = skuMap.get(s.product_id);
-        if (existing === undefined || price < existing) skuMap.set(s.product_id, price);
-      });
-      const converted: LootbarGame[] = prods.map(p => ({
-        game_id: p.id,
-        game_name: p.product_name,
-        game_image: p.photo_url || "",
-        category: p.game_category || "Top Up",
-        rating: 5.0,
-        sold_count: "",
-        is_hot: p.is_featured || false,
-        discount: 0,
-        min_price: skuMap.get(p.id) ?? null,
-      }));
-      setManualGames(converted);
     });
+    loadManualGames((manual) => setManualGames(manual));
   }, []);
 
   const allGames = [...manualGames, ...games];

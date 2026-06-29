@@ -8,12 +8,13 @@ import { HeroBanner } from "@/components/features/HeroBanner";
 import { CategoryIcons } from "@/components/features/CategoryIcons";
 import { GameCard, GameCardSkeleton } from "@/components/features/GameCard";
 import { FloatingChat } from "@/components/features/FloatingChat";
-import { lootbarApi } from "@/lib/lootbar-api";
+import { useTranslation } from "@/hooks/useTranslation";
+import type { LootbarGame } from "@/types";
+import { loadGames, loadManualGames, loadBanners, loadSections, mergeGamesWithOverrides } from "@/lib/gameCache";
 import { useTranslation } from "@/hooks/useTranslation";
 import type { LootbarGame } from "@/types";
 import { Wallet, Coins, Gift, Swords } from "lucide-react";
 const BANNER_IMAGES: Array<{ id: string; title: string; subtitle: string; image_url: string; image: string; link: string; fallback: string }> = [];
-import { supabase } from "@/lib/supabase";
 import { trackEvent } from "@/lib/analytics";
 import { NewUserCouponModal } from "@/components/features/NewUserCouponModal";
 import { useAuthStore } from "@/stores/authStore";
@@ -204,55 +205,16 @@ export function HomePage() {
   useEffect(() => {
     trackEvent("page_view", { page: "/" });
 
-    // Load games + overrides in parallel, then merge custom images
-    Promise.all([
-      lootbarApi.getGames(),
-      supabase.from("game_overrides").select("game_id, custom_image_url, is_hidden"),
-    ]).then(([data, { data: overrides }]) => {
-      const overrideMap = new Map<string, string>();
-      (overrides || []).forEach((o: any) => {
-        if (o.custom_image_url) overrideMap.set(o.game_id, o.custom_image_url);
-      });
-      // Apply custom_image_url from game_overrides — this is the admin-set photo
-      const merged = data.map(g => ({
-        ...g,
-        game_image: overrideMap.get(String(g.game_id)) || g.game_image,
-      }));
+    // Load games with 3-day localStorage cache — instant on repeat visits
+    loadGames((rawGames, overrides) => {
+      const merged = mergeGamesWithOverrides(rawGames, overrides);
       setGames(merged);
       setIsLoading(false);
-    }).catch(() => setIsLoading(false));
-
-    supabase.from("home_sections").select("*").eq("is_active", true).order("sort_order")
-      .then(({ data }) => { if (data) setSections(data as HomeSection[]); });
-    supabase.from("home_banners").select("*").eq("is_active", true).order("sort_order")
-      .then(({ data }) => { if (data) setDynamicBanners(data); setIsLoadingBanners(false); })
-      .catch(() => setIsLoadingBanners(false));
-
-    // Fetch manual products and convert to LootbarGame format
-    Promise.all([
-      supabase.from("manual_products").select("*").eq("is_active", true).order("sort_order"),
-      supabase.from("manual_skus").select("product_id, original_price, sale_price").eq("is_active", true),
-    ]).then(([{ data: prods }, { data: skuData }]) => {
-      if (!prods) return;
-      const skuMap = new Map<string, number>();
-      (skuData || []).forEach(s => {
-        const price = Number(s.sale_price ?? s.original_price);
-        const existing = skuMap.get(s.product_id);
-        if (existing === undefined || price < existing) skuMap.set(s.product_id, price);
-      });
-      const converted: LootbarGame[] = prods.map(p => ({
-        game_id: p.id,
-        game_name: p.product_name,
-        game_image: p.photo_url || "",
-        category: p.game_category || "Top Up",
-        rating: 5.0,
-        sold_count: "",
-        is_hot: p.is_featured || false,
-        discount: 0,
-        min_price: skuMap.get(p.id) ?? null,
-      }));
-      setManualGames(converted);
     });
+
+    loadManualGames((manual) => setManualGames(manual));
+    loadBanners((b) => setDynamicBanners(b));
+    loadSections((s) => setSections(s as HomeSection[]));
   }, []);
 
   const getSectionGames = (section: HomeSection): LootbarGame[] => {
@@ -700,4 +662,3 @@ export function HomePage() {
     </div>
   );
 }
-hello ai auto save all game so when user enter to the app all game already here dont have to refetch only if have new game check in silent chak 3days and load all game and saved all also in gamedetail,categoires please also same has banner.

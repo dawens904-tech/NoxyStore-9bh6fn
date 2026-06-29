@@ -10,6 +10,7 @@ import { lootbarApi } from "@/lib/lootbar-api";
 import type { LootbarGame, SkuItem } from "@/types";
 import { trackEvent } from "@/lib/analytics";
 import { supabase } from "@/lib/supabase";
+import { invalidateGameCache } from "@/lib/gameCache";
 import { toast } from "sonner";
 
 // ── Country flag + name map ──────────────────────────────────────────────────
