@@ -170,6 +170,7 @@ export function HomePage() {
   // Mobile row expansion state — 3 cols, 3 lines initially
   const [hotRows, setHotRows] = useState(3);
   const [coinRows, setCoinRows] = useState(3);
+  const [lifestyleRows, setLifestyleRows] = useState(3);
   const [discountRows, setDiscountRows] = useState(3);
   const [newRows, setNewRows] = useState(3);
   const [giftRows, setGiftRows] = useState(3);
@@ -177,6 +178,7 @@ export function HomePage() {
   // Desktop row expansion state — 7 cols, 2 rows initially
   const [hotDesktopRows, setHotDesktopRows] = useState(2);
   const [coinDesktopRows, setCoinDesktopRows] = useState(2);
+  const [lifestyleDesktopRows, setLifestyleDesktopRows] = useState(2);
   const [discountDesktopRows, setDiscountDesktopRows] = useState(2);
   const [newDesktopRows, setNewDesktopRows] = useState(2);
   const [giftDesktopRows, setGiftDesktopRows] = useState(2);
@@ -239,6 +241,28 @@ export function HomePage() {
     g.game_name?.toLowerCase().includes("coin") ||
     g.game_name?.toLowerCase().includes("diamond") ||
     g.game_name?.toLowerCase().includes("gem")
+  );
+  const lifestyleGames = allGames.filter((g) =>
+    g.category?.toLowerCase().includes("social") ||
+    g.category?.toLowerCase().includes("lifestyle") ||
+    g.category?.toLowerCase().includes("app") ||
+    g.game_name?.toLowerCase().includes("tiktok") ||
+    g.game_name?.toLowerCase().includes("spotify") ||
+    g.game_name?.toLowerCase().includes("netflix") ||
+    g.game_name?.toLowerCase().includes("facebook") ||
+    g.game_name?.toLowerCase().includes("instagram") ||
+    g.game_name?.toLowerCase().includes("youtube") ||
+    g.game_name?.toLowerCase().includes("discord") ||
+    g.game_name?.toLowerCase().includes("whatsapp") ||
+    g.game_name?.toLowerCase().includes("telegram") ||
+    g.game_name?.toLowerCase().includes("snapchat") ||
+    g.game_name?.toLowerCase().includes("twitter") ||
+    g.game_name?.toLowerCase().includes("wechat") ||
+    g.game_name?.toLowerCase().includes("bigo") ||
+    g.game_name?.toLowerCase().includes("likee") ||
+    g.game_name?.toLowerCase().includes("viber") ||
+    g.game_name?.toLowerCase().includes("line coins") ||
+    g.game_name?.toLowerCase().includes("kakao")
   );
   const giftCardGames = allGames.filter((g) =>
     g.category?.toLowerCase().includes("gift") ||
@@ -391,6 +415,35 @@ export function HomePage() {
                   </button>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Lifestyle & Social App Top-up — desktop */}
+          {lifestyleGames.length > 0 && (
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-xl font-black text-gray-900">Lifestyle &amp; Social App Top-up</h2>
+                  <p className="text-sm text-gray-500 mt-0.5">TikTok, Spotify, Discord &amp; more</p>
+                </div>
+                <button onClick={() => navigate("/categories?filter=Social")} className="flex items-center gap-1 text-sm text-gray-600 font-semibold border border-gray-200 bg-white rounded-xl px-3 py-1.5 hover:bg-gray-50">
+                  {t("all")} ({lifestyleGames.length}) <ChevronRight size={14} />
+                </button>
+              </div>
+              <div className="grid grid-cols-5 lg:grid-cols-7 gap-4">
+                {isLoading
+                  ? Array.from({ length: lifestyleDesktopRows * DESKTOP_COLS }).map((_, i) => <div key={i} className="shimmer rounded-2xl aspect-square" />)
+                  : lifestyleGames.slice(0, lifestyleDesktopRows * DESKTOP_COLS).map((game) => <GameCard key={game.game_id} game={game} size="sm" />)}
+              </div>
+              {!isLoading && lifestyleGames.length > lifestyleDesktopRows * DESKTOP_COLS ? (
+                <button onClick={() => setLifestyleDesktopRows(r => r + 2)} className="w-full mt-4 py-2 text-sm font-semibold text-gray-400 flex items-center justify-center gap-1 hover:text-gray-700 transition-colors">
+                  View More <ChevronRight size={14} />
+                </button>
+              ) : !isLoading && lifestyleDesktopRows > 2 ? (
+                <button onClick={() => setLifestyleDesktopRows(2)} className="w-full mt-4 py-2 text-sm font-semibold text-gray-400 flex items-center justify-center gap-1 hover:text-gray-700 transition-colors">
+                  Show Less <ChevronRight size={14} className="rotate-180" />
+                </button>
+              ) : null}
             </div>
           )}
 
@@ -621,6 +674,36 @@ export function HomePage() {
           </div>
         )}
 
+        {/* LIFESTYLE & SOCIAL APP TOP-UP */}
+        {lifestyleGames.length > 0 && (
+          <div className="mt-6 px-3">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <h2 className="text-lg font-black text-gray-900">Lifestyle &amp; Social App</h2>
+                <p className="text-xs text-gray-500 mt-0.5">TikTok, Spotify &amp; more</p>
+              </div>
+              <button onClick={() => navigate("/categories?filter=Social")} className="flex items-center gap-1 text-xs text-gray-500 font-medium">
+                {t("all")} ({lifestyleGames.length}) <ChevronRight size={12} />
+              </button>
+            </div>
+            <div className="grid grid-cols-3 gap-2.5">
+              {isLoading
+                ? Array.from({ length: lifestyleRows * COLS }).map((_, i) => <div key={i} className="shimmer rounded-xl aspect-square" />)
+                : lifestyleGames.slice(0, lifestyleRows * COLS).map((game) => <MobileGameCard key={game.game_id} game={game} />)
+              }
+            </div>
+            {lifestyleGames.length > lifestyleRows * COLS ? (
+              <button onClick={() => setLifestyleRows((r) => r + LINES_PER_CLICK)} className="w-full mt-4 py-2 text-sm font-semibold text-gray-400 flex items-center justify-center gap-1 hover:text-gray-700 transition-colors">
+                {t("viewMore")} <ChevronRight size={14} />
+              </button>
+            ) : lifestyleRows > INITIAL_LINES ? (
+              <button onClick={() => setLifestyleRows(INITIAL_LINES)} className="w-full mt-4 py-2 text-sm font-semibold text-gray-400 flex items-center justify-center gap-1 hover:text-gray-700 transition-colors">
+                {t("showLess")} <ChevronRight size={14} className="rotate-180" />
+              </button>
+            ) : null}
+          </div>
+        )}
+
         {/* DISCOUNT DEALS */}
         {discountGames.length > 0 && (
           <div className="mt-6 px-3">
@@ -727,4 +810,4 @@ export function HomePage() {
     </div>
   );
 }
-after popular game key add another section for Lifestyle & Social App Top-up and add only lifestyle social app from lootbar.
+
