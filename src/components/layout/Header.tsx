@@ -24,7 +24,7 @@ export function Header({ showMenu, title, showBack }: HeaderProps) {
     <>
       <LanguageCurrencyModal isOpen={showLangModal} onClose={() => setShowLangModal(false)} />
 
-      <header className="bg-[#0a0a0a] px-4 py-0 sticky top-0 z-40 shadow-md">
+      <header className="bg-[#0a0a0a] px-4 py-0 fixed top-0 left-0 right-0 z-40 shadow-md">
         {/* Top row: [left: back/menu + logo] [right: actions] */}
         <div className="flex items-center justify-between h-12">
           {/* Left: back/menu button + logo side by side */}
@@ -165,6 +165,8 @@ export function Header({ showMenu, title, showBack }: HeaderProps) {
           </div>
         </div>
       )}
+      {/* Spacer to offset fixed header height */}
+      <div className="h-12" />
     </>
   );
 }

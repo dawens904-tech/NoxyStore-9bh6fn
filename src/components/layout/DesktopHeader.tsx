@@ -367,7 +367,7 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
       <LanguageCurrencyModal isOpen={showLangModal} onClose={() => setShowLangModal(false)} />
 
       {/* Sticky header */}
-      <header className="bg-[#0a0a0a] sticky top-0 z-50 shadow-lg" style={{ height: 56 }}>
+      <header className="bg-[#0a0a0a] fixed top-0 left-0 right-0 z-50 shadow-lg" style={{ height: 56 }}>
         <div className="max-w-[1280px] mx-auto px-6 flex items-center h-full gap-8">
           {/* Logo */}
           <button onClick={() => navigate("/")} className="flex-shrink-0 flex items-center gap-1">
@@ -511,6 +511,8 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
           )}
         </div>
       </header>
+      {/* Spacer to offset fixed header height */}
+      <div style={{ height: 56 }} />
     </>
   );
 }
