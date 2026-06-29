@@ -661,4 +661,4 @@ export function HomePage() {
   );
 }
 
-
+after the section hotselling add another Popular Game Coins.
