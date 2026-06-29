@@ -409,8 +409,8 @@ export function LoginPage() {
       {/* Blurred backdrop - page behind is visible but blurred */}
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={handleClose} />
       
-      {/* Modal container — large square, glass frosted effect */}
-      <div className="relative bg-white/88 backdrop-blur-xl rounded-2xl border border-white/50 shadow-2xl w-full max-w-md mx-4 p-8" style={{ minHeight: '480px' }}>
+      {/* Modal — solid white on desktop, full page on mobile */}
+      <div className="relative bg-white w-full min-h-screen flex flex-col justify-center sm:min-h-0 sm:block sm:max-w-md sm:mx-4 sm:rounded-2xl sm:shadow-2xl overflow-y-auto p-8">
         {/* Close button */}
         <button
           onClick={handleClose}
@@ -459,4 +459,4 @@ export function LoginPage() {
     </div>
   );
 }
-please modal background must be white its not the modal must be blur the back background and when a user open login page let their see the back other page theior open the modal login and for mobile make login better full page.
+
