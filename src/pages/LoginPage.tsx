@@ -459,4 +459,3 @@ export function LoginPage() {
     </div>
   );
 }
-hello AI, please make the login modal white When users open the login modal from the home page, keep the home page visible with a blurred background behind the modal Do not add a white full-screen background—only the modal itself should be white.
