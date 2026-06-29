@@ -5,7 +5,7 @@ import { useAuthStore } from "@/stores/authStore";
 import AdminSidebar from "./AdminSidebar";
 import {
   ShoppingCart, RefreshCw, Search, Eye, Clock, CheckCircle,
-  XCircle, Loader2, AlertCircle, ChevronLeft, ChevronRight,
+  XCircle, Loader2, AlertCircle, ChevronLeft, ChevronRight, Download,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -139,6 +139,49 @@ export default function AdminOrdersPage() {
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
+  const handleExportCSV = async () => {
+    // Fetch all filtered orders (no pagination limit) for export
+    toast.info("Preparing CSV export...");
+    const tab = TABS.find(t => t.key === activeTab);
+    let query = supabase
+      .from("orders")
+      .select("reference_id, game_name, sku_name, user_email, price, state, created_at")
+      .order("created_at", { ascending: false });
+    if (tab?.state !== null && tab?.state !== undefined) {
+      query = query.eq("state", tab.state);
+    }
+    if (search.trim()) {
+      query = query.or(
+        `reference_id.ilike.%${search.trim()}%,game_name.ilike.%${search.trim()}%,user_email.ilike.%${search.trim()}%`
+      );
+    }
+    const { data, error } = await query;
+    if (error || !data) { toast.error("Export failed: " + error?.message); return; }
+
+    const stateLabel = (s: number) => STATE_CONFIG[s]?.label ?? String(s);
+    const rows = [
+      ["reference_id", "game_name", "sku_name", "user_email", "price", "state", "created_at"],
+      ...data.map((o: any) => [
+        o.reference_id,
+        o.game_name,
+        o.sku_name,
+        o.user_email ?? "",
+        Number(o.price).toFixed(2),
+        stateLabel(o.state),
+        new Date(o.created_at).toISOString(),
+      ]),
+    ];
+    const csv = rows.map(r => r.map((v: any) => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `orders-${activeTab}-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`Exported ${data.length} orders to CSV`);
+  };
+
   return (
     <div className="flex min-h-screen bg-[#f5f7fa]">
       <AdminSidebar />
@@ -151,13 +194,22 @@ export default function AdminOrdersPage() {
               <h1 className="text-3xl font-black text-gray-900 mb-1">Orders Management</h1>
               <p className="text-gray-500 text-sm">View and manage all customer orders</p>
             </div>
-            <button
-              onClick={() => { fetchOrders(); fetchTabCounts(); }}
-              className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-all shadow-sm"
-            >
-              <RefreshCw size={14} className={isLoading ? "animate-spin" : ""} />
-              Refresh
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleExportCSV}
+                className="flex items-center gap-2 bg-yellow-400 hover:bg-yellow-300 rounded-xl px-4 py-2 text-sm font-bold text-black transition-all shadow-sm"
+              >
+                <Download size={14} />
+                Export CSV
+              </button>
+              <button
+                onClick={() => { fetchOrders(); fetchTabCounts(); }}
+                className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-all shadow-sm"
+              >
+                <RefreshCw size={14} className={isLoading ? "animate-spin" : ""} />
+                Refresh
+              </button>
+            </div>
           </div>
 
           {/* Tabs */}

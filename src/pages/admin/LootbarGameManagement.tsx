@@ -14,6 +14,7 @@ import {
   DollarSign, AlertCircle, Loader2, List
 } from "lucide-react";
 import { toast } from "sonner";
+import { invalidateGameCache } from "@/lib/gameCache";
 
 interface GameCache {
   game_id: string;
@@ -232,6 +233,7 @@ export default function LootbarGameManagement() {
     }
 
     toast.success(`Override saved for ${editGame.game_name}`);
+    invalidateGameCache(); // force frontend cache refresh on next page visit
     setEditGame(null);
     await fetchGames();
   };
