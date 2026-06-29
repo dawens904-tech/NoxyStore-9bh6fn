@@ -169,12 +169,14 @@ export function HomePage() {
 
   // Mobile row expansion state — 3 cols, 3 lines initially
   const [hotRows, setHotRows] = useState(3);
+  const [coinRows, setCoinRows] = useState(3);
   const [discountRows, setDiscountRows] = useState(3);
   const [newRows, setNewRows] = useState(3);
   const [giftRows, setGiftRows] = useState(3);
 
   // Desktop row expansion state — 7 cols, 2 rows initially
   const [hotDesktopRows, setHotDesktopRows] = useState(2);
+  const [coinDesktopRows, setCoinDesktopRows] = useState(2);
   const [discountDesktopRows, setDiscountDesktopRows] = useState(2);
   const [newDesktopRows, setNewDesktopRows] = useState(2);
   const [giftDesktopRows, setGiftDesktopRows] = useState(2);
@@ -232,6 +234,12 @@ export function HomePage() {
   const hotGames = allGames.filter((g) => g.is_hot).concat(allGames.filter(g => !g.is_hot));
   const discountGames = allGames.filter((g) => g.discount && g.discount > 0);
   const newGames = [...manualGames, ...games].reverse();
+  const gameCoinGames = allGames.filter((g) =>
+    g.category?.toLowerCase().includes("coin") ||
+    g.game_name?.toLowerCase().includes("coin") ||
+    g.game_name?.toLowerCase().includes("diamond") ||
+    g.game_name?.toLowerCase().includes("gem")
+  );
   const giftCardGames = allGames.filter((g) =>
     g.category?.toLowerCase().includes("gift") ||
     g.game_name?.toLowerCase().includes("gift") ||
@@ -304,6 +312,35 @@ export function HomePage() {
               </button>
             ) : null}
           </div>
+
+          {/* Popular Game Coins — desktop */}
+          {gameCoinGames.length > 0 && (
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-xl font-black text-gray-900">Popular Game Coins</h2>
+                  <p className="text-sm text-gray-500 mt-0.5">Top up diamonds, coins & gems instantly</p>
+                </div>
+                <button onClick={() => navigate("/categories?filter=Game+Coins")} className="flex items-center gap-1 text-sm text-gray-600 font-semibold border border-gray-200 bg-white rounded-xl px-3 py-1.5 hover:bg-gray-50">
+                  {t("all")} ({gameCoinGames.length}) <ChevronRight size={14} />
+                </button>
+              </div>
+              <div className="grid grid-cols-5 lg:grid-cols-7 gap-4">
+                {isLoading
+                  ? Array.from({ length: coinDesktopRows * DESKTOP_COLS }).map((_, i) => <div key={i} className="shimmer rounded-2xl aspect-square" />)
+                  : gameCoinGames.slice(0, coinDesktopRows * DESKTOP_COLS).map((game) => <GameCard key={game.game_id} game={game} size="sm" />)}
+              </div>
+              {!isLoading && gameCoinGames.length > coinDesktopRows * DESKTOP_COLS ? (
+                <button onClick={() => setCoinDesktopRows(r => r + 2)} className="w-full mt-4 py-2 text-sm font-semibold text-gray-400 flex items-center justify-center gap-1 hover:text-gray-700 transition-colors">
+                  View More <ChevronRight size={14} />
+                </button>
+              ) : !isLoading && coinDesktopRows > 2 ? (
+                <button onClick={() => setCoinDesktopRows(2)} className="w-full mt-4 py-2 text-sm font-semibold text-gray-400 flex items-center justify-center gap-1 hover:text-gray-700 transition-colors">
+                  Show Less <ChevronRight size={14} className="rotate-180" />
+                </button>
+              ) : null}
+            </div>
+          )}
 
           {/* Popular Game Key — desktop */}
           {(gameKeyGames.length > 0 || !isLoading) && (
@@ -508,6 +545,36 @@ export function HomePage() {
           ) : null}
         </div>
 
+        {/* POPULAR GAME COINS */}
+        {gameCoinGames.length > 0 && (
+          <div className="mt-6 px-3">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <h2 className="text-lg font-black text-gray-900">Popular Game Coins</h2>
+                <p className="text-xs text-gray-500 mt-0.5">Diamonds, coins &amp; gems</p>
+              </div>
+              <button onClick={() => navigate("/categories?filter=Game+Coins")} className="flex items-center gap-1 text-xs text-gray-500 font-medium">
+                {t("all")} ({gameCoinGames.length}) <ChevronRight size={12} />
+              </button>
+            </div>
+            <div className="grid grid-cols-3 gap-2.5">
+              {isLoading
+                ? Array.from({ length: coinRows * COLS }).map((_, i) => <div key={i} className="shimmer rounded-xl aspect-square" />)
+                : gameCoinGames.slice(0, coinRows * COLS).map((game) => <MobileGameCard key={game.game_id} game={game} />)
+              }
+            </div>
+            {gameCoinGames.length > coinRows * COLS ? (
+              <button onClick={() => setCoinRows((r) => r + LINES_PER_CLICK)} className="w-full mt-4 py-2 text-sm font-semibold text-gray-400 flex items-center justify-center gap-1 hover:text-gray-700 transition-colors">
+                {t("viewMore")} <ChevronRight size={14} />
+              </button>
+            ) : coinRows > INITIAL_LINES ? (
+              <button onClick={() => setCoinRows(INITIAL_LINES)} className="w-full mt-4 py-2 text-sm font-semibold text-gray-400 flex items-center justify-center gap-1 hover:text-gray-700 transition-colors">
+                {t("showLess")} <ChevronRight size={14} className="rotate-180" />
+              </button>
+            ) : null}
+          </div>
+        )}
+
         {/* POPULAR GAME KEY */}
         {(gameKeyGames.length > 0 || !isLoading) && (
           <div className="mt-6 mx-3 rounded-2xl overflow-hidden relative" style={{ background: `url(${gameKeysBg}) center/cover no-repeat` }}>
@@ -661,4 +728,3 @@ export function HomePage() {
   );
 }
 
-after the section hotselling add another Popular Game Coins.
