@@ -1339,3 +1339,4 @@ export function CheckoutPage() {
     </>
   );
 }
+fix left spacing lan remove spacing lan kite a little and put it same color as background right and fix and in gamedetail desktop add 5fr 1row.
