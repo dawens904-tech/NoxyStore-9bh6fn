@@ -445,7 +445,7 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
 
           {/* Language/Currency */}
           <button onClick={() => setShowLangModal(true)}
-            className="flex items-center gap-1.5 bg-[#1a1a1a] hover:bg-[#222] border border-gray-700 text-white text-sm font-semibold px-3 py-1.5 rounded transition-colors whitespace-nowrap">
+            className="flex items-center gap-1 bg-[#0a0a0a] hover:bg-[#111] text-gray-400 hover:text-gray-200 text-xs font-medium py-1 transition-colors whitespace-nowrap">
             {langDisplay} / {currDisplay}
           </button>
 

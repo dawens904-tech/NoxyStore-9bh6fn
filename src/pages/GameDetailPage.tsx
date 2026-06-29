@@ -930,7 +930,7 @@ export function GameDetailPage() {
                   {Array.from({ length: 8 }).map((_, i) => <div key={i} className="shimmer h-36 rounded-xl" />)}
                 </div>
               ) : (
-                <div className="grid grid-cols-3 xl:grid-cols-4 gap-3">
+                <div className="grid grid-cols-4 xl:grid-cols-5 gap-3">
                   {filteredSkus.map((sku) => {
                     const markedPrice = applyMarkup(sku.price || 0);
                     const savings = sku.discount_amount || 0;
