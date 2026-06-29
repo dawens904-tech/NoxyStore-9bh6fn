@@ -661,4 +661,4 @@ export function HomePage() {
   );
 }
 
-
+hello ai you tell me both Header (mobile) and DesktopHeader (desktop) already have sticky top-0 applied and remain always visible regardless of scroll direction but when i scroll its still scroll check what happens and teste before check in both header page.
