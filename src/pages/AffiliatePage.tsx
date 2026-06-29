@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { DesktopHeader } from "@/components/layout/DesktopHeader";
 import { Header } from "@/components/layout/Header";
 import { BottomNav } from "@/components/layout/BottomNav";
+import { AccountSidebar } from "@/components/features/AccountSidebar";
 import { toast } from "sonner";
 
 type AffiliateStep =
@@ -279,7 +280,11 @@ export function AffiliatePage() {
         <div className="hidden lg:block"><DesktopHeader /></div>
         <div className="lg:hidden"><Header showBack title="Affiliate Program" /></div>
 
-        <div className="max-w-lg mx-auto px-0 lg:px-4 pt-0 lg:pt-4 pb-24">
+        {/* Desktop: show with sidebar */}
+        <div className="hidden lg:block max-w-[1280px] mx-auto px-6 py-6">
+          <div className="flex gap-6 items-start">
+            <AccountSidebar activePage="affiliate" className="sticky top-[72px] self-start" />
+            <div className="flex-1 max-w-lg">
 
           {/* Profile Header */}
           <div className="bg-white px-4 pt-4 pb-4 mb-2">
@@ -498,13 +503,46 @@ export function AffiliatePage() {
               <p className="text-gray-400 font-medium">Growth Center coming soon</p>
             </div>
           )}
+            </div>
+          </div>
         </div>
 
-        <div className="lg:hidden"><BottomNav /></div>
+        {/* Mobile only - same content without sidebar */}
+        <div className="lg:hidden max-w-lg mx-auto px-0 pt-0 pb-24">
+          <div className="bg-white px-4 pt-4 pb-4 mb-2">
+            <div className="flex items-center gap-3 mb-4">
+              {existingStore.avatar_url ? (
+                <img src={existingStore.avatar_url} alt="" className="w-14 h-14 rounded-full object-cover" />
+              ) : (
+                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center text-white text-2xl font-black">{existingStore.store_name[0]?.toUpperCase()}</div>
+              )}
+              <div className="flex-1">
+                <p className="font-bold text-gray-900">{user?.nickname || "U" + user?.id?.slice(-10)}</p>
+                <p className="text-sm text-gray-500">Promotion Rookie</p>
+              </div>
+            </div>
+            <div className="flex gap-4 mb-4">
+              <div className="flex-1"><p className="text-orange-500 font-black text-2xl">$0.00</p><p className="text-gray-500 text-xs">Pending settlement</p></div>
+              <div className="flex-1"><p className="text-orange-500 font-black text-2xl">$0.00</p><p className="text-gray-500 text-xs">Cumulative Amount</p></div>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => setShowIncomeDetails(true)} className="flex-1 border border-gray-300 rounded-xl py-2.5 font-semibold text-gray-700 text-sm">Income Details</button>
+              <button onClick={() => toast.info("Withdrawal feature coming soon")} className="flex-1 bg-yellow-400 hover:bg-yellow-300 text-black font-bold rounded-xl py-2.5 text-sm">Withdraw</button>
+            </div>
+          </div>
+          <div className="bg-white px-4 py-4 mb-2">
+            <p className="font-bold text-gray-900 text-sm mb-3">My Store</p>
+            <div className="flex gap-2 mb-2">
+              <div className="flex-1 bg-gray-100 rounded-xl px-3 py-2.5 text-sm text-gray-500 font-mono truncate">noxystore.gg/shop/{existingStore.store_link}</div>
+              <button onClick={handleCopyLink} className="bg-yellow-400 text-black font-bold px-4 py-2.5 rounded-xl text-sm">{copiedLink ? "Copied!" : "Copy"}</button>
+            </div>
+          </div>
+        </div>
 
         {showShareCode && <ShareCodeModal referralCode={referralCode} onClose={() => setShowShareCode(false)} />}
         {showIncomeDetails && <IncomeDetailsModal onClose={() => setShowIncomeDetails(false)} />}
         {showClients && <ClientsModal tab={showClients} onClose={() => setShowClients(null)} />}
+        <div className="lg:hidden"><BottomNav /></div>
       </div>
     );
   }

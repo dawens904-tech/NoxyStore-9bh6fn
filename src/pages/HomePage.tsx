@@ -11,8 +11,6 @@ import { FloatingChat } from "@/components/features/FloatingChat";
 import { useTranslation } from "@/hooks/useTranslation";
 import type { LootbarGame } from "@/types";
 import { loadGames, loadManualGames, loadBanners, loadSections, mergeGamesWithOverrides } from "@/lib/gameCache";
-import { useTranslation } from "@/hooks/useTranslation";
-import type { LootbarGame } from "@/types";
 import { Wallet, Coins, Gift, Swords } from "lucide-react";
 const BANNER_IMAGES: Array<{ id: string; title: string; subtitle: string; image_url: string; image: string; link: string; fallback: string }> = [];
 import { trackEvent } from "@/lib/analytics";

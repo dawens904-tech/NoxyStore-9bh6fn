@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Copy, Check, ChevronRight, X, Info } from "lucide-react";
+import { Check, ChevronRight, X, Info } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { supabase } from "@/lib/supabase";
 import { DesktopHeader } from "@/components/layout/DesktopHeader";
 import { Header } from "@/components/layout/Header";
 import { BottomNav } from "@/components/layout/BottomNav";
+import { AccountSidebar } from "@/components/features/AccountSidebar";
 import inviteReward from "@/assets/invite-reward.png";
 import couponSave5 from "@/assets/coupon-save5.png";
 import { toast } from "sonner";
@@ -36,7 +37,6 @@ interface TaskGroup {
   groupProgress: { current: number; total: number };
 }
 
-// Social platform SVGs
 function XIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
@@ -44,7 +44,6 @@ function XIcon() {
     </svg>
   );
 }
-
 function FacebookIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
@@ -52,7 +51,6 @@ function FacebookIcon() {
     </svg>
   );
 }
-
 function WhatsAppIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
@@ -60,11 +58,10 @@ function WhatsAppIcon() {
     </svg>
   );
 }
-
 function DiscordIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057.1 18.079.11 18.1.128 18.11a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
+      <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057.1 18.079.11 18.1.128 18.11a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/>
     </svg>
   );
 }
@@ -83,10 +80,113 @@ function generateReferralCode(userId: string) {
 function generateShortCode() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
   let code = "";
-  for (let i = 0; i < 6; i++) {
-    code += chars[Math.floor(Math.random() * chars.length)];
-  }
+  for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
   return code;
+}
+
+// Shared invite content used in both desktop and mobile
+function InviteBody({
+  referral, useShorter, setUseShorter, copied, handleCopy, handleShare,
+  inviteLink, usersInvited, ordersCompleted, totalSpending,
+  taskGroups, socialPlatforms, setSelectedTask, setShowTaskInfo, setShowRules,
+}: any) {
+  return (
+    <>
+      {/* Hero banner */}
+      <div className="bg-yellow-400 rounded-2xl p-5 mb-5 relative overflow-hidden">
+        <div className="flex items-start gap-4">
+          <div className="flex-1">
+            <h2 className="font-black text-gray-900 text-lg leading-tight mb-1">
+              Invite new users to sign up and make orders to earn multiple rewards!
+            </h2>
+            <p className="text-gray-700 text-sm">The more users you invite the more rewards you could earn!</p>
+            <button onClick={() => setShowRules(true)} className="flex items-center gap-1 text-blue-700 font-semibold text-sm mt-2 hover:underline">
+              Click here to view the rules <ChevronRight size={14} />
+            </button>
+          </div>
+          <img src={inviteReward} alt="Invite rewards" className="w-24 h-24 object-contain flex-shrink-0" />
+        </div>
+      </div>
+
+      {/* Social share */}
+      <div className="bg-white rounded-2xl p-5 mb-4 shadow-sm">
+        <div className="flex items-center justify-center gap-6 mb-5">
+          {socialPlatforms.map((p: any) => (
+            <button key={p.key} onClick={() => handleShare(p.key)} className="flex flex-col items-center gap-2">
+              <div className={`w-12 h-12 ${p.bg} rounded-full flex items-center justify-center ${p.text} shadow-md hover:scale-105 transition-transform`}>{p.icon}</div>
+              <span className="text-xs text-gray-600 font-medium">{p.label}</span>
+            </button>
+          ))}
+        </div>
+        <div className="flex gap-2 mb-3">
+          <div className="flex-1 bg-gray-100 rounded-xl px-4 py-3 text-sm text-gray-500 font-mono truncate">{inviteLink}</div>
+          <button onClick={handleCopy} className="bg-yellow-400 hover:bg-yellow-300 text-black font-bold px-5 py-3 rounded-xl flex items-center gap-2 transition-colors whitespace-nowrap">
+            {copied ? <Check size={16} /> : (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            )}
+            Copy Link
+          </button>
+        </div>
+        <button onClick={() => setUseShorter(!useShorter)} className="flex items-center gap-2 text-sm text-gray-600">
+          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${useShorter ? "bg-yellow-400 border-yellow-400" : "border-gray-300"}`}>
+            {useShorter && <Check size={11} className="text-black" />}
+          </div>
+          Share with a shorter link
+        </button>
+      </div>
+
+      {/* Invite Progress */}
+      <div className="bg-white rounded-2xl p-5 mb-4 shadow-sm">
+        <h3 className="font-black text-gray-900 text-base mb-4">Invite Progress Overview</h3>
+        <div className="grid grid-cols-3 gap-4 text-center">
+          <div>
+            <p className="text-2xl font-black text-orange-500">{usersInvited}</p>
+            <p className="text-xs text-gray-500 mt-0.5">Users Invited</p>
+          </div>
+          <div>
+            <p className="text-2xl font-black text-orange-500">{ordersCompleted}</p>
+            <p className="text-xs text-gray-500 mt-0.5">Orders Completed</p>
+          </div>
+          <div>
+            <p className="text-2xl font-black text-orange-500">${totalSpending.toFixed(2)}</p>
+            <p className="text-xs text-gray-500 mt-0.5">Total Spending</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Task & Reward */}
+      <div className="bg-white rounded-2xl p-5 shadow-sm">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-1 h-5 bg-yellow-400 rounded-full" />
+          <h3 className="font-black text-gray-900 text-base">Task &amp; Reward</h3>
+          <button onClick={() => setShowTaskInfo(true)} className="text-gray-400 hover:text-gray-600"><Info size={16} /></button>
+        </div>
+        <div className="space-y-3">
+          {taskGroups.map((group: TaskGroup) => (
+            <div key={group.key} className="border border-gray-100 rounded-2xl p-4 relative overflow-hidden">
+              <div className="absolute right-0 top-0 w-24 h-24 opacity-5"><img src={couponSave5} alt="" className="w-full h-full object-cover" /></div>
+              <div className="flex items-start gap-3">
+                <div className="flex-1">
+                  <h4 className="font-black text-gray-900 text-sm">{group.title}</h4>
+                  <p className="text-gray-500 text-xs mt-0.5 leading-relaxed">{group.description}</p>
+                  <button onClick={() => toast.info("Rewards will be sent to your coupon wallet after claiming.")} className="mt-2 bg-yellow-200 hover:bg-yellow-300 text-yellow-800 font-bold text-xs px-4 py-1.5 rounded-xl transition-colors">Claim</button>
+                </div>
+                <img src={group.rewardImg} alt="reward" className="w-14 h-14 object-contain flex-shrink-0" />
+              </div>
+              <button onClick={() => setSelectedTask(group)} className="flex items-center justify-between w-full mt-3 pt-3 border-t border-gray-100 text-left">
+                <span className="text-sm text-gray-600">Group Progress: {group.groupProgress.current} / {group.groupProgress.total}</span>
+                <ChevronRight size={16} className="text-gray-400" />
+              </button>
+            </div>
+          ))}
+        </div>
+        <p className="text-center text-sm text-gray-500 mt-4 leading-relaxed">
+          The more users you invite the more rewards you could earn!{" "}
+          <button onClick={() => setShowRules(true)} className="text-blue-500 font-semibold">Click here to view the rule</button>
+        </p>
+      </div>
+    </>
+  );
 }
 
 export function InvitePage() {
@@ -106,30 +206,13 @@ export function InvitePage() {
 
   const loadOrCreateReferral = async () => {
     if (!user?.email || !user?.id) return;
-    const { data } = await supabase
-      .from("referral_codes")
-      .select("*")
-      .eq("user_email", user.email)
-      .single();
-
+    const { data } = await supabase.from("referral_codes").select("*").eq("user_email", user.email).single();
     if (data) {
       setReferral(data as ReferralData);
     } else {
       const code = generateReferralCode(user.id);
       const shortCode = generateShortCode();
-      const { data: created } = await supabase
-        .from("referral_codes")
-        .insert({
-          user_id: user.id,
-          user_email: user.email,
-          code,
-          short_code: shortCode,
-          users_invited: 0,
-          orders_completed: 0,
-          total_spending: 0,
-        })
-        .select()
-        .single();
+      const { data: created } = await supabase.from("referral_codes").insert({ user_id: user.id, user_email: user.email, code, short_code: shortCode, users_invited: 0, orders_completed: 0, total_spending: 0 }).select().single();
       if (created) setReferral(created as ReferralData);
     }
   };
@@ -164,11 +247,9 @@ export function InvitePage() {
 
   const taskGroups: TaskGroup[] = [
     {
-      key: "invite_master",
-      title: "Invite Master",
+      key: "invite_master", title: "Invite Master",
       description: "Invite new users to join NoxyStore and become an Invite Master!",
-      rewardImg: couponSave5,
-      rewardLabel: "SAVE $5",
+      rewardImg: couponSave5, rewardLabel: "SAVE $5",
       groupProgress: { current: usersInvited, total: 5 },
       milestones: [
         { label: "Invite 1 new user to sign up", target: 1, current: Math.min(usersInvited, 1), reward: "8% OFF Coupon", rewardImg: couponSave5 },
@@ -179,11 +260,9 @@ export function InvitePage() {
       ],
     },
     {
-      key: "slow_steady_basic",
-      title: "Slow and Steady – Basic",
+      key: "slow_steady_basic", title: "Slow and Steady – Basic",
       description: "Earn rewards as your invited users reach these purchasing milestones!",
-      rewardImg: couponSave5,
-      rewardLabel: "SAVE $5",
+      rewardImg: couponSave5, rewardLabel: "SAVE $5",
       groupProgress: { current: ordersCompleted, total: 3 },
       milestones: [
         { label: "5 new users each complete an order (min. $5)", target: 5, current: Math.min(ordersCompleted, 5), reward: "8% OFF Coupon", rewardImg: couponSave5 },
@@ -192,11 +271,9 @@ export function InvitePage() {
       ],
     },
     {
-      key: "slow_steady_advanced",
-      title: "Slow and Steady – Advanced",
+      key: "slow_steady_advanced", title: "Slow and Steady – Advanced",
       description: "Will your invited users keep spending and unlock even more rewards for you?",
-      rewardImg: couponSave5,
-      rewardLabel: "SAVE $15",
+      rewardImg: couponSave5, rewardLabel: "SAVE $15",
       groupProgress: { current: ordersCompleted, total: 3 },
       milestones: [
         { label: "8 new users each complete an order (min. $5)", target: 8, current: Math.min(ordersCompleted, 8), reward: "12% OFF Coupon", rewardImg: couponSave5 },
@@ -213,151 +290,11 @@ export function InvitePage() {
     { key: "discord", label: "Discord", icon: <DiscordIcon />, bg: "bg-[#5865F2]", text: "text-white" },
   ];
 
-  return (
-    <div className="min-h-screen bg-[#f5f5f5]">
-      <div className="hidden lg:block"><DesktopHeader /></div>
-      <div className="lg:hidden"><Header showBack title="Invite for Coupons" /></div>
+  const bodyProps = { referral, useShorter, setUseShorter, copied, handleCopy, handleShare, inviteLink, shareText, usersInvited, ordersCompleted, totalSpending, taskGroups, socialPlatforms, setSelectedTask, setShowTaskInfo, setShowRules };
 
-      <div className="max-w-2xl mx-auto px-4 pt-4 pb-24 lg:pb-8">
-        {/* Hero banner */}
-        <div className="bg-yellow-400 rounded-2xl p-5 mb-5 relative overflow-hidden">
-          <div className="flex items-start gap-4">
-            <div className="flex-1">
-              <h2 className="font-black text-gray-900 text-lg leading-tight mb-1">
-                Invite new users to sign up and make orders to earn multiple rewards!
-              </h2>
-              <p className="text-gray-700 text-sm">The more users you invite the more rewards you could earn!</p>
-              <button
-                onClick={() => setShowRules(true)}
-                className="flex items-center gap-1 text-blue-700 font-semibold text-sm mt-2 hover:underline"
-              >
-                Click here to view the rules <ChevronRight size={14} />
-              </button>
-            </div>
-            <img src={inviteReward} alt="Invite rewards" className="w-24 h-24 object-contain flex-shrink-0" />
-          </div>
-        </div>
-
-        {/* Social share */}
-        <div className="bg-white rounded-2xl p-5 mb-4 shadow-sm">
-          <div className="flex items-center justify-center gap-6 mb-5">
-            {socialPlatforms.map((p) => (
-              <button
-                key={p.key}
-                onClick={() => handleShare(p.key)}
-                className="flex flex-col items-center gap-2"
-              >
-                <div className={`w-12 h-12 ${p.bg} rounded-full flex items-center justify-center ${p.text} shadow-md hover:scale-105 transition-transform`}>
-                  {p.icon}
-                </div>
-                <span className="text-xs text-gray-600 font-medium">{p.label}</span>
-              </button>
-            ))}
-          </div>
-
-          {/* Link */}
-          <div className="flex gap-2 mb-3">
-            <div className="flex-1 bg-gray-100 rounded-xl px-4 py-3 text-sm text-gray-500 font-mono truncate">
-              {inviteLink}
-            </div>
-            <button
-              onClick={handleCopy}
-              className="bg-yellow-400 hover:bg-yellow-300 text-black font-bold px-5 py-3 rounded-xl flex items-center gap-2 transition-colors whitespace-nowrap"
-            >
-              {copied ? <Check size={16} /> : (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
-                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
-                </svg>
-              )}
-              Copy Link
-            </button>
-          </div>
-
-          {/* Short link toggle */}
-          <button
-            onClick={() => setUseShorter(!useShorter)}
-            className="flex items-center gap-2 text-sm text-gray-600"
-          >
-            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${useShorter ? "bg-yellow-400 border-yellow-400" : "border-gray-300"}`}>
-              {useShorter && <Check size={11} className="text-black" />}
-            </div>
-            Share with a shorter link
-          </button>
-        </div>
-
-        {/* Invite Progress */}
-        <div className="bg-white rounded-2xl p-5 mb-4 shadow-sm">
-          <h3 className="font-black text-gray-900 text-base mb-4">Invite Progress Overview</h3>
-          <div className="grid grid-cols-3 gap-4 text-center">
-            <div>
-              <p className="text-2xl font-black text-orange-500">{usersInvited}</p>
-              <p className="text-xs text-gray-500 mt-0.5">Users Invited</p>
-            </div>
-            <div>
-              <p className="text-2xl font-black text-orange-500">{ordersCompleted}</p>
-              <p className="text-xs text-gray-500 mt-0.5">Orders Completed</p>
-            </div>
-            <div>
-              <p className="text-2xl font-black text-orange-500">${totalSpending.toFixed(2)}</p>
-              <p className="text-xs text-gray-500 mt-0.5">Total Spending</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Task & Reward */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-1 h-5 bg-yellow-400 rounded-full" />
-            <h3 className="font-black text-gray-900 text-base">Task &amp; Reward</h3>
-            <button onClick={() => setShowTaskInfo(true)} className="text-gray-400 hover:text-gray-600">
-              <Info size={16} />
-            </button>
-          </div>
-
-          <div className="space-y-3">
-            {taskGroups.map((group) => (
-              <div key={group.key} className="border border-gray-100 rounded-2xl p-4 relative overflow-hidden">
-                {/* Background decoration */}
-                <div className="absolute right-0 top-0 w-24 h-24 opacity-5">
-                  <img src={couponSave5} alt="" className="w-full h-full object-cover" />
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="flex-1">
-                    <h4 className="font-black text-gray-900 text-sm">{group.title}</h4>
-                    <p className="text-gray-500 text-xs mt-0.5 leading-relaxed">{group.description}</p>
-                    <button
-                      onClick={() => toast.info("Rewards will be sent to your coupon wallet after claiming.")}
-                      className="mt-2 bg-yellow-200 hover:bg-yellow-300 text-yellow-800 font-bold text-xs px-4 py-1.5 rounded-xl transition-colors"
-                    >
-                      Claim
-                    </button>
-                  </div>
-                  <img src={group.rewardImg} alt="reward" className="w-14 h-14 object-contain flex-shrink-0" />
-                </div>
-                <button
-                  onClick={() => setSelectedTask(group)}
-                  className="flex items-center justify-between w-full mt-3 pt-3 border-t border-gray-100 text-left"
-                >
-                  <span className="text-sm text-gray-600">
-                    Group Progress: {group.groupProgress.current} / {group.groupProgress.total}
-                  </span>
-                  <ChevronRight size={16} className="text-gray-400" />
-                </button>
-              </div>
-            ))}
-          </div>
-
-          <p className="text-center text-sm text-gray-500 mt-4 leading-relaxed">
-            The more users you invite the more rewards you could earn!{" "}
-            <button onClick={() => setShowRules(true)} className="text-blue-500 font-semibold">
-              Click here to view the rule
-            </button>
-          </p>
-        </div>
-      </div>
-
-      {/* Task detail modal */}
+  // Shared modals
+  const Modals = () => (
+    <>
       {selectedTask && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
           <div className="absolute inset-0 bg-black/40" onClick={() => setSelectedTask(null)} />
@@ -368,9 +305,7 @@ export function InvitePage() {
               <div className="w-6" />
             </div>
             <div className="px-5 py-4">
-              <p className="text-sm text-gray-600 mb-4">
-                Group Progress: {selectedTask.groupProgress.current} / {selectedTask.groupProgress.total}
-              </p>
+              <p className="text-sm text-gray-600 mb-4">Group Progress: {selectedTask.groupProgress.current} / {selectedTask.groupProgress.total}</p>
               <div className="space-y-3">
                 {selectedTask.milestones.map((m, idx) => (
                   <div key={idx} className="flex items-center gap-3 border border-gray-100 rounded-2xl p-4">
@@ -388,7 +323,6 @@ export function InvitePage() {
         </div>
       )}
 
-      {/* Task & Reward info modal */}
       {showTaskInfo && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
           <div className="absolute inset-0 bg-black/40" onClick={() => setShowTaskInfo(false)} />
@@ -399,10 +333,10 @@ export function InvitePage() {
               <div className="w-6" />
             </div>
             <div className="px-5 py-5 space-y-4 text-gray-700 text-sm leading-relaxed">
-              <p>In this module, you will see multiple task groups, each consisting of several small task units with different rewards. You can click on the reward image on the task card to learn more about the specific rewards for each task.</p>
-              <p>By inviting new users and encouraging them to place orders, you can progress in the tasks, unlocking corresponding rewards as you reach certain milestones. Once you complete all tasks within a group, you will receive the ultimate reward for that group, recognizing your outstanding performance in attracting new users!</p>
+              <p>In this module, you will see multiple task groups, each consisting of several small task units with different rewards.</p>
+              <p>By inviting new users and encouraging them to place orders, you can progress in the tasks, unlocking corresponding rewards as you reach certain milestones.</p>
               <p className="font-semibold">Please note:</p>
-              <p>Rewards are not automatically issued — we will send the corresponding rewards to your NoxyStore account in the form of coupons only after you click to claim them. Remember to use them within 30 days of claiming!</p>
+              <p>Rewards are not automatically issued — we will send the rewards to your NoxyStore account in the form of coupons only after you click to claim them.</p>
             </div>
             <div className="px-5 pb-6">
               <button onClick={() => setShowTaskInfo(false)} className="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-bold py-4 rounded-2xl">Ok</button>
@@ -411,7 +345,6 @@ export function InvitePage() {
         </div>
       )}
 
-      {/* Program Rules modal */}
       {showRules && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
           <div className="absolute inset-0 bg-black/40" onClick={() => setShowRules(false)} />
@@ -422,11 +355,11 @@ export function InvitePage() {
               <div className="w-6" />
             </div>
             <div className="px-5 py-5 space-y-4 text-gray-700 text-sm leading-relaxed">
-              <p>In this program, you can invite new users to sign up through the share component at the top of the page. You'll earn various rewards by completing milestone tasks based on the number of users you invite and their spending. The more users you invite and the more they spend, the more rewards you'll unlock.</p>
+              <p>You can invite new users through the share link. You earn various rewards by completing milestone tasks based on the number of users you invite and their spending.</p>
               <div>
                 <p className="font-bold text-gray-900 mb-2">Rules</p>
                 <p className="mb-3">1. Any new user who signs up using your link will receive 2 coupons, each up to a maximum save of $10.</p>
-                <p className="mb-3">2. For all users who <span className="text-orange-500 font-semibold">sign up through your link</span>, their sign-ups and purchases will count toward your invite task progress once the orders are successfully completed. There may be a slight delay in processing, but rest assured—every valid new user will be counted.</p>
+                <p className="mb-3">2. For all users who <span className="text-orange-500 font-semibold">sign up through your link</span>, their sign-ups and purchases will count toward your invite task progress once the orders are successfully completed.</p>
                 <p className="mb-3">3. For orders with refunds or partial refunds, your task progress settlement will be based on the user's final order completion status and the actual amount paid.</p>
                 <p className="mb-3">4. Each invited user can only be counted once toward your progress. Duplicate accounts or fraudulent activities will be disqualified.</p>
                 <p>5. NoxyStore reserves the right to modify or terminate this program at any time with prior notice.</p>
@@ -438,7 +371,35 @@ export function InvitePage() {
           </div>
         </div>
       )}
+    </>
+  );
 
+  return (
+    <div className="min-h-screen bg-[#f5f5f5]">
+      <div className="hidden lg:block"><DesktopHeader /></div>
+      <div className="lg:hidden"><Header showBack title="Invite for Coupons" /></div>
+
+      {/* ── Desktop: sidebar + content ── */}
+      <div className="hidden lg:block max-w-[1280px] mx-auto px-6 py-6">
+        <div className="flex items-center gap-2 text-sm text-gray-500 mb-6">
+          <button onClick={() => navigate("/")} className="hover:text-gray-700">Home</button>
+          <ChevronRight size={14} />
+          <span className="text-gray-800 font-medium">Invite for Coupons</span>
+        </div>
+        <div className="flex gap-6 items-start">
+          <AccountSidebar activePage="invite" className="sticky top-[72px] self-start" />
+          <div className="flex-1 max-w-2xl">
+            <InviteBody {...bodyProps} />
+          </div>
+        </div>
+      </div>
+
+      {/* ── Mobile layout ── */}
+      <div className="lg:hidden max-w-2xl mx-auto px-4 pt-4 pb-24">
+        <InviteBody {...bodyProps} />
+      </div>
+
+      <Modals />
       <div className="lg:hidden"><BottomNav /></div>
     </div>
   );
