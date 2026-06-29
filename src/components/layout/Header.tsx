@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Menu, X, User, ChevronRight } from "lucide-react";
+import { Search, Menu, X, User, ChevronRight, Home, Gamepad2, Newspaper, Download } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useSettingsStore } from "@/stores/settingsStore";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -66,17 +66,6 @@ export function Header({ showMenu, title, showBack }: HeaderProps) {
             >
               {currency}
             </button>
-
-            {/* Account avatar */}
-            {isAuthenticated ? (
-              <button onClick={() => navigate("/account")} className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 text-black font-black text-sm">
-                {user?.nickname?.[0]?.toUpperCase() ?? "U"}
-              </button>
-            ) : (
-              <button onClick={() => navigate("/login")} className="text-white p-1.5">
-                <User size={19} />
-              </button>
-            )}
           </div>
         </div>
       </header>
@@ -86,80 +75,81 @@ export function Header({ showMenu, title, showBack }: HeaderProps) {
         <div className="fixed inset-0 z-50 flex">
           <div className="absolute inset-0 bg-black/60" onClick={() => setMenuOpen(false)} />
           <div className="relative w-[280px] bg-white h-full shadow-2xl flex flex-col overflow-hidden">
-            {/* Menu header */}
-            <div className="bg-[#0a0a0a] px-5 py-4 flex items-center justify-between">
-              <button onClick={() => navigate("/")} className="font-black text-xl">
-                <span className="text-yellow-400">NOXY</span>
-                <span className="text-white">STORE</span>
-              </button>
-              <button onClick={() => setMenuOpen(false)} className="text-white/60">
-                <X size={20} />
-              </button>
-            </div>
-
-            {/* User info */}
+            {/* User info header */}
             {isAuthenticated ? (
               <button
                 onClick={() => { navigate("/account"); setMenuOpen(false); }}
-                className="flex items-center gap-3 px-5 py-4 bg-yellow-50 border-b border-yellow-100"
+                className="flex items-center gap-3 px-5 py-5 hover:bg-gray-50 transition-colors"
               >
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center text-black font-black text-base flex-shrink-0">
-                  {user?.nickname?.[0]?.toUpperCase() ?? "U"}
-                </div>
-                <div className="flex-1 text-left min-w-0">
-                  <p className="font-bold text-gray-900 text-sm truncate">{user?.nickname}</p>
-                  <p className="text-xs text-gray-500 truncate">{user?.email}</p>
-                </div>
+                {user?.avatar ? (
+                  <img src={user.avatar} alt="avatar" className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center text-white font-bold text-base flex-shrink-0">
+                    {user?.nickname?.[0]?.toUpperCase() ?? "U"}
+                  </div>
+                )}
+                <span className="flex-1 text-left font-medium text-gray-900 text-sm truncate">
+                  {user?.nickname || user?.email?.split("@")[0] || "User"}
+                </span>
                 <ChevronRight size={16} className="text-gray-400 flex-shrink-0" />
               </button>
             ) : (
               <button
                 onClick={() => { navigate("/login"); setMenuOpen(false); }}
-                className="flex items-center gap-3 px-5 py-4 bg-yellow-50 border-b border-yellow-100"
+                className="flex items-center gap-3 px-5 py-5 hover:bg-gray-50 transition-colors"
               >
-                <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
-                  <User size={20} className="text-gray-500" />
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center text-white font-bold text-base flex-shrink-0">
+                  U
                 </div>
-                <div className="flex-1 text-left">
-                  <p className="font-bold text-gray-900 text-sm">Sign in / Register</p>
-                  <p className="text-xs text-gray-500">Get exclusive deals</p>
-                </div>
+                <span className="flex-1 text-left font-medium text-gray-900 text-sm">
+                  Sign in / Register
+                </span>
                 <ChevronRight size={16} className="text-gray-400 flex-shrink-0" />
               </button>
             )}
 
+            {/* Divider */}
+            <div className="mx-5 h-px bg-gray-200" />
+
             {/* Nav links */}
             <nav className="flex-1 py-2 overflow-y-auto">
-              {[
-                { label: t("home"), path: "/", icon: "🏠" },
-                { label: t("games"), path: "/categories", icon: "🎮" },
-                { label: t("myOrders"), path: isAuthenticated ? "/account" : "/login", icon: "📦" },
-                { label: "Balance & Wallet", path: "/balance", icon: "💳" },
-                { label: "Coupons", path: "/coupons", icon: "🎟" },
-                { label: "Invite Friends", path: "/invite", icon: "👥" },
-                { label: t("helpCenter"), path: "/support", icon: "💬" },
-                { label: "About NoxyStore", path: "/about-us", icon: "ℹ️" },
-              ].map((item) => (
-                <button
-                  key={item.path}
-                  onClick={() => { navigate(item.path); setMenuOpen(false); }}
-                  className="w-full flex items-center gap-3 px-5 py-3.5 text-gray-800 font-medium hover:bg-gray-50 border-b border-gray-100 text-sm"
-                >
-                  <span className="w-6 text-base">{item.icon}</span>
-                  {item.label}
-                  <ChevronRight size={14} className="ml-auto text-gray-300" />
-                </button>
-              ))}
+              <button
+                onClick={() => { navigate("/"); setMenuOpen(false); }}
+                className="w-full flex items-center gap-3 px-5 py-3.5 text-gray-800 font-medium hover:bg-gray-50 text-sm transition-colors"
+              >
+                <Home size={18} className="text-gray-500" />
+                Home
+              </button>
+
+              <button
+                onClick={() => { navigate("/categories"); setMenuOpen(false); }}
+                className="w-full flex items-center justify-between px-5 py-3.5 text-gray-800 font-medium hover:bg-gray-50 text-sm transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <Gamepad2 size={18} className="text-gray-500" />
+                  Games
+                </div>
+                <ChevronRight size={14} className="text-gray-400" />
+              </button>
+
+              <button
+                onClick={() => { navigate("/about"); setMenuOpen(false); }}
+                className="w-full flex items-center gap-3 px-5 py-3.5 text-gray-800 font-medium hover:bg-gray-50 text-sm transition-colors"
+              >
+                <Newspaper size={18} className="text-gray-500" />
+                Blog
+              </button>
             </nav>
 
-            {/* Lang/Currency at bottom */}
+            {/* Download App section */}
             <div className="px-5 py-4 border-t border-gray-100">
-              <button
-                onClick={() => { setShowLangModal(true); setMenuOpen(false); }}
-                className="w-full flex items-center justify-between bg-gray-100 rounded-xl px-4 py-3 text-sm font-semibold text-gray-700"
-              >
-                <span>Language & Currency</span>
-                <span className="text-gray-500 text-xs font-bold">{language.toUpperCase()} / {currency}</span>
+              <p className="text-xs text-gray-500 mb-2">Download App</p>
+              <button className="flex items-center gap-2 bg-black rounded-lg px-3 py-2 hover:bg-gray-900 transition-colors">
+                <Download size={16} className="text-white" />
+                <div className="text-left">
+                  <p className="text-[9px] text-gray-400 leading-tight">GET IT ON</p>
+                  <p className="text-xs text-white font-semibold leading-tight">Google Play</p>
+                </div>
               </button>
             </div>
           </div>
@@ -170,5 +160,3 @@ export function Header({ showMenu, title, showBack }: HeaderProps) {
     </>
   );
 }
-
-
