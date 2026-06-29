@@ -727,4 +727,4 @@ export function HomePage() {
     </div>
   );
 }
-
+after popular game key add another section for Lifestyle & Social App Top-up and add only lifestyle social app from lootbar.
