@@ -163,12 +163,6 @@ export function MessagesPage() {
       icon: "https://placehold.co/40x40/1a1a1a/fbbf24?text=N",
       unread: tradeMessages.filter(m => !m.read).length + STATIC_SYSTEM.filter(s => !s.read).length,
     },
-    {
-      key: "game-kingdom" as SourceKey,
-      label: "Game Kingdom",
-      icon: "https://placehold.co/40x40/1e3a5f/fbbf24?text=G",
-      unread: STATIC_NEWS.filter(n => !n.read).length,
-    },
   ];
 
   const totalUnread = tradeMessages.filter(m => !m.read).length + STATIC_NEWS.filter(n => !n.read).length + STATIC_SYSTEM.filter(s => !s.read).length;
@@ -199,9 +193,6 @@ export function MessagesPage() {
     }
     return { tabOverride: activeTab };
   };
-
-  const { tabOverride } = getFilteredContent();
-  const displayTab = activeSource === "game-kingdom" ? "news" : activeTab;
 
   return (
     <div className="min-h-screen bg-[#f5f6fa]">
@@ -604,3 +595,4 @@ export function MessagesPage() {
     </div>
   );
 }
+hello ai please make real Trade Messages,New Game News,System messages please remove all message fake and system message must see real new login all system must come and real news game please no demo system show real order message and fix checkou page show logo card yo tro small fon metel gro and add natcahs/moncash payment only locate for haiti anb for admin email show when user select its open a modal to choose natcash or moncash after  show continue after in same modal show info number and name after photo upload proof 3limit and notes add let user put order id and click send afer soon.
