@@ -661,3 +661,4 @@ export function HomePage() {
   );
 }
 
+fix error when i scroll down the desktop and mobile header scroll and i dont see it only if scroll up please let always visible for both mobile desktop even i scroll down.
