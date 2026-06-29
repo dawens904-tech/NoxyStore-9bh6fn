@@ -1263,4 +1263,4 @@ export function CheckoutPage() {
     </>
   );
 }
-
+hello ai please fix Y.renderLogo is not a function. (In 'Y.renderLogo()', 'Y.renderLogo' is undefined).
