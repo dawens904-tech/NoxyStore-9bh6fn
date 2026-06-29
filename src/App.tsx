@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useEffect, useState, Component, ReactNode } from "react";
-import { Analytics } from "@vercel/analytics/next"
+import { Analytics } from "@vercel/analytics/react"
 import { Toaster } from "sonner";
 import { HomePage } from "@/pages/HomePage";
 import { CategoriesPage } from "@/pages/CategoriesPage";
@@ -260,6 +260,7 @@ function App() {
         }}
         richColors
       />
+      <Analytics />
     </BrowserRouter>
   );
 }
