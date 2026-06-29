@@ -317,7 +317,27 @@ export function CheckoutPage() {
     }
     loadUserCoupons();
     loadSavedCards();
-    lootbarApi.getBalance().then(setLiveBalance).catch(() => {});
+    // Balance: admin fetches from Lootbar API, normal users fetch from wallet_transactions
+    if (user?.role === "admin" || user?.email?.includes("admin")) {
+      lootbarApi.getBalance().then(setLiveBalance).catch(() => {});
+    } else if (user?.email) {
+      supabase
+        .from("wallet_transactions")
+        .select("amount, type")
+        .eq("user_email", user.email)
+        .eq("status", "completed")
+        .then(({ data }) => {
+          if (data) {
+            const bal = data.reduce((sum: number, t: any) => {
+              return t.type === "deposit" || t.type === "refund"
+                ? sum + Number(t.amount)
+                : sum - Number(t.amount);
+            }, 0);
+            setLiveBalance(Math.max(0, bal).toFixed(2));
+          }
+        })
+        .catch(() => {});
+    }
   }, []);
 
   const loadUserCoupons = async () => {
@@ -884,7 +904,6 @@ export function CheckoutPage() {
                 Only available for VIP3 and above
               </span>
             )}
-          </div>
         </button>
 
         {/* Sub-cards for visa_mc */}
@@ -1320,4 +1339,4 @@ export function CheckoutPage() {
     </>
   );
 }
-fix error in this page and please for normal user fetch balance from their balance and for admin email fetch from lootbar api.
+
