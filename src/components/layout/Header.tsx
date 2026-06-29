@@ -48,7 +48,7 @@ export function Header({ showMenu, title, showBack }: HeaderProps) {
               <button onClick={() => navigate("/")} className="font-black text-lg tracking-tight">
                 <span className="text-yellow-400">NOXY</span>
                 <span className="text-white">STORE</span>
-                <span className="text-yellow-400 text-xs">.gg</span>
+                <span className="text-yellow-400 text-xs">.com</span>
               </button>
             )}
           </div>
