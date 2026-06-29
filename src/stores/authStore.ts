@@ -18,16 +18,19 @@ interface AuthState {
   syncOrdersFromDB: (email: string) => Promise<void>;
 }
 
-function mapSupabaseUser(supabaseUser: { id: string; email?: string; user_metadata?: Record<string, string> }, role = "user"): User {
+function mapSupabaseUser(supabaseUser: { id: string; email?: string; user_metadata?: Record<string, any> }, role = "user"): User {
+  const meta = supabaseUser.user_metadata || {};
+  // Google OAuth sets `picture`, email OTP sets `avatar_url` — check both
+  const avatar = meta.avatar_url || meta.picture || undefined;
   return {
     id: supabaseUser.id,
-    nickname: supabaseUser.user_metadata?.username || supabaseUser.user_metadata?.full_name || supabaseUser.email?.split("@")[0] || "Gamer",
+    nickname: meta.username || meta.full_name || meta.name || supabaseUser.email?.split("@")[0] || "Gamer",
     email: supabaseUser.email ?? "",
     balance: 0,
     points: 39,
     coupons: 0,
     role: role as "user" | "admin",
-    avatar: supabaseUser.user_metadata?.avatar_url,
+    avatar,
   };
 }
 
@@ -42,19 +45,20 @@ export const useAuthStore = create<AuthState>()(
       isLoading: false,
 
       login: (userData) =>
-        set({
+        set((state) => ({
           user: {
-            id: userData.id || `user_${Date.now()}`,
-            nickname: userData.nickname || "Gamer",
-            email: userData.email || "",
-            balance: userData.balance || 0,
-            points: userData.points || 39,
-            coupons: userData.coupons || 0,
-            role: userData.role || "user",
-            avatar: userData.avatar,
+            id: userData.id || state.user?.id || `user_${Date.now()}`,
+            nickname: userData.nickname || state.user?.nickname || "Gamer",
+            email: userData.email || state.user?.email || "",
+            balance: userData.balance ?? state.user?.balance ?? 0,
+            points: userData.points ?? state.user?.points ?? 39,
+            coupons: userData.coupons ?? state.user?.coupons ?? 0,
+            role: userData.role || state.user?.role || "user",
+            // Preserve avatar: prefer incoming value, fallback to existing
+            avatar: userData.avatar || state.user?.avatar || undefined,
           },
           isAuthenticated: true,
-        }),
+        })),
 
       logout: async () => {
         try { await supabase.auth.signOut(); } catch {}
