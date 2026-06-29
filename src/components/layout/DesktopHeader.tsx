@@ -372,7 +372,7 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
             <span className="font-black text-2xl tracking-tight leading-none">
               <span className="text-yellow-400">NOXY</span>
               <span className="text-white">STORE</span>
-              <span className="text-yellow-400 text-sm">.gg</span>
+              <span className="text-yellow-400 text-sm">.com</span>
             </span>
           </button>
 
