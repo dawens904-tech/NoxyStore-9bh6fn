@@ -513,4 +513,4 @@ export default function AdminDashboard() {
     </div>
   );
 }
-
+hello ai please please fix add real analytics and fix lootbar game show manage server for game require server if region click manage region instead of sku and after its open region from that products after anba each region show manage sku products when click its show all product can edit name,photo,price,price orginal if want to after auto saved to gamedetail page and real checkout avel never unsave real and allow admin can add new region new server.
