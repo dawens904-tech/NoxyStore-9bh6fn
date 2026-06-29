@@ -472,3 +472,129 @@ export function MessagesPage() {
     </div>
   );
 }
+hello ai please if see this malke change you see in message:🚀 System Requirements (Clean Version)
+1. Real System Messages (No Fake / Demo Data)
+All trade messages, game news, system notifications, and login alerts must be real-time and live
+Remove all demo, fake, or placeholder system messages
+System must always show:
+Real user logins
+Real order updates
+Real transaction status
+Real game news updates (not mock data)
+2. Checkout Page Improvements
+Redesign checkout UI:
+Make product cards larger (not small or compressed)
+Improve spacing and modern UI layout
+Add proper branding/logo display (clean and visible)
+Ensure checkout page is fully responsive and user-friendly
+3. Haiti Local Payment Methods (Only for Haiti Users)
+Add payment options:
+NatCash
+MonCash
+These methods should only appear when user location = Haiti
+Payment Flow:
+User selects payment method
+Open modal asking user to choose:
+NatCash
+MonCash
+After selection:
+Show "Continue" button inside same modal
+On continue:
+Call backend Edge Function:
+moncash_payment
+natcash_payment
+Edge Function must:
+Connect to real API (not mock)
+Validate transaction in real time
+4. API Key & Server Setup Guidance
+Provide documentation for:
+How to obtain MonCash API key
+How to obtain NatCash API key
+How to configure production server-side payment integration
+Must ensure:
+Keys are stored securely (server-side only)
+Never exposed in frontend
+5. Order Processing Flow (LootBar Integration)
+
+After successful payment:
+
+Confirm payment success
+Trigger LootBar API order creation
+Send order request to LootBar
+If successful:
+Mark order as completed
+Send confirmation email to user
+Email must include:
+Order ID
+Status
+Confirmation message
+6. Email Notifications System
+
+Send email automatically when:
+
+Order is completed
+Payment is successful
+Login detected (optional security alert)
+7. Credit Card Payments (Stripe Integration)
+Add Stripe payment system for credit cards
+Flow:
+User selects "Credit Card"
+If no saved card:
+Open modal with fields:
+Full Name
+Card Number
+CVV
+Expiry Date
+Billing Address
+After submission:
+Validate via Stripe API (server-side)
+On success:
+Proceed with LootBar order creation
+
+⚠️ Important:
+
+Never store CVV or raw card data (Stripe handles securely)
+8. Apple Pay / Google Pay Support
+Replace any “MIR payment” with real digital wallets:
+iOS:
+Show Apple Pay only on iPhone
+Android:
+Show Google Pay only on Android
+
+Flow:
+
+Use Stripe Payment Request API
+Detect device automatically
+Trigger correct wallet payment method
+9. Edge Functions (Backend Logic)
+
+Create secure backend functions for:
+
+moncash_payment
+natcash_payment
+stripe_payment
+lootbar_order_create
+
+Each function must:
+
+Validate payment
+Handle retries
+Log transaction status
+Return success/failure response
+10. LootBar Integration Rules
+After payment success:
+Send order to LootBar API
+If LootBar fails:
+Do NOT mark order complete
+Retry or mark as “pending”
+
+⚠️ Refund logic:
+
+If LootBar refuses order or fails permanently:
+System should trigger refund process automatically
+11. Security & Compliance Notes
+Never expose API keys in frontend
+All payment logic must run server-side
+Use HTTPS only
+Log all transactions securely
+Comply with Stripe PCI requirements.
