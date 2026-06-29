@@ -1302,3 +1302,4 @@ export function GameDetailPage() {
   );
 }
 
+add background square to the game header and make game card square also fix down and up more clean just down dont have to enter in a white side when down.
