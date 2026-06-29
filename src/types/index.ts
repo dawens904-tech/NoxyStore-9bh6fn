@@ -198,6 +198,20 @@ export interface VIPLevel {
   };
 }
 
+// ── Payment Method IDs ──────────────────────────────────────────────────────
+export type PaymentMethodId =
+  | "stripe_card"
+  | "apple_pay"
+  | "google_pay"
+  | "haiti_moncash"
+  | "haiti_natcash"
+  | "crypto"
+  | "balance"
+  | "jcb_group"
+  | "paypal"
+  | "paylater"
+  | "cashapp";
+
 export const ORDER_STATE_MAP: Record<number, { label: string; color: string }> = {
   1: { label: 'Pending', color: 'text-yellow-600' },
   2: { label: 'Processing', color: 'text-blue-600' },

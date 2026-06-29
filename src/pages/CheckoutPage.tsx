@@ -7,7 +7,7 @@ import {
 import { lootbarApi } from "@/lib/lootbar-api";
 import { useAuthStore } from "@/stores/authStore";
 import { ORDER_STATE_MAP } from "@/types";
-import type { SkuItem, LootbarGame, Order } from "@/types";
+import type { SkuItem, LootbarGame, Order, PaymentMethodId } from "@/types";
 import { DesktopHeader } from "@/components/layout/DesktopHeader";
 import { Header } from "@/components/layout/Header";
 import { supabase } from "@/lib/supabase";
@@ -1339,4 +1339,3 @@ export function CheckoutPage() {
     </>
   );
 }
-hello ai please Implement a balance top-up flow for normal users on the /balance page: show current wallet balance fetched from wallet_transactions, allow depositing via Stripe Checkout, and record completed deposits as wallet_transactions rows with type='deposit' The PaymentMethodId type is referenced in CheckoutPage but never defined, causing a TypeScript error. Define it as a union type of all valid payment method id strings (stripe_card, apple_pay, google_pay, haiti_moncash, haiti_natcash, crypto, balance, jcb_group, paypal, paylater, cashapp) in src/types/index Add a transaction history section on the /balance page that lists all wallet_transactions for the logged-in user (deposits, purchases, refunds) with date, type badge, and amount columns.

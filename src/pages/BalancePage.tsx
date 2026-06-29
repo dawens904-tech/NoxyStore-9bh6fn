@@ -7,13 +7,14 @@
  */
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Plus, X, CreditCard, Check, ChevronRight } from "lucide-react";
+import { ArrowLeft, Plus, X, CreditCard, Check, ChevronRight, Loader2, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownLeft, ShoppingBag, RotateCcw } from "lucide-react";
 import { AccountSidebar } from "@/components/features/AccountSidebar";
 import { DesktopHeader } from "@/components/layout/DesktopHeader";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { useAuthStore } from "@/stores/authStore";
 import { supabase, retryQuery } from "@/lib/supabase";
 import { toast } from "sonner";
+import { FunctionsHttpError } from "@supabase/supabase-js";
 
 type BalanceTab = "topup" | "withdraw" | "cashflow";
 
@@ -32,47 +33,10 @@ interface Transaction {
   description: string;
   created_at: string;
   status: string;
+  method?: string;
 }
 
-const PAYMENT_METHODS = [
-  {
-    id: "visa",
-    label: "Visa / Mastercard",
-    icon: (
-      <div className="flex items-center gap-1.5">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" alt="Visa" className="h-5" />
-        <img src="https://upload.wikimedia.org/wikipedia/commons/b/b7/MasterCard_Logo.svg" alt="MC" className="h-5" />
-      </div>
-    ),
-  },
-  {
-    id: "jcb",
-    label: "JCB / Amex / Discover",
-    icon: (
-      <div className="flex items-center gap-1">
-        <div className="w-8 h-5 bg-[#003087] text-white text-[8px] font-bold flex items-center justify-center">JCB</div>
-        <div className="w-8 h-5 bg-[#2E77BC] text-white text-[8px] font-bold flex items-center justify-center">AMEX</div>
-        <div className="w-8 h-5 bg-orange-500 text-white text-[8px] font-bold flex items-center justify-center">DISC</div>
-      </div>
-    ),
-  },
-  {
-    id: "paypal",
-    label: "PayPal",
-    icon: <img src="https://upload.wikimedia.org/wikipedia/commons/a/a4/Paypal_2014_logo.png" alt="PayPal" className="h-6" />,
-  },
-  {
-    id: "crypto",
-    label: "Cryptocurrency",
-    icon: (
-      <div className="flex items-center gap-1">
-        {["#F7931A", "#627EEA", "#26A17B", "#00A3FF"].map((c, i) => (
-          <div key={i} className="w-5 h-5" style={{ backgroundColor: c }} />
-        ))}
-      </div>
-    ),
-  },
-];
+const PRESETS = ["20.00", "50.00", "100.00", "200.00"];
 
 const WITHDRAW_METHODS = [
   { id: "ewallet", label: "e-Wallet", powered: "Payoneer" },
@@ -80,12 +44,24 @@ const WITHDRAW_METHODS = [
   { id: "bank_airwallex", label: "Bank Transfer", powered: "Airwallex" },
 ];
 
-const PRESETS = ["50.00", "90.00", "150.00"];
-
 function getCardLogo(type: string) {
   if (type === "visa") return <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" alt="Visa" className="h-4" />;
   if (type === "mastercard") return <img src="https://upload.wikimedia.org/wikipedia/commons/b/b7/MasterCard_Logo.svg" alt="MC" className="h-5" />;
   return <CreditCard size={16} className="text-gray-600" />;
+}
+
+// ── Transaction type metadata ─────────────────────────────────────────────────
+const TX_META: Record<string, { label: string; icon: React.ReactNode; colorClass: string; sign: "+" | "-" }> = {
+  deposit:   { label: "Deposit",   icon: <ArrowDownLeft size={14} />, colorClass: "text-green-600 bg-green-50",  sign: "+" },
+  topup:     { label: "Top Up",    icon: <ArrowDownLeft size={14} />, colorClass: "text-green-600 bg-green-50",  sign: "+" },
+  refund:    { label: "Refund",    icon: <RotateCcw size={14} />,     colorClass: "text-blue-600 bg-blue-50",    sign: "+" },
+  bonus:     { label: "Bonus",     icon: <TrendingUp size={14} />,    colorClass: "text-purple-600 bg-purple-50",sign: "+" },
+  purchase:  { label: "Purchase",  icon: <ShoppingBag size={14} />,   colorClass: "text-red-500 bg-red-50",      sign: "-" },
+  withdraw:  { label: "Withdraw",  icon: <ArrowUpRight size={14} />,  colorClass: "text-orange-500 bg-orange-50",sign: "-" },
+};
+
+function getTxMeta(type: string) {
+  return TX_META[type] ?? { label: type, icon: <TrendingDown size={14} />, colorClass: "text-gray-500 bg-gray-100", sign: "-" as const };
 }
 
 // ─── Tab Content (outside BalancePage to prevent remount) ─────────────────────
@@ -95,8 +71,6 @@ interface TabContentProps {
   setTopupAmount: (v: string) => void;
   withdrawAmount: string;
   setWithdrawAmount: (v: string) => void;
-  selectedPayment: string;
-  setSelectedPayment: (v: string) => void;
   selectedWithdrawMethod: string;
   setSelectedWithdrawMethod: (v: string) => void;
   bankCards: BankCard[];
@@ -105,6 +79,8 @@ interface TabContentProps {
   setCashflowFilter: (v: string) => void;
   balance: number;
   onAddCard: () => void;
+  onStripeTopup: () => void;
+  isProcessingTopup: boolean;
 }
 
 function TabContent({
@@ -113,8 +89,6 @@ function TabContent({
   setTopupAmount,
   withdrawAmount,
   setWithdrawAmount,
-  selectedPayment,
-  setSelectedPayment,
   selectedWithdrawMethod,
   setSelectedWithdrawMethod,
   bankCards,
@@ -123,9 +97,19 @@ function TabContent({
   setCashflowFilter,
   balance,
   onAddCard,
+  onStripeTopup,
+  isProcessingTopup,
 }: TabContentProps) {
-  const processingFee = parseFloat(topupAmount || "0") * 0.035 + 0.15;
-  const totalAmount = parseFloat(topupAmount || "0") + processingFee;
+  const amount = parseFloat(topupAmount || "0");
+  const processingFee = amount * 0.035 + (amount > 0 ? 0.15 : 0);
+  const totalAmount = amount + processingFee;
+
+  const filteredTx = cashflowFilter === "All"
+    ? transactions
+    : transactions.filter(tx => {
+        const label = getTxMeta(tx.type).label.toLowerCase();
+        return label === cashflowFilter.toLowerCase();
+      });
 
   return (
     <div>
@@ -135,54 +119,51 @@ function TabContent({
           <div>
             <h3 className="font-bold text-gray-900 mb-3">Top-up Amount</h3>
             <div className="border border-gray-300 px-4 py-3 flex items-center gap-2 mb-3">
-              <span className="text-gray-400 font-semibold">$</span>
+              <span className="text-gray-400 font-semibold text-xl">$</span>
               <input
                 type="number"
                 value={topupAmount}
                 onChange={(e) => setTopupAmount(e.target.value)}
+                min="1"
                 className="flex-1 outline-none text-2xl font-bold text-gray-900 bg-transparent"
+                placeholder="0.00"
               />
             </div>
-            <div className="flex gap-2">
+            <div className="grid grid-cols-4 gap-2">
               {PRESETS.map((p) => (
                 <button
                   key={p}
                   onClick={() => setTopupAmount(p)}
-                  className={`flex-1 border py-2 text-sm font-semibold transition-all ${
-                    topupAmount === p ? "border-yellow-400 bg-yellow-50 text-yellow-700" : "border-gray-300 text-gray-600"
+                  className={`border py-2 text-sm font-semibold transition-all ${
+                    topupAmount === p ? "border-yellow-400 bg-yellow-50 text-yellow-700" : "border-gray-300 text-gray-600 hover:border-gray-400"
                   }`}
                 >
-                  $ {p}
+                  ${p}
                 </button>
               ))}
             </div>
           </div>
 
+          {/* Payment method: Stripe card */}
           <div>
-            <h3 className="font-bold text-gray-900 mb-3">Top-up Method</h3>
-            <div className="grid grid-cols-2 gap-3">
-              {PAYMENT_METHODS.map((method) => (
-                <button
-                  key={method.id}
-                  onClick={() => setSelectedPayment(method.id)}
-                  className={`border-2 py-4 px-3 flex items-center justify-center relative transition-all ${
-                    selectedPayment === method.id ? "border-yellow-400 bg-yellow-50" : "border-gray-200"
-                  }`}
-                >
-                  {selectedPayment === method.id && (
-                    <div className="absolute top-1 right-1 w-4 h-4 bg-yellow-400 flex items-center justify-center">
-                      <Check size={10} className="text-black" />
-                    </div>
-                  )}
-                  {method.icon}
-                </button>
-              ))}
+            <h3 className="font-bold text-gray-900 mb-3">Payment Method</h3>
+            <div className="border-2 border-yellow-400 bg-yellow-50 py-4 px-4 flex items-center gap-3">
+              <div className="w-5 h-5 border-2 border-yellow-500 rounded-full flex items-center justify-center">
+                <div className="w-2.5 h-2.5 bg-yellow-500 rounded-full" />
+              </div>
+              <div className="flex items-center gap-2">
+                <img src="/images/IMG_8408.webp" alt="Visa/Mastercard" className="h-7 object-contain"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                <span className="text-sm font-semibold text-gray-700">Credit / Debit Card</span>
+              </div>
+              <span className="ml-auto text-xs text-green-600 font-semibold">Secure</span>
             </div>
           </div>
 
-          <div>
-            <h3 className="font-bold text-gray-900 mb-3">Payment Account</h3>
-            {bankCards.length > 0 ? (
+          {/* Saved cards */}
+          {bankCards.length > 0 && (
+            <div>
+              <h3 className="font-bold text-gray-900 mb-3">Payment Account</h3>
               <div className="space-y-2">
                 {bankCards.map((card) => (
                   <div key={card.id} className="border border-gray-200 px-4 py-3 flex items-center gap-3">
@@ -191,31 +172,46 @@ function TabContent({
                     {card.is_default && <span className="ml-auto text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 font-semibold">Default</span>}
                   </div>
                 ))}
+                <button
+                  onClick={onAddCard}
+                  className="w-full border border-dashed border-gray-300 py-3 flex items-center justify-center gap-2 text-gray-500 hover:bg-gray-50 transition-colors text-sm"
+                >
+                  <Plus size={16} /> Add another card
+                </button>
               </div>
-            ) : (
-              <button
-                onClick={onAddCard}
-                className="w-full border border-dashed border-gray-300 py-4 flex items-center justify-center gap-2 text-gray-500 hover:bg-gray-50 transition-colors"
-              >
-                <Plus size={18} />
-                <span className="font-semibold">Add a bank card</span>
-              </button>
-            )}
-          </div>
+            </div>
+          )}
 
-          <div className="bg-yellow-50 border border-yellow-200 px-4 py-3">
-            <p className="text-xs text-gray-600 leading-relaxed">
-              Payment processing fees: <span className="text-orange-500 font-semibold">3.5% + $0.15</span>, Actual payment amount:{" "}
-              <span className="text-orange-500 font-semibold">${totalAmount.toFixed(2)}, processing fee: ${processingFee.toFixed(2)}</span>.
-              Deposit balance can only be used to purchase items on this platform.
-            </p>
-          </div>
+          {bankCards.length === 0 && (
+            <button
+              onClick={onAddCard}
+              className="w-full border border-dashed border-gray-300 py-4 flex items-center justify-center gap-2 text-gray-500 hover:bg-gray-50 transition-colors"
+            >
+              <Plus size={18} />
+              <span className="font-semibold">Add a bank card</span>
+            </button>
+          )}
+
+          {amount > 0 && (
+            <div className="bg-yellow-50 border border-yellow-200 px-4 py-3">
+              <p className="text-xs text-gray-600 leading-relaxed">
+                Processing fee: <span className="text-orange-500 font-semibold">3.5% + $0.15 = ${processingFee.toFixed(2)}</span>
+                <span className="mx-1">·</span>
+                Total charged: <span className="text-orange-500 font-semibold">${totalAmount.toFixed(2)}</span>
+              </p>
+            </div>
+          )}
 
           <button
-            onClick={() => toast.info("Balance top-up coming soon. Please purchase directly from the game catalog.")}
-            className="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-bold py-4 transition-colors"
+            onClick={onStripeTopup}
+            disabled={isProcessingTopup || amount <= 0}
+            className="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-bold py-4 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
           >
-            Top Up
+            {isProcessingTopup ? (
+              <><Loader2 size={18} className="animate-spin" /> Processing...</>
+            ) : (
+              `Top Up $${amount > 0 ? amount.toFixed(2) : "0.00"}`
+            )}
           </button>
         </div>
       )}
@@ -295,44 +291,72 @@ function TabContent({
       {/* CASH FLOW */}
       {activeTab === "cashflow" && (
         <div>
-          <div className="mb-4">
-            <select
-              value={cashflowFilter}
-              onChange={(e) => setCashflowFilter(e.target.value)}
-              className="border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 bg-white outline-none"
-            >
-              {["All", "Top Up", "Withdraw", "Purchase", "Refund"].map((f) => (
-                <option key={f}>{f}</option>
-              ))}
-            </select>
+          {/* Filter */}
+          <div className="flex gap-2 mb-5 flex-wrap">
+            {["All", "Deposit", "Purchase", "Refund", "Withdraw", "Bonus"].map((f) => (
+              <button
+                key={f}
+                onClick={() => setCashflowFilter(f)}
+                className={`px-3 py-1.5 text-xs font-semibold border transition-all rounded-full ${
+                  cashflowFilter === f
+                    ? "bg-yellow-400 border-yellow-400 text-black"
+                    : "border-gray-200 text-gray-600 hover:border-gray-300"
+                }`}
+              >
+                {f}
+              </button>
+            ))}
           </div>
-          {transactions.length === 0 ? (
+
+          {filteredTx.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16">
-              <div className="w-24 h-24 bg-gray-100 flex items-center justify-center mb-4">
-                <svg viewBox="0 0 80 80" className="w-16 h-16">
+              <div className="w-20 h-20 bg-gray-100 flex items-center justify-center mb-4 rounded-full">
+                <svg viewBox="0 0 80 80" className="w-14 h-14">
                   <rect x="10" y="5" width="60" height="70" rx="6" fill="#e5e7eb"/>
                   <rect x="20" y="18" width="40" height="4" rx="2" fill="#d1d5db"/>
                   <rect x="20" y="28" width="30" height="4" rx="2" fill="#d1d5db"/>
                   <rect x="20" y="38" width="35" height="4" rx="2" fill="#d1d5db"/>
-                  <path d="M50 55 L60 65 L70 50" stroke="#9ca3af" strokeWidth="3" fill="none" strokeLinecap="round"/>
                 </svg>
               </div>
-              <p className="text-gray-500 font-semibold">No records</p>
+              <p className="text-gray-500 font-semibold text-sm">No transactions yet</p>
+              <p className="text-gray-400 text-xs mt-1">Your cash flow history will appear here</p>
             </div>
           ) : (
-            <div className="space-y-3">
-              {transactions.map((tx) => (
-                <div key={tx.id} className="flex items-center justify-between py-3 border-b border-gray-100">
-                  <div>
-                    <p className="font-semibold text-gray-800 text-sm capitalize">{tx.type}</p>
-                    <p className="text-xs text-gray-400">{tx.description}</p>
-                    <p className="text-xs text-gray-400">{new Date(tx.created_at).toLocaleDateString()}</p>
+            <div className="divide-y divide-gray-100">
+              {filteredTx.map((tx) => {
+                const meta = getTxMeta(tx.type);
+                const isCredit = meta.sign === "+";
+                return (
+                  <div key={tx.id} className="flex items-center gap-3 py-3.5">
+                    {/* Icon badge */}
+                    <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${meta.colorClass}`}>
+                      {meta.icon}
+                    </div>
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold text-gray-800 text-sm">{meta.label}</p>
+                        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${
+                          tx.status === "completed" ? "bg-green-100 text-green-700" :
+                          tx.status === "pending" ? "bg-yellow-100 text-yellow-700" :
+                          "bg-red-100 text-red-600"
+                        }`}>
+                          {tx.status || "completed"}
+                        </span>
+                      </div>
+                      {tx.description && <p className="text-xs text-gray-400 truncate mt-0.5">{tx.description}</p>}
+                      {tx.method && <p className="text-xs text-gray-400">via {tx.method}</p>}
+                      <p className="text-xs text-gray-400 mt-0.5">{new Date(tx.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
+                    </div>
+                    {/* Amount */}
+                    <div className="text-right flex-shrink-0">
+                      <p className={`font-bold text-sm ${isCredit ? "text-green-600" : "text-red-500"}`}>
+                        {meta.sign}${Math.abs(tx.amount).toFixed(2)}
+                      </p>
+                    </div>
                   </div>
-                  <span className={`font-bold text-sm ${tx.type === "purchase" || tx.type === "withdraw" ? "text-red-500" : "text-green-600"}`}>
-                    {tx.type === "purchase" || tx.type === "withdraw" ? "-" : "+"}${Math.abs(tx.amount).toFixed(2)}
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -348,13 +372,13 @@ export function BalancePage() {
   const [activeTab, setActiveTab] = useState<BalanceTab>("topup");
   const [topupAmount, setTopupAmount] = useState("50.00");
   const [withdrawAmount, setWithdrawAmount] = useState("");
-  const [selectedPayment, setSelectedPayment] = useState("visa");
   const [selectedWithdrawMethod, setSelectedWithdrawMethod] = useState("ewallet");
   const [bankCards, setBankCards] = useState<BankCard[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [showAddCard, setShowAddCard] = useState(false);
   const [cashflowFilter, setCashflowFilter] = useState("All");
   const [balance, setBalance] = useState<number>(user?.balance || 0);
+  const [isProcessingTopup, setIsProcessingTopup] = useState(false);
 
   // Fetch real wallet balance from wallet_transactions (credits - debits)
   useEffect(() => {
@@ -368,7 +392,7 @@ export function BalancePage() {
         if (!data) return;
         const bal = data.reduce((acc, tx) => {
           const debitTypes = ["purchase", "withdraw", "points_redeemed"];
-          const creditTypes = ["topup", "refund", "bonus", "points_earned"];
+          const creditTypes = ["deposit", "topup", "refund", "bonus", "points_earned"];
           if (debitTypes.includes(tx.type)) return acc - Math.abs(tx.amount);
           if (creditTypes.includes(tx.type)) return acc + Math.abs(tx.amount);
           return acc;
@@ -381,7 +405,7 @@ export function BalancePage() {
     if (!user?.email) return;
     const cacheKey = `balance_data_${user.email}`;
 
-    // 1. Load stale data from localStorage immediately (instant display)
+    // Load stale data from localStorage immediately
     try {
       const cached = localStorage.getItem(cacheKey);
       if (cached) {
@@ -391,13 +415,12 @@ export function BalancePage() {
       }
     } catch (_) {}
 
-    // 2. Fetch fresh data with retry backoff
+    // Fetch fresh cards
     retryQuery(() =>
       supabase.from("user_bank_cards").select("*").eq("user_email", user.email!)
     ).then(({ data }) => {
       if (data) {
         setBankCards(data);
-        // Update cache
         try {
           const cached = localStorage.getItem(cacheKey);
           const prev = cached ? JSON.parse(cached) : {};
@@ -406,9 +429,10 @@ export function BalancePage() {
       }
     });
 
+    // Fetch fresh transactions
     retryQuery(() =>
       supabase.from("wallet_transactions").select("*").eq("user_email", user.email!)
-        .order("created_at", { ascending: false }).limit(50)
+        .order("created_at", { ascending: false }).limit(100)
     ).then(({ data }) => {
       if (data) {
         setTransactions(data);
@@ -421,14 +445,93 @@ export function BalancePage() {
     });
   }, [user?.email]);
 
+  // ── Stripe top-up via edge function ──────────────────────────────────────────
+  const handleStripeTopup = async () => {
+    if (!user?.email) { toast.error("Please login to continue"); navigate("/login"); return; }
+    const amount = parseFloat(topupAmount || "0");
+    if (amount <= 0) { toast.error("Please enter a valid amount"); return; }
+    if (amount < 1) { toast.error("Minimum top-up is $1.00"); return; }
+
+    setIsProcessingTopup(true);
+    const refId = `TOPUP-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+
+    const { data, error } = await supabase.functions.invoke("stripe-checkout", {
+      body: {
+        gameName: "Wallet Top-Up",
+        skuName: `Add $${amount.toFixed(2)} to balance`,
+        quantity: 1,
+        totalPrice: amount,
+        userEmail: user.email,
+        referenceId: refId,
+        successUrl: `${window.location.origin}/balance?topup=success&ref=${refId}&amount=${amount}`,
+        cancelUrl: `${window.location.origin}/balance`,
+        metadata: { type: "wallet_topup", amount: amount.toString() },
+      },
+    });
+
+    if (error) {
+      let msg = error.message;
+      if (error instanceof FunctionsHttpError) {
+        try { msg = await error.context?.text(); } catch { /* ignore */ }
+      }
+      toast.error(`Payment error: ${msg}`);
+      setIsProcessingTopup(false);
+      return;
+    }
+
+    if (data?.url) {
+      window.location.href = data.url;
+    } else {
+      toast.error("No checkout URL returned");
+      setIsProcessingTopup(false);
+    }
+  };
+
+  // Handle Stripe success redirect → record deposit in wallet_transactions
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("topup") === "success" && user?.email) {
+      const ref = params.get("ref");
+      const amount = parseFloat(params.get("amount") || "0");
+      if (ref && amount > 0) {
+        // Record the deposit
+        supabase.from("wallet_transactions").insert({
+          user_email: user.email,
+          user_id: user.id,
+          type: "deposit",
+          amount,
+          status: "completed",
+          method: "stripe",
+          description: `Wallet top-up via Stripe (${ref})`,
+        }).then(({ error }) => {
+          if (!error) {
+            toast.success(`$${amount.toFixed(2)} added to your balance!`);
+            setBalance(prev => prev + amount);
+            setTransactions(prev => [{
+              id: `tx_${Date.now()}`,
+              type: "deposit",
+              amount,
+              description: `Wallet top-up via Stripe`,
+              created_at: new Date().toISOString(),
+              status: "completed",
+              method: "stripe",
+            }, ...prev]);
+            // Switch to cash flow tab
+            setActiveTab("cashflow");
+          }
+        });
+      }
+      // Clean up URL
+      window.history.replaceState({}, "", "/balance");
+    }
+  }, [user?.email]);
+
   const tabProps: TabContentProps = {
     activeTab,
     topupAmount,
     setTopupAmount,
     withdrawAmount,
     setWithdrawAmount,
-    selectedPayment,
-    setSelectedPayment,
     selectedWithdrawMethod,
     setSelectedWithdrawMethod,
     bankCards,
@@ -437,6 +540,8 @@ export function BalancePage() {
     setCashflowFilter,
     balance,
     onAddCard: () => setShowAddCard(true),
+    onStripeTopup: handleStripeTopup,
+    isProcessingTopup,
   };
 
   const TABS: [BalanceTab, string][] = [
@@ -471,6 +576,7 @@ export function BalancePage() {
                   <p className="text-5xl font-black text-black mt-1">
                     <span className="text-3xl">$</span>{balance.toFixed(2)}
                   </p>
+                  <p className="text-xs text-yellow-800 opacity-70 mt-1">Available for purchases</p>
                 </div>
                 <div className="w-24 h-24 opacity-70">
                   <svg viewBox="0 0 100 100" fill="none">
@@ -521,6 +627,7 @@ export function BalancePage() {
             <p className="text-4xl font-black text-gray-900 mt-1">
               <span className="text-2xl">$</span>{balance.toFixed(2)}
             </p>
+            <p className="text-xs text-gray-400 mt-0.5">Available for purchases</p>
           </div>
           <div className="w-20 h-20 opacity-80">
             <svg viewBox="0 0 100 100" fill="none">
