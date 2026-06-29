@@ -473,12 +473,21 @@ export default function LootbarGameManagement() {
 
                       {/* Actions */}
                       <div className="grid grid-cols-2 gap-1 mb-1">
-                        <button
-                          onClick={() => navigate(`/secure-dashboard-92x2011/lootbar-games/${game.game_id}/skus`)}
-                          className="flex items-center justify-center gap-0.5 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-[10px] font-bold transition-all col-span-2"
-                        >
-                          <List size={10} /> Manage SKUs
-                        </button>
+                        {game.requires_server ? (
+                          <button
+                            onClick={() => navigate(`/secure-dashboard-92x2011/games/${game.game_id}/servers`)}
+                            className="flex items-center justify-center gap-0.5 py-1.5 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 text-[10px] font-bold transition-all col-span-2"
+                          >
+                            <List size={10} /> Manage Servers
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => navigate(`/secure-dashboard-92x2011/lootbar-games/${game.game_id}/skus`)}
+                            className="flex items-center justify-center gap-0.5 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-[10px] font-bold transition-all col-span-2"
+                          >
+                            <List size={10} /> Manage Regions & SKUs
+                          </button>
+                        )}
                       </div>
                       <div className="grid grid-cols-3 gap-1">
                         <button
