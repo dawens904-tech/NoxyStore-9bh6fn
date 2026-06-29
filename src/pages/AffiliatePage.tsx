@@ -504,12 +504,8 @@ export function AffiliatePage() {
             </div>
           )}
         </div>
-
-            </div>
-          </div>
-        </div>
-          </div>
-        </div>
+      </div>
+    </div>
 
         {/* Mobile only */}
         <div className="lg:hidden pb-24">
