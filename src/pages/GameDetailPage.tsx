@@ -1357,5 +1357,6 @@ export function GameDetailPage() {
     </>
   );
 }
+hello ai fix header sticky in mobile,desktop like the accountpage sticky even if i scroll down in all pages homes,categories,cart,checkout please in all app tsx that import header.
 
 
