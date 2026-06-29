@@ -513,4 +513,72 @@ export default function AdminDashboard() {
     </div>
   );
 }
+hello AI please read message and make change fix error sku fetch real time.
 
+Please fix and improve the LootBar integration and admin system with the following changes:
+
+### 1. Real Analytics
+
+* Replace all demo or fake analytics with real analytics.
+* Show actual sales, revenue, orders, customers, and product performance using real database data.
+* Analytics must update automatically in real time.
+
+### 2. Game Server, Region & SKU Management
+
+Please redesign the product management system.
+
+**If a game requires both servers and regions:**
+
+* Show a **Manage Regions** button instead of **Manage SKU**.
+* When the admin clicks **Manage Regions**, display all available regions for that game.
+* Under each region, show a **Manage SKU** button.
+* Clicking **Manage SKU** should display all products for that region (for example: 100 Diamonds, 310 Diamonds, Weekly Membership, etc.).
+* The admin must be able to edit:
+
+  * Product name
+  * Product image
+  * Selling price
+  * Original price (optional)
+* All changes must save automatically and appear immediately on the Game Detail page.
+
+**If a game only requires servers (no regions):**
+
+* Show only **Manage SKU**.
+* The admin should be able to edit all products directly.
+
+### 3. Add New Servers & Regions
+
+Allow the admin to:
+
+* Add new servers.
+* Add new regions.
+* Edit existing servers and regions.
+* Delete servers and regions if needed.
+
+The interface should automatically adapt:
+
+* Games with **Server + Region** → Show **Manage Regions**.
+* Games with **Server Only** → Show **Manage SKU** directly.
+* Games with neither → Show products normally.
+
+### 4. Permanent Product Storage
+
+Do **not** fetch products from the LootBar API every time someone opens the Game Detail page.
+
+Instead:
+
+* Save every fetched product permanently in the database.
+* The Game Detail page must always load products from the database.
+* Products should only be updated when the admin manually refreshes or syncs them from the LootBar API.
+* This prevents products from disappearing and improves loading speed.
+
+### 5. Reliable Checkout
+
+Fix the checkout system so it is fully reliable.
+
+* Orders must always be saved correctly.
+* Checkout data must never be lost.
+* Payment information and order details must remain consistent.
+* Eliminate any issues where orders are not saved or become unsynchronized.
+
+Overall, the system should be database-driven, stable, and production-ready, with no temporary data, no fake analytics, and no unnecessary API fetching after products have been synced.
