@@ -700,4 +700,4 @@ export function HomePage() {
     </div>
   );
 }
-
+hello ai auto save all game so when user enter to the app all game already here dont have to refetch only if have new game check in silent chak 3days and load all game and saved all also in gamedetail,categoires please also same has banner.
