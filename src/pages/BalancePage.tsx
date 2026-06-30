@@ -39,7 +39,7 @@ interface Transaction {
 const PRESETS = ["20.00", "50.00", "100.00", "200.00"];
 
 function getCardLogo(type: string) {
-  if (type === "visa") return <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" alt="Visa" className="h-4" />;
+  if (type === "visa") return <img src="https://alrdbeekdywyvwhxrlrg.supabase.co/storage/v1/object/public/hi/download.webp" alt="Visa" className="h-4" />;
   if (type === "mastercard") return <img src="https://upload.wikimedia.org/wikipedia/commons/b/b7/MasterCard_Logo.svg" alt="MC" className="h-5" />;
   return <CreditCard size={16} className="text-gray-600" />;
 }
