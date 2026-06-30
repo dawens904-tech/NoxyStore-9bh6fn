@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/stores/authStore";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import AdminSidebar from "./AdminSidebar";
 import {
   ArrowLeft, Search, Edit2, Save, X, Loader2, RefreshCw,
   EyeOff, Eye, ChevronUp, ChevronDown, Globe, Package, DollarSign, Image,
-  Database,
+  Database, Upload, ChevronsUp,
 } from "lucide-react";
 import { toast } from "sonner";
 import { FunctionsHttpError } from "@supabase/supabase-js";
@@ -86,6 +86,21 @@ function EditSkuModal({ sku, gameId, onClose, onSaved }: EditModalProps) {
     is_hidden: sku?.override?.is_hidden ?? false,
   });
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageUpload = async (file: File) => {
+    if (!file) return;
+    setUploading(true);
+    const ext = file.name.split(".").pop() || "jpg";
+    const path = `skus/${gameId}-${Date.now()}.${ext}`;
+    const { data, error } = await supabase.storage.from("store-assets").upload(path, file, { upsert: true });
+    if (error) { toast.error("Upload failed: " + error.message); setUploading(false); return; }
+    const { data: urlData } = supabase.storage.from("store-assets").getPublicUrl(path);
+    setForm(f => ({ ...f, custom_image_url: urlData.publicUrl }));
+    toast.success("Image uploaded");
+    setUploading(false);
+  };
 
   const handleSave = async () => {
     if (!sku) return;
@@ -148,13 +163,32 @@ function EditSkuModal({ sku, gameId, onClose, onSaved }: EditModalProps) {
 
           {/* Custom Image */}
           <div>
-            <Label className="flex items-center gap-1 text-xs font-semibold text-gray-600 mb-1"><Image size={11} /> Custom Image URL</Label>
-            <Input
-              value={form.custom_image_url}
-              onChange={(e) => setForm(f => ({ ...f, custom_image_url: e.target.value }))}
-              placeholder="https://... (leave empty to use Lootbar image)"
-              className="text-sm rounded-xl"
-            />
+            <Label className="flex items-center gap-1 text-xs font-semibold text-gray-600 mb-1"><Image size={11} /> Custom Image</Label>
+            <div className="flex gap-2">
+              <Input
+                value={form.custom_image_url}
+                onChange={(e) => setForm(f => ({ ...f, custom_image_url: e.target.value }))}
+                placeholder="https://... (leave empty to use Lootbar image)"
+                className="text-sm rounded-xl flex-1"
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="flex items-center gap-1.5 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold rounded-xl border border-gray-200 flex-shrink-0 transition-colors disabled:opacity-50"
+              >
+                {uploading ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
+                {uploading ? "..." : "Upload"}
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImageUpload(f); }}
+              />
+            </div>
+            <p className="text-[10px] text-gray-400 mt-1">Paste a URL or upload an image file.</p>
           </div>
 
           {/* Custom Price */}
@@ -203,13 +237,14 @@ function EditSkuModal({ sku, gameId, onClose, onSaved }: EditModalProps) {
 export default function LootbarSkuManagement() {
   const { gameId } = useParams<{ gameId: string }>();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuthStore();
 
   const [skus, setSkus] = useState<MergedSku[]>([]);
   const [gameName, setGameName] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [selectedRegion, setSelectedRegion] = useState<string>("");
+  const [selectedRegion, setSelectedRegion] = useState<string>(searchParams.get("region") || "");
   const [search, setSearch] = useState("");
   const [editSku, setEditSku] = useState<MergedSku | null>(null);
   const [cacheTimestamp, setCacheTimestamp] = useState<string | null>(null);
@@ -270,7 +305,11 @@ export default function LootbarSkuManagement() {
 
         const merged = buildMerged(rawSkus, overrideMap);
         setSkus(merged);
-        if (merged.length > 0) setSelectedRegion(merged[0]._region);
+        if (merged.length > 0) {
+          const savedRegion = searchParams.get("region");
+          const validRegion = savedRegion && merged.some(s => s._region === savedRegion) ? savedRegion : merged[0]._region;
+          setSelectedRegion(validRegion);
+        }
       } else {
         // No cache — trigger live sync automatically
         await syncFromLootbar(true);
@@ -340,7 +379,10 @@ export default function LootbarSkuManagement() {
 
       const merged = buildMerged(rawSkus, overrideMap);
       setSkus(merged);
-      if (merged.length > 0 && !selectedRegion) setSelectedRegion(merged[0]._region);
+      if (merged.length > 0) {
+        const savedRegion = searchParams.get("region");
+        if (!selectedRegion && !savedRegion) setSelectedRegion(merged[0]._region);
+      }
       setCacheTimestamp(now);
 
       if (!silent) toast.success(`${rawSkus.length} SKUs synced and saved to database.`);
@@ -406,19 +448,37 @@ export default function LootbarSkuManagement() {
     toast.success(newHidden ? "SKU hidden" : "SKU visible");
   };
 
+  // Global sorted list (all regions) for cross-region movement
+  const allSkusSorted = useMemo(() =>
+    [...skus].sort((a, b) => {
+      const ao = a.override?.sort_order ?? 9999;
+      const bo = b.override?.sort_order ?? 9999;
+      if (ao !== bo) return ao - bo;
+      return (a.price || 0) - (b.price || 0);
+    }),
+  [skus]);
+
+  const mkBlank = (s: MergedSku) => ({
+    game_id: gameId!, sku_id: String(s.sku_id),
+    custom_name: s.override?.custom_name ?? null,
+    custom_price: s.override?.custom_price ?? null,
+    custom_image_url: s.override?.custom_image_url ?? null,
+    is_hidden: s.override?.is_hidden ?? false,
+    sort_order: 0,
+  });
+
   const handleMoveUp = async (sku: MergedSku, idx: number) => {
     if (idx === 0) return;
     const prev = regionSkus[idx - 1];
     const aOrder = sku.override?.sort_order ?? idx;
     const bOrder = prev.override?.sort_order ?? idx - 1;
-    const blank = (s: MergedSku) => ({ game_id: gameId!, sku_id: String(s.sku_id), custom_name: s.override?.custom_name ?? null, custom_price: s.override?.custom_price ?? null, custom_image_url: s.override?.custom_image_url ?? null, is_hidden: s.override?.is_hidden ?? false, sort_order: 0 });
     await Promise.all([
-      supabase.from("sku_overrides").upsert({ ...blank(sku), sort_order: bOrder }, { onConflict: "game_id,sku_id" }),
-      supabase.from("sku_overrides").upsert({ ...blank(prev), sort_order: aOrder }, { onConflict: "game_id,sku_id" }),
+      supabase.from("sku_overrides").upsert({ ...mkBlank(sku), sort_order: bOrder }, { onConflict: "game_id,sku_id" }),
+      supabase.from("sku_overrides").upsert({ ...mkBlank(prev), sort_order: aOrder }, { onConflict: "game_id,sku_id" }),
     ]);
     setSkus(old => old.map(s => {
-      if (String(s.sku_id) === String(sku.sku_id)) return { ...s, override: { ...(s.override ?? { game_id: gameId!, sku_id: String(s.sku_id), custom_name: null, custom_price: null, custom_image_url: null, is_hidden: false, sort_order: 9999 }), sort_order: bOrder } };
-      if (String(s.sku_id) === String(prev.sku_id)) return { ...s, override: { ...(s.override ?? { game_id: gameId!, sku_id: String(s.sku_id), custom_name: null, custom_price: null, custom_image_url: null, is_hidden: false, sort_order: 9999 }), sort_order: aOrder } };
+      if (String(s.sku_id) === String(sku.sku_id)) return { ...s, override: { ...(s.override ?? { ...mkBlank(s), sort_order: 9999 }), sort_order: bOrder } };
+      if (String(s.sku_id) === String(prev.sku_id)) return { ...s, override: { ...(s.override ?? { ...mkBlank(s), sort_order: 9999 }), sort_order: aOrder } };
       return s;
     }));
     toast.success("Order updated");
@@ -429,17 +489,31 @@ export default function LootbarSkuManagement() {
     const next = regionSkus[idx + 1];
     const aOrder = sku.override?.sort_order ?? idx;
     const bOrder = next.override?.sort_order ?? idx + 1;
-    const blank = (s: MergedSku) => ({ game_id: gameId!, sku_id: String(s.sku_id), custom_name: s.override?.custom_name ?? null, custom_price: s.override?.custom_price ?? null, custom_image_url: s.override?.custom_image_url ?? null, is_hidden: s.override?.is_hidden ?? false, sort_order: 0 });
     await Promise.all([
-      supabase.from("sku_overrides").upsert({ ...blank(sku), sort_order: bOrder }, { onConflict: "game_id,sku_id" }),
-      supabase.from("sku_overrides").upsert({ ...blank(next), sort_order: aOrder }, { onConflict: "game_id,sku_id" }),
+      supabase.from("sku_overrides").upsert({ ...mkBlank(sku), sort_order: bOrder }, { onConflict: "game_id,sku_id" }),
+      supabase.from("sku_overrides").upsert({ ...mkBlank(next), sort_order: aOrder }, { onConflict: "game_id,sku_id" }),
     ]);
     setSkus(old => old.map(s => {
-      if (String(s.sku_id) === String(sku.sku_id)) return { ...s, override: { ...(s.override ?? { game_id: gameId!, sku_id: String(s.sku_id), custom_name: null, custom_price: null, custom_image_url: null, is_hidden: false, sort_order: 9999 }), sort_order: bOrder } };
-      if (String(s.sku_id) === String(next.sku_id)) return { ...s, override: { ...(s.override ?? { game_id: gameId!, sku_id: String(s.sku_id), custom_name: null, custom_price: null, custom_image_url: null, is_hidden: false, sort_order: 9999 }), sort_order: aOrder } };
+      if (String(s.sku_id) === String(sku.sku_id)) return { ...s, override: { ...(s.override ?? { ...mkBlank(s), sort_order: 9999 }), sort_order: bOrder } };
+      if (String(s.sku_id) === String(next.sku_id)) return { ...s, override: { ...(s.override ?? { ...mkBlank(s), sort_order: 9999 }), sort_order: aOrder } };
       return s;
     }));
     toast.success("Order updated");
+  };
+
+  // Move to very top globally (sort_order = min - 1)
+  const handleMoveToGlobalTop = async (sku: MergedSku) => {
+    const minOrder = allSkusSorted[0]?.override?.sort_order ?? 0;
+    const newOrder = Math.min(0, minOrder - 1);
+    const payload = { ...mkBlank(sku), sort_order: newOrder };
+    const { error } = await supabase.from("sku_overrides").upsert(payload, { onConflict: "game_id,sku_id" });
+    if (error) { toast.error(error.message); return; }
+    setSkus(old => old.map(s =>
+      String(s.sku_id) === String(sku.sku_id)
+        ? { ...s, override: { ...(s.override ?? { ...mkBlank(s) }), sort_order: newOrder } }
+        : s
+    ));
+    toast.success("Moved to global top — will show first in game detail");
   };
 
   if (!user || user.role !== "admin") return null;
@@ -540,7 +614,7 @@ export default function LootbarSkuManagement() {
                       return (
                         <button
                           key={r.value}
-                          onClick={() => { setSelectedRegion(r.value); setSearch(""); }}
+                          onClick={() => { setSelectedRegion(r.value); setSearch(""); setSearchParams({ region: r.value }); }}
                           className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                             isSelected ? "bg-gray-900 text-white" : "text-gray-600 hover:bg-gray-50"
                           }`}
@@ -623,6 +697,13 @@ export default function LootbarSkuManagement() {
                       >
                         {/* Reorder buttons */}
                         <div className="flex flex-col gap-0.5 flex-shrink-0">
+                          <button
+                            onClick={() => handleMoveToGlobalTop(sku)}
+                            title="Move to global top (first in game detail)"
+                            className="w-6 h-6 rounded-lg bg-yellow-100 hover:bg-yellow-200 text-yellow-700 flex items-center justify-center transition-colors"
+                          >
+                            <ChevronsUp size={11} />
+                          </button>
                           <button
                             onClick={() => handleMoveUp(sku, idx)}
                             disabled={idx === 0}
@@ -766,4 +847,4 @@ export default function LootbarSkuManagement() {
     </div>
   );
 }
-fix error when you in a region tabs even if you refresh still stay dont go up and fix you can move a product whatver you want if want to put it fist allow all sku can move uka metel avan and show in game detail fist also add photo upload+url both must work.
+
