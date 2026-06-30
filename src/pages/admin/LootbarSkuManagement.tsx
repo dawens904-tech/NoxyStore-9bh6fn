@@ -213,6 +213,8 @@ export default function LootbarSkuManagement() {
   const [search, setSearch] = useState("");
   const [editSku, setEditSku] = useState<MergedSku | null>(null);
   const [cacheTimestamp, setCacheTimestamp] = useState<string | null>(null);
+  const [previewImages, setPreviewImages] = useState(false);
+  const [gameImage, setGameImage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) { navigate("/login"); return; }
@@ -239,8 +241,8 @@ export default function LootbarSkuManagement() {
     if (!gameId) return;
     setIsLoading(true);
 
-    supabase.from("games_cache").select("game_name").eq("game_id", gameId).single()
-      .then(({ data }) => { if (data) setGameName(data.game_name); });
+    supabase.from("games_cache").select("game_name, game_image").eq("game_id", gameId).single()
+      .then(({ data }) => { if (data) { setGameName(data.game_name); setGameImage(data.game_image || null); } });
 
     try {
       const [{ data: cachedSkus }, { data: overridesData }] = await Promise.all([
@@ -574,6 +576,19 @@ export default function LootbarSkuManagement() {
                   <span className="text-sm text-gray-400">·</span>
                   <span className="text-sm text-gray-500">{regionSkus.length} SKUs</span>
 
+                  {/* Preview Images toggle */}
+                  <button
+                    onClick={() => setPreviewImages(v => !v)}
+                    className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl border transition-all ${
+                      previewImages
+                        ? "bg-yellow-400 border-yellow-400 text-black"
+                        : "bg-white border-gray-200 text-gray-600 hover:border-gray-300"
+                    }`}
+                  >
+                    <Image size={12} />
+                    Preview Images
+                  </button>
+
                   {/* Search */}
                   <div className="relative ml-auto w-56">
                     <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -625,20 +640,54 @@ export default function LootbarSkuManagement() {
                         </div>
 
                         {/* Image */}
-                        <div className="w-14 h-14 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
-                          {displayImg ? (
-                            <img
-                              src={displayImg}
-                              alt={displayName}
-                              className="w-full h-full object-cover"
-                              onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center">
-                              <Package size={20} className="text-gray-300" />
+                        {previewImages ? (
+                          <div className="relative w-20 h-20 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 border-2 border-gray-100">
+                            {displayImg ? (
+                              <img
+                                src={displayImg}
+                                alt={displayName}
+                                className="w-full h-full object-cover"
+                                onError={(e) => { (e.target as HTMLImageElement).src = gameImage || ""; }}
+                              />
+                            ) : gameImage ? (
+                              <>
+                                <img src={gameImage} alt="game cover" className="w-full h-full object-cover opacity-40" />
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <span className="text-[9px] bg-gray-800/70 text-white px-1 py-0.5 rounded font-bold">fallback</span>
+                                </div>
+                              </>
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <Package size={20} className="text-gray-300" />
+                              </div>
+                            )}
+                            {/* Image source badge */}
+                            <div className={`absolute bottom-0 left-0 right-0 text-center text-[8px] font-bold py-0.5 ${
+                              sku.override?.custom_image_url
+                                ? "bg-blue-500 text-white"
+                                : sku.image
+                                ? "bg-green-500 text-white"
+                                : "bg-gray-400 text-white"
+                            }`}>
+                              {sku.override?.custom_image_url ? "custom" : sku.image ? "lootbar" : "none"}
                             </div>
-                          )}
-                        </div>
+                          </div>
+                        ) : (
+                          <div className="w-14 h-14 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
+                            {displayImg ? (
+                              <img
+                                src={displayImg}
+                                alt={displayName}
+                                className="w-full h-full object-cover"
+                                onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <Package size={20} className="text-gray-300" />
+                              </div>
+                            )}
+                          </div>
+                        )}
 
                         {/* Info */}
                         <div className="flex-1 min-w-0">
