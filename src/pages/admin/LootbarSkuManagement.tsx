@@ -847,4 +847,4 @@ export default function LootbarSkuManagement() {
     </div>
   );
 }
-
+fix error when i in a region tabs example usa and soti re antre its go up to nuber 1 region fix it must stay in the tabs i put it.
