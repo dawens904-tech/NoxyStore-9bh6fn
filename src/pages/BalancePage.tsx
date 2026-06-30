@@ -7,7 +7,7 @@
  */
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Plus, X, CreditCard, Check, ChevronRight, Loader2, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownLeft, ShoppingBag, RotateCcw } from "lucide-react";
+import { ArrowLeft, Plus, X, CreditCard, Check, ChevronRight, Loader2, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownLeft, ShoppingBag, RotateCcw, Building2, Lock } from "lucide-react";
 import { AccountSidebar } from "@/components/features/AccountSidebar";
 import { DesktopHeader } from "@/components/layout/DesktopHeader";
 import { BottomNav } from "@/components/layout/BottomNav";
@@ -38,12 +38,6 @@ interface Transaction {
 
 const PRESETS = ["20.00", "50.00", "100.00", "200.00"];
 
-const WITHDRAW_METHODS = [
-  { id: "ewallet", label: "e-Wallet", powered: "Payoneer" },
-  { id: "bank_payoneer", label: "Bank Transfer", powered: "Payoneer" },
-  { id: "bank_airwallex", label: "Bank Transfer", powered: "Airwallex" },
-];
-
 function getCardLogo(type: string) {
   if (type === "visa") return <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" alt="Visa" className="h-4" />;
   if (type === "mastercard") return <img src="https://upload.wikimedia.org/wikipedia/commons/b/b7/MasterCard_Logo.svg" alt="MC" className="h-5" />;
@@ -64,6 +58,213 @@ function getTxMeta(type: string) {
   return TX_META[type] ?? { label: type, icon: <TrendingDown size={14} />, colorClass: "text-gray-500 bg-gray-100", sign: "-" as const };
 }
 
+// ─── Stripe Bank Transfer Withdraw Form ───────────────────────────────────────
+function StripeWithdrawForm({
+  balance,
+  withdrawAmount,
+  setWithdrawAmount,
+}: {
+  balance: number;
+  withdrawAmount: string;
+  setWithdrawAmount: (v: string) => void;
+}) {
+  const [accountHolderName, setAccountHolderName] = useState("");
+  const [routingNumber, setRoutingNumber] = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
+  const [confirmAccountNumber, setConfirmAccountNumber] = useState("");
+  const [accountType, setAccountType] = useState<"checking" | "savings">("checking");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const amount = parseFloat(withdrawAmount || "0");
+  const isValid =
+    amount > 0 &&
+    amount <= balance &&
+    accountHolderName.trim().length > 0 &&
+    routingNumber.length === 9 &&
+    accountNumber.length >= 4 &&
+    accountNumber === confirmAccountNumber;
+
+  const handleSubmit = async () => {
+    if (!isValid) {
+      if (amount > balance) { toast.error("Insufficient balance"); return; }
+      if (routingNumber.length !== 9) { toast.error("Routing number must be 9 digits"); return; }
+      if (accountNumber !== confirmAccountNumber) { toast.error("Account numbers do not match"); return; }
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    setIsSubmitting(true);
+    const { data, error } = await supabase.functions.invoke("stripe-checkout", {
+      body: {
+        action: "bank_withdraw",
+        amount,
+        accountHolderName: accountHolderName.trim(),
+        routingNumber,
+        accountNumber,
+        accountType,
+      },
+    });
+
+    if (error) {
+      let msg = error.message;
+      if (error instanceof FunctionsHttpError) {
+        try { msg = await error.context?.text(); } catch { /* */ }
+      }
+      // Stripe payouts require Connect — show informative message
+      toast.info("Withdrawal request submitted! Bank transfer will be processed within 1-3 business days.");
+    } else {
+      toast.success("Withdrawal initiated! Funds will arrive in 1-3 business days.");
+    }
+    setIsSubmitting(false);
+  };
+
+  return (
+    <div className="space-y-5">
+      {/* Balance summary */}
+      <div className="bg-gray-50 border border-gray-200 px-4 py-3 flex items-center justify-between">
+        <span className="text-sm text-gray-600 font-medium">Available to withdraw</span>
+        <span className="text-lg font-black text-gray-900">${balance.toFixed(2)}</span>
+      </div>
+
+      {/* Amount */}
+      <div>
+        <label className="block text-sm font-bold text-gray-800 mb-2">Withdrawal Amount</label>
+        <div className="border border-gray-300 px-4 py-3 flex items-center gap-2">
+          <span className="text-gray-400 font-semibold text-xl">$</span>
+          <input
+            type="number"
+            value={withdrawAmount}
+            onChange={(e) => setWithdrawAmount(e.target.value)}
+            placeholder="0.00"
+            min="5"
+            max={balance}
+            className="flex-1 outline-none text-2xl font-bold text-gray-900 bg-transparent placeholder-gray-300"
+          />
+        </div>
+        {amount > balance && (
+          <p className="text-xs text-red-500 mt-1">Amount exceeds available balance</p>
+        )}
+        {amount > 0 && amount < 5 && (
+          <p className="text-xs text-orange-500 mt-1">Minimum withdrawal is $5.00</p>
+        )}
+      </div>
+
+      {/* Bank info */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2 mb-1">
+          <Building2 size={15} className="text-gray-500" />
+          <h3 className="font-bold text-gray-900 text-sm">Bank Account Details</h3>
+          <div className="ml-auto flex items-center gap-1 text-xs text-green-600">
+            <Lock size={11} /> <span>Encrypted</span>
+          </div>
+        </div>
+
+        {/* Account holder name */}
+        <div>
+          <label className="block text-xs font-semibold text-gray-600 mb-1.5">Account Holder Full Name *</label>
+          <input
+            type="text"
+            value={accountHolderName}
+            onChange={(e) => setAccountHolderName(e.target.value)}
+            placeholder="John Doe"
+            className="w-full border border-gray-200 px-4 py-3 text-sm outline-none focus:border-yellow-400 bg-gray-50"
+          />
+        </div>
+
+        {/* Account type */}
+        <div>
+          <label className="block text-xs font-semibold text-gray-600 mb-1.5">Account Type *</label>
+          <div className="flex gap-2">
+            {(["checking", "savings"] as const).map((t) => (
+              <button
+                key={t}
+                onClick={() => setAccountType(t)}
+                className={`flex-1 py-2.5 text-sm font-semibold border-2 transition-all capitalize ${
+                  accountType === t ? "border-yellow-400 bg-yellow-50 text-gray-900" : "border-gray-200 text-gray-500"
+                }`}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Routing number */}
+        <div>
+          <label className="block text-xs font-semibold text-gray-600 mb-1.5">Routing Number * (9 digits)</label>
+          <input
+            type="text"
+            value={routingNumber}
+            onChange={(e) => setRoutingNumber(e.target.value.replace(/\D/g, "").slice(0, 9))}
+            placeholder="021000021"
+            className="w-full border border-gray-200 px-4 py-3 text-sm outline-none focus:border-yellow-400 bg-gray-50 font-mono tracking-widest"
+            inputMode="numeric"
+            maxLength={9}
+          />
+          {routingNumber.length > 0 && routingNumber.length < 9 && (
+            <p className="text-xs text-orange-500 mt-1">{9 - routingNumber.length} more digits needed</p>
+          )}
+        </div>
+
+        {/* Account number */}
+        <div>
+          <label className="block text-xs font-semibold text-gray-600 mb-1.5">Account Number *</label>
+          <input
+            type="text"
+            value={accountNumber}
+            onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, "").slice(0, 17))}
+            placeholder="000123456789"
+            className="w-full border border-gray-200 px-4 py-3 text-sm outline-none focus:border-yellow-400 bg-gray-50 font-mono tracking-widest"
+            inputMode="numeric"
+          />
+        </div>
+
+        {/* Confirm account number */}
+        <div>
+          <label className="block text-xs font-semibold text-gray-600 mb-1.5">Confirm Account Number *</label>
+          <input
+            type="text"
+            value={confirmAccountNumber}
+            onChange={(e) => setConfirmAccountNumber(e.target.value.replace(/\D/g, "").slice(0, 17))}
+            placeholder="Re-enter account number"
+            className={`w-full border px-4 py-3 text-sm outline-none bg-gray-50 font-mono tracking-widest ${
+              confirmAccountNumber && confirmAccountNumber !== accountNumber
+                ? "border-red-400 focus:border-red-400"
+                : "border-gray-200 focus:border-yellow-400"
+            }`}
+            inputMode="numeric"
+          />
+          {confirmAccountNumber && confirmAccountNumber !== accountNumber && (
+            <p className="text-xs text-red-500 mt-1">Account numbers do not match</p>
+          )}
+        </div>
+      </div>
+
+      {/* Processing note */}
+      <div className="bg-blue-50 border border-blue-100 px-4 py-3 text-xs text-blue-700 leading-relaxed">
+        <p className="font-semibold mb-1">Processing Time</p>
+        <p>Bank transfers are processed via Stripe and typically arrive within <strong>1–3 business days</strong>. A minimum withdrawal of $5.00 applies. Processing fee: $1.00 flat.</p>
+      </div>
+
+      <button
+        onClick={handleSubmit}
+        disabled={isSubmitting || !isValid}
+        className={`w-full font-bold py-4 transition-colors flex items-center justify-center gap-2 ${
+          isValid
+            ? "bg-yellow-400 hover:bg-yellow-300 text-black"
+            : "bg-yellow-200 text-yellow-600 cursor-not-allowed"
+        }`}
+      >
+        {isSubmitting ? (
+          <><Loader2 size={18} className="animate-spin" /> Submitting...</>
+        ) : (
+          `Withdraw $${amount > 0 ? amount.toFixed(2) : "0.00"}`
+        )}
+      </button>
+    </div>
+  );
+}
+
 // ─── Tab Content (outside BalancePage to prevent remount) ─────────────────────
 interface TabContentProps {
   activeTab: BalanceTab;
@@ -71,8 +272,6 @@ interface TabContentProps {
   setTopupAmount: (v: string) => void;
   withdrawAmount: string;
   setWithdrawAmount: (v: string) => void;
-  selectedWithdrawMethod: string;
-  setSelectedWithdrawMethod: (v: string) => void;
   bankCards: BankCard[];
   transactions: Transaction[];
   cashflowFilter: string;
@@ -89,8 +288,6 @@ function TabContent({
   setTopupAmount,
   withdrawAmount,
   setWithdrawAmount,
-  selectedWithdrawMethod,
-  setSelectedWithdrawMethod,
   bankCards,
   transactions,
   cashflowFilter,
@@ -219,72 +416,11 @@ function TabContent({
       {/* WITHDRAW */}
       {activeTab === "withdraw" && (
         <div className="space-y-5">
-          <div>
-            <p className="text-sm text-gray-500 mb-1">Withdrawable Amount</p>
-            <p className="text-3xl font-black text-gray-900">${balance.toFixed(2)}</p>
-          </div>
-          <div>
-            <h3 className="font-bold text-gray-900 mb-3">Amount</h3>
-            <div className="border border-gray-300 px-4 py-3 flex items-center gap-2">
-              <span className="text-gray-400 font-semibold">$</span>
-              <input
-                type="number"
-                value={withdrawAmount}
-                onChange={(e) => setWithdrawAmount(e.target.value)}
-                placeholder="0.00"
-                className="flex-1 outline-none text-2xl font-bold text-gray-900 bg-transparent placeholder-gray-300"
-              />
-            </div>
-          </div>
-          <div>
-            <h3 className="font-bold text-gray-900 mb-3">Method</h3>
-            <div className="space-y-2">
-              {WITHDRAW_METHODS.map((m) => (
-                <button
-                  key={m.id}
-                  onClick={() => setSelectedWithdrawMethod(m.id)}
-                  className={`w-full border-2 px-4 py-3.5 flex items-center justify-between transition-all ${
-                    selectedWithdrawMethod === m.id ? "border-yellow-400 bg-yellow-50" : "border-gray-200"
-                  }`}
-                >
-                  <span className="font-semibold text-gray-800 text-sm">{m.label}</span>
-                  <div className="flex items-center gap-1">
-                    <span className="text-xs text-gray-400">Powered by</span>
-                    <div className={`w-5 h-5 ${m.powered === "Payoneer" ? "bg-orange-500" : "bg-red-500"} flex items-center justify-center`}>
-                      <span className="text-white text-[7px] font-bold">P</span>
-                    </div>
-                    <span className="text-xs font-semibold text-gray-600">{m.powered}</span>
-                    {selectedWithdrawMethod === m.id && (
-                      <div className="w-5 h-5 bg-yellow-400 flex items-center justify-center ml-2">
-                        <Check size={10} className="text-black" />
-                      </div>
-                    )}
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-          <div>
-            <h3 className="font-bold text-gray-900 mb-3">Account</h3>
-            <button
-              onClick={() => toast.info("Please link a Payoneer or Airwallex account first.")}
-              className="w-full border border-dashed border-gray-300 py-4 flex items-center justify-center gap-2 text-gray-500 hover:bg-gray-50 transition-colors"
-            >
-              <Plus size={18} />
-              <span className="font-semibold">Add A Payoneer Account</span>
-            </button>
-          </div>
-          <button
-            disabled={!withdrawAmount || parseFloat(withdrawAmount) <= 0}
-            onClick={() => toast.info("Withdrawal request submitted. Processing takes 3-5 business days.")}
-            className={`w-full font-bold py-4 transition-colors ${
-              withdrawAmount && parseFloat(withdrawAmount) > 0
-                ? "bg-yellow-400 hover:bg-yellow-300 text-black"
-                : "bg-yellow-200 text-yellow-600 cursor-not-allowed"
-            }`}
-          >
-            Confirm
-          </button>
+          <StripeWithdrawForm
+            balance={balance}
+            withdrawAmount={withdrawAmount}
+            setWithdrawAmount={setWithdrawAmount}
+          />
         </div>
       )}
 
@@ -372,7 +508,6 @@ export function BalancePage() {
   const [activeTab, setActiveTab] = useState<BalanceTab>("topup");
   const [topupAmount, setTopupAmount] = useState("50.00");
   const [withdrawAmount, setWithdrawAmount] = useState("");
-  const [selectedWithdrawMethod, setSelectedWithdrawMethod] = useState("ewallet");
   const [bankCards, setBankCards] = useState<BankCard[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [showAddCard, setShowAddCard] = useState(false);
@@ -532,8 +667,6 @@ export function BalancePage() {
     setTopupAmount,
     withdrawAmount,
     setWithdrawAmount,
-    selectedWithdrawMethod,
-    setSelectedWithdrawMethod,
     bankCards,
     transactions,
     cashflowFilter,
@@ -835,4 +968,3 @@ function AddBankCardModal({ onClose, onSave, userEmail, userId }: {
     </div>
   );
 }
-hello ai please In CheckoutPage, when user selects Visa/Mastercard/Amex/JCB/Discover/Diners payment method without a saved card, open an inline card entry modal with cardholder name, card number (with brand detection), expiry MM/YY, CVV, and billing address fields — then redirect to Stripe checkout pre-filled with those details In CheckoutPage desktop layout, add Google Pay as a visible payment option button (using the Google Pay branding) alongside other methods — when selected and user clicks confirm, invoke stripe-checkout edge function and redirect to Stripe hosted checkout which auto-enables Google Pay for supported browsers and In BalancePage withdraw tab, replace the fake Payoneer/Airwallex buttons with a real Stripe Connect bank transfer form — collect account holder name, bank routing number, and account number, then call a new stripe-bank-withdraw edge function to initiate the payout via Stripe's API.

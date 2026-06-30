@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   CheckCircle, XCircle, Loader2, Edit2, Shield,
-  ChevronRight, X, Plus, HelpCircle, Minus, Smartphone, ChevronDown
+  ChevronRight, X, Plus, HelpCircle, Minus, Smartphone, ChevronDown, Lock
 } from "lucide-react";
 import { lootbarApi } from "@/lib/lootbar-api";
 import { useAuthStore } from "@/stores/authStore";
@@ -167,6 +167,126 @@ const GiftIcon = () => (
   </svg>
 );
 
+// ─── Card Entry Modal ───────────────────────────────────────────────────────
+function CardEntryModal({
+  paymentId,
+  onClose,
+  onConfirm,
+}: {
+  paymentId: string;
+  onClose: () => void;
+  onConfirm: (data: { cardNumber: string; cardHolder: string; expiry: string; cvv: string; address: string; city: string; zip: string }) => void;
+}) {
+  const [cardHolder, setCardHolder] = useState("");
+  const [cardNumber, setCardNumber] = useState("");
+  const [expiry, setExpiry] = useState("");
+  const [cvv, setCvv] = useState("");
+  const [address, setAddress] = useState("");
+  const [city, setCity] = useState("");
+  const [zip, setZip] = useState("");
+
+  const formatCard = (v: string) => v.replace(/\D/g, "").replace(/(.{4})/g, "$1 ").trim().slice(0, 19);
+  const formatExpiry = (v: string) => { const d = v.replace(/\D/g, ""); return d.length >= 2 ? d.slice(0, 2) + "/" + d.slice(2, 4) : d; };
+
+  const detectBrand = (n: string): string => {
+    const c = n.replace(/\s/g, "");
+    if (c.startsWith("4")) return "Visa";
+    if (/^5[1-5]/.test(c)) return "Mastercard";
+    if (/^3[47]/.test(c)) return "Amex";
+    if (/^35/.test(c)) return "JCB";
+    if (/^6011|^64|^65/.test(c)) return "Discover";
+    if (/^30[0-5]|^36|^38/.test(c)) return "Diners";
+    return "";
+  };
+
+  const brand = detectBrand(cardNumber);
+  const isJcbGroup = paymentId === "jcb_group";
+  const isValid = cardHolder.trim() && cardNumber.replace(/\s/g, "").length >= 13 && expiry.length === 5 && cvv.length >= 3 && address.trim() && city.trim() && zip.trim();
+
+  const brandColor: Record<string, string> = { Visa: "text-blue-600", Mastercard: "text-red-500", Amex: "text-blue-500", JCB: "text-green-600", Discover: "text-orange-500", Diners: "text-gray-600" };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end lg:items-center justify-center">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-white w-full max-w-lg lg:max-w-md mx-auto shadow-2xl overflow-y-auto" style={{ maxHeight: "95vh" }}>
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 sticky top-0 bg-white z-10">
+          <div>
+            <h3 className="font-bold text-gray-900">Card Payment</h3>
+            <p className="text-xs text-gray-400 mt-0.5">
+              {isJcbGroup ? "JCB / Amex / Discover / Diners" : "Visa / Mastercard"}
+            </p>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600"><X size={18} /></button>
+        </div>
+
+        <div className="px-5 py-5 space-y-4">
+          {/* Security badge */}
+          <div className="flex items-center gap-2 bg-green-50 border border-green-100 px-3 py-2 rounded-lg">
+            <Lock size={13} className="text-green-600" />
+            <span className="text-xs text-green-700 font-semibold">Your card info is encrypted and never stored on our servers</span>
+          </div>
+
+          {/* Card holder */}
+          <div>
+            <label className="block text-xs font-bold text-gray-700 mb-1.5">Cardholder Name *</label>
+            <input type="text" value={cardHolder} onChange={e => setCardHolder(e.target.value)} placeholder="John Doe" className="w-full border border-gray-200 px-4 py-3 text-sm outline-none focus:border-yellow-400" />
+          </div>
+
+          {/* Card number */}
+          <div>
+            <label className="block text-xs font-bold text-gray-700 mb-1.5">Card Number *</label>
+            <div className="relative">
+              <input type="text" value={cardNumber} onChange={e => setCardNumber(formatCard(e.target.value))} placeholder="0000 0000 0000 0000" className="w-full border border-gray-200 px-4 py-3 text-sm outline-none focus:border-yellow-400 font-mono pr-16" inputMode="numeric" maxLength={19} />
+              {brand && (
+                <span className={`absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold ${brandColor[brand] || "text-gray-500"}`}>{brand}</span>
+              )}
+            </div>
+          </div>
+
+          {/* Expiry + CVV */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-bold text-gray-700 mb-1.5">Expiry *</label>
+              <input type="text" value={expiry} onChange={e => setExpiry(formatExpiry(e.target.value))} placeholder="MM/YY" className="w-full border border-gray-200 px-4 py-3 text-sm outline-none focus:border-yellow-400" inputMode="numeric" maxLength={5} />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-gray-700 mb-1.5">CVV *</label>
+              <input type="password" value={cvv} onChange={e => setCvv(e.target.value.replace(/\D/g, "").slice(0, 4))} placeholder="•••" className="w-full border border-gray-200 px-4 py-3 text-sm outline-none focus:border-yellow-400" inputMode="numeric" maxLength={4} />
+            </div>
+          </div>
+
+          {/* Billing address */}
+          <div className="pt-1">
+            <p className="text-xs font-bold text-gray-700 mb-3">Billing Address *</p>
+            <div className="space-y-3">
+              <input type="text" value={address} onChange={e => setAddress(e.target.value)} placeholder="Street address" className="w-full border border-gray-200 px-4 py-3 text-sm outline-none focus:border-yellow-400" />
+              <div className="grid grid-cols-2 gap-3">
+                <input type="text" value={city} onChange={e => setCity(e.target.value)} placeholder="City" className="w-full border border-gray-200 px-4 py-3 text-sm outline-none focus:border-yellow-400" />
+                <input type="text" value={zip} onChange={e => setZip(e.target.value)} placeholder="ZIP / Postal code" className="w-full border border-gray-200 px-4 py-3 text-sm outline-none focus:border-yellow-400" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Action */}
+        <div className="px-5 pb-6 pt-2">
+          <button
+            onClick={() => isValid && onConfirm({ cardNumber, cardHolder, expiry, cvv, address, city, zip })}
+            disabled={!isValid}
+            className={`w-full font-bold py-4 text-sm transition-colors ${
+              isValid ? "bg-yellow-400 hover:bg-yellow-300 text-black" : "bg-yellow-200 text-yellow-600 cursor-not-allowed"
+            }`}
+          >
+            Continue to Payment
+          </button>
+          <p className="text-center text-xs text-gray-400 mt-2">You will be redirected to Stripe to complete payment securely</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Haiti Payment Modal ──────────────────────────────────────────────────────
 function HaitiPaymentModal({
   selectedMethod,
@@ -298,6 +418,8 @@ export function CheckoutPage() {
   const [modifyValues, setModifyValues] = useState<Record<string, string>>({});
   const [showHaitiModal, setShowHaitiModal] = useState(false);
   const [haitiMethod, setHaitiMethod] = useState<"moncash" | "natcash">("moncash");
+  const [showCardModal, setShowCardModal] = useState(false);
+  const [pendingCardPaymentId, setPendingCardPaymentId] = useState<string | null>(null);
 
   // Auto-apply pending coupon from coupons page
   useEffect(() => {
@@ -389,6 +511,10 @@ export function CheckoutPage() {
     { id: "paypal", label: "", renderLogo: () => <PayPalLogo />, fee: 0.19 },
     { id: "paylater", label: "", renderLogo: () => <PayLaterLogo />, fee: 0.19 },
     { id: "cashapp", label: "", renderLogo: () => <CashAppLogo />, fee: 0.25 },
+  // Google Pay (always shown on desktop)
+    { id: "google_pay" as PaymentMethodId, label: "Google Pay", fee: 0, renderLogo: () => (
+        <div className="flex items-center gap-2"><GooglePayBadge /><p className="text-xs text-gray-400 ml-1">One-tap pay</p></div>
+    )},
   // Apple Pay (iOS only)
     ...(isIOS ? [{
       id: "apple_pay" as PaymentMethodId,
@@ -401,18 +527,7 @@ export function CheckoutPage() {
         </div>
       ),
     }] : []),
-    // Google Pay (Android only)
-    ...(isAndroid ? [{
-      id: "google_pay" as PaymentMethodId,
-      label: "Google Pay",
-      fee: 0,
-      renderLogo: () => (
-        <div className="flex items-center gap-2">
-          <GooglePayBadge />
-          <p className="text-xs text-gray-400 ml-1">One-tap pay</p>
-        </div>
-      ),
-    }] : []),
+
     {
       id: "crypto",
       label: "",
@@ -625,7 +740,13 @@ export function CheckoutPage() {
     if (isProcessingPayment) return;
 
     // Route to Stripe for card / Apple Pay / Google Pay
-    if (["stripe_card", "apple_pay", "google_pay"].includes(selectedPayment)) {
+    if (["stripe_card", "jcb_group", "apple_pay", "google_pay"].includes(selectedPayment)) {
+      // For card payments with no saved cards, show card entry modal
+      if (["stripe_card", "jcb_group"].includes(selectedPayment) && savedCards.length === 0) {
+        setPendingCardPaymentId(selectedPayment);
+        setShowCardModal(true);
+        return;
+      }
       await handleStripeCheckout();
       return;
     }
@@ -1324,6 +1445,39 @@ export function CheckoutPage() {
     <>
       <DesktopCheckout />
       <MobileCheckout />
+
+      {/* Card Entry Modal — shown when selecting card payment without a saved card */}
+      {showCardModal && (
+        <CardEntryModal
+          paymentId={pendingCardPaymentId || "stripe_card"}
+          onClose={() => { setShowCardModal(false); setPendingCardPaymentId(null); }}
+          onConfirm={async (cardData) => {
+            setShowCardModal(false);
+            setPendingCardPaymentId(null);
+            // Save card to DB then proceed to Stripe
+            if (user?.email && user?.id) {
+              const n = cardData.cardNumber.replace(/\s/g, "");
+              const last4 = n.slice(-4);
+              let cardType = "visa";
+              if (n.startsWith("4")) cardType = "visa";
+              else if (/^5[1-5]/.test(n)) cardType = "mastercard";
+              else if (/^3[47]/.test(n)) cardType = "amex";
+              else if (/^35/.test(n)) cardType = "jcb";
+              else if (/^6011|^64|^65/.test(n)) cardType = "discover";
+              const { data: saved } = await supabase.from("user_bank_cards").insert({
+                user_id: user.id,
+                user_email: user.email,
+                card_number_masked: `**** **** **** ${last4}`,
+                card_type: cardType,
+                expiry: cardData.expiry,
+                is_default: savedCards.length === 0,
+              }).select().single();
+              if (saved) setSavedCards(prev => [...prev, saved]);
+            }
+            await handleStripeCheckout();
+          }}
+        />
+      )}
 
       {showHaitiModal && (
         <HaitiPaymentModal
