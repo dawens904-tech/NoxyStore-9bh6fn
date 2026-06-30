@@ -766,3 +766,4 @@ export default function LootbarSkuManagement() {
     </div>
   );
 }
+fix error when you in a region tabs even if you refresh still stay dont go up and fix you can move a product whatver you want if want to put it fist allow all sku can move uka metel avan and show in game detail fist also add photo upload+url both must work.
