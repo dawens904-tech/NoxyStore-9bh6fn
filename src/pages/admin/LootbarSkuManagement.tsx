@@ -859,3 +859,4 @@ export default function LootbarSkuManagement() {
   );
 }
 
+please fix sku move up and down please just allow admin tap a button and li just deplasel mete kotel li vle an lika anba nenpot anle nenpot epa komsi just up allow admin ka deplase all products yo ka move.
