@@ -1358,4 +1358,4 @@ export function GameDetailPage() {
   );
 }
 
-
+for game sku fetch via sku photo per region product edg 100diamonds instead of the game photo.
