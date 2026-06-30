@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { FunctionsHttpError } from "@supabase/supabase-js";
 
 type BalanceTab = "topup" | "withdraw" | "cashflow";
+type PaymentMethod = "card" | "jcb" | "paypal" | "crypto";
 
 interface BankCard {
   id: string;
@@ -36,7 +37,7 @@ interface Transaction {
   method?: string;
 }
 
-const PRESETS = ["20.00", "50.00", "100.00", "200.00"];
+const PRESETS = ["50.00", "90.00", "150.00"];
 
 function getCardLogo(type: string) {
   if (type === "visa") return <img src="https://alrdbeekdywyvwhxrlrg.supabase.co/storage/v1/object/public/hi/download.webp" alt="Visa" className="h-4" />;
@@ -195,7 +196,7 @@ function StripeWithdrawForm({
           <input
             type="text"
             value={routingNumber}
-            onChange={(e) => setRoutingNumber(e.target.value.replace(/\D/g, "").slice(0, 9))}
+            onChange={(e) => setRoutingNumber(e.target.value.replace(/\\D/g, "").slice(0, 9))}
             placeholder="021000021"
             className="w-full border border-gray-200 px-4 py-3 text-sm outline-none focus:border-yellow-400 bg-gray-50 font-mono tracking-widest"
             inputMode="numeric"
@@ -212,7 +213,7 @@ function StripeWithdrawForm({
           <input
             type="text"
             value={accountNumber}
-            onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, "").slice(0, 17))}
+            onChange={(e) => setAccountNumber(e.target.value.replace(/\\D/g, "").slice(0, 17))}
             placeholder="000123456789"
             className="w-full border border-gray-200 px-4 py-3 text-sm outline-none focus:border-yellow-400 bg-gray-50 font-mono tracking-widest"
             inputMode="numeric"
@@ -225,7 +226,7 @@ function StripeWithdrawForm({
           <input
             type="text"
             value={confirmAccountNumber}
-            onChange={(e) => setConfirmAccountNumber(e.target.value.replace(/\D/g, "").slice(0, 17))}
+            onChange={(e) => setConfirmAccountNumber(e.target.value.replace(/\\D/g, "").slice(0, 17))}
             placeholder="Re-enter account number"
             className={`w-full border px-4 py-3 text-sm outline-none bg-gray-50 font-mono tracking-widest ${
               confirmAccountNumber && confirmAccountNumber !== accountNumber
@@ -265,6 +266,165 @@ function StripeWithdrawForm({
   );
 }
 
+// ─── Top-up Confirmation Modal ────────────────────────────────────────────────
+function TopUpConfirmationModal({
+  isOpen,
+  onClose,
+  onConfirm,
+  amount,
+  feeRate,
+  feeFixed,
+  method,
+  isProcessing,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  amount: number;
+  feeRate: number;
+  feeFixed: number;
+  method: string;
+  isProcessing: boolean;
+}) {
+  if (!isOpen) return null;
+
+  const fee = amount * feeRate + (amount > 0 ? feeFixed : 0);
+  const total = amount + fee;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white w-full max-w-sm rounded-lg shadow-xl overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors">
+            <X size={20} className="text-gray-700" />
+          </button>
+          <h2 className="font-bold text-gray-900 text-lg">Top-up Confirmation</h2>
+          <div className="w-8" />
+        </div>
+        
+        <div className="px-5 py-5 space-y-3">
+          <div className="flex justify-between items-center">
+            <span className="text-gray-600 text-sm">Top-up Amount:</span>
+            <span className="font-bold text-gray-900">${amount.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-gray-600 text-sm">Payment Fee:</span>
+            <span className="font-bold text-gray-900">${fee.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between items-center border-t border-gray-200 pt-3">
+            <span className="text-gray-800 font-semibold text-sm">Actual payment:</span>
+            <span className="font-bold text-yellow-600 text-lg">${total.toFixed(2)}</span>
+          </div>
+          
+          <p className="text-xs text-gray-500 leading-relaxed mt-2">
+            Payment instruction: This payment may be affected by the exchange rate, the amount in USD is for reference only, please refer to your final payment amount.
+          </p>
+        </div>
+
+        <div className="px-4 pb-5 flex gap-3">
+          <button
+            onClick={onClose}
+            className="flex-1 py-3 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={isProcessing}
+            className="flex-1 py-3 bg-yellow-400 hover:bg-yellow-300 text-black font-bold rounded-lg transition-colors disabled:opacity-60"
+          >
+            {isProcessing ? (
+              <span className="flex items-center justify-center gap-2">
+                <Loader2 size={16} className="animate-spin" /> Processing...
+              </span>
+            ) : (
+              "Top Up"
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Payment Method Selector (4-part grid) ──────────────────────────────────
+function PaymentMethodSelector({
+  selected,
+  onSelect,
+}: {
+  selected: PaymentMethod;
+  onSelect: (method: PaymentMethod) => void;
+}) {
+  const methods: { id: PaymentMethod; label: string; logos: string[] }[] = [
+    {
+      id: "card",
+      label: "",
+      logos: [
+        "https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg",
+        "https://upload.wikimedia.org/wikipedia/commons/b/b7/MasterCard_Logo.svg",
+      ],
+    },
+    {
+      id: "jcb",
+      label: "",
+      logos: [
+        "https://upload.wikimedia.org/wikipedia/commons/6/6c/JCB_logo.svg",
+        "https://upload.wikimedia.org/wikipedia/commons/5/57/Discover_Card_logo.svg",
+        "https://upload.wikimedia.org/wikipedia/commons/3/30/American_Express_logo.svg",
+        "https://upload.wikimedia.org/wikipedia/commons/0/0d/Diners_Club_International_logo.svg",
+      ],
+    },
+    {
+      id: "paypal",
+      label: "",
+      logos: ["https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg"],
+    },
+    {
+      id: "crypto",
+      label: "",
+      logos: [
+        "https://cryptologos.cc/logos/bitcoin-btc-logo.svg",
+        "https://cryptologos.cc/logos/ethereum-eth-logo.svg",
+        "https://cryptologos.cc/logos/tether-usdt-logo.svg",
+        "https://cryptologos.cc/logos/binance-usd-busd-logo.svg",
+      ],
+    },
+  ];
+
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      {methods.map((method) => (
+        <button
+          key={method.id}
+          onClick={() => onSelect(method.id)}
+          className={`relative border-2 rounded-lg p-3 flex items-center justify-center gap-1 transition-all min-h-[52px] ${
+            selected === method.id
+              ? "border-yellow-400 bg-yellow-50"
+              : "border-gray-200 hover:border-gray-300"
+          }`}
+        >
+          {selected === method.id && (
+            <div className="absolute top-1 right-1 w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center">
+              <Check size={10} className="text-white" strokeWidth={3} />
+            </div>
+          )}
+          <div className="flex items-center gap-1 flex-wrap justify-center">
+            {method.logos.map((logo, idx) => (
+              <img
+                key={idx}
+                src={logo}
+                alt=""
+                className="h-4 object-contain"
+                onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+              />
+            ))}
+          </div>
+        </button>
+      ))}
+    </div>
+  );
+}
+
 // ─── Tab Content (outside BalancePage to prevent remount) ─────────────────────
 interface TabContentProps {
   activeTab: BalanceTab;
@@ -280,6 +440,9 @@ interface TabContentProps {
   onAddCard: () => void;
   onStripeTopup: () => void;
   isProcessingTopup: boolean;
+  paymentMethod: PaymentMethod;
+  setPaymentMethod: (m: PaymentMethod) => void;
+  onShowConfirm: () => void;
 }
 
 function TabContent({
@@ -296,9 +459,12 @@ function TabContent({
   onAddCard,
   onStripeTopup,
   isProcessingTopup,
+  paymentMethod,
+  setPaymentMethod,
+  onShowConfirm,
 }: TabContentProps) {
   const amount = parseFloat(topupAmount || "0");
-  const processingFee = amount * 0.035 + (amount > 0 ? 0.15 : 0);
+  const processingFee = amount * 0.0399 + (amount > 0 ? 0.3 : 0);
   const totalAmount = amount + processingFee;
 
   const filteredTx = cashflowFilter === "All"
@@ -314,8 +480,8 @@ function TabContent({
       {activeTab === "topup" && (
         <div className="space-y-5">
           <div>
-            <h3 className="font-bold text-gray-900 mb-3">Top-up Amount</h3>
-            <div className="border border-gray-300 px-4 py-3 flex items-center gap-2 mb-3">
+            <h3 className="font-bold text-gray-900 mb-3 text-base">Top-up Amount</h3>
+            <div className="border border-gray-300 rounded-lg px-4 py-3 flex items-center gap-2 mb-3">
               <span className="text-gray-400 font-semibold text-xl">$</span>
               <input
                 type="number"
@@ -326,12 +492,12 @@ function TabContent({
                 placeholder="0.00"
               />
             </div>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               {PRESETS.map((p) => (
                 <button
                   key={p}
                   onClick={() => setTopupAmount(p)}
-                  className={`border py-2 text-sm font-semibold transition-all ${
+                  className={`border rounded-lg py-2.5 text-sm font-semibold transition-all ${
                     topupAmount === p ? "border-yellow-400 bg-yellow-50 text-yellow-700" : "border-gray-300 text-gray-600 hover:border-gray-400"
                   }`}
                 >
@@ -341,68 +507,76 @@ function TabContent({
             </div>
           </div>
 
-          {/* Payment method: Stripe card */}
+          {/* Payment method: 4-part grid */}
           <div>
-            <h3 className="font-bold text-gray-900 mb-3">Payment Method</h3>
-            <div className="border-2 border-yellow-400 bg-yellow-50 py-4 px-4 flex items-center gap-3">
-              <div className="w-5 h-5 border-2 border-yellow-500 rounded-full flex items-center justify-center">
-                <div className="w-2.5 h-2.5 bg-yellow-500 rounded-full" />
-              </div>
-              <div className="flex items-center gap-2">
-                <img src="/images/IMG_8408.webp" alt="Visa/Mastercard" className="h-7 object-contain"
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                <span className="text-sm font-semibold text-gray-700">Credit / Debit Card</span>
-              </div>
-              <span className="ml-auto text-xs text-green-600 font-semibold">Secure</span>
-            </div>
+            <h3 className="font-bold text-gray-900 mb-3 text-base">Top-up Method</h3>
+            <PaymentMethodSelector selected={paymentMethod} onSelect={setPaymentMethod} />
           </div>
 
-          {/* Saved cards */}
-          {bankCards.length > 0 && (
-            <div>
-              <h3 className="font-bold text-gray-900 mb-3">Payment Account</h3>
-              <div className="space-y-2">
-                {bankCards.map((card) => (
-                  <div key={card.id} className="border border-gray-200 px-4 py-3 flex items-center gap-3">
-                    {getCardLogo(card.card_type)}
-                    <span className="text-sm font-semibold text-gray-700">{card.card_number_masked}</span>
-                    {card.is_default && <span className="ml-auto text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 font-semibold">Default</span>}
-                  </div>
-                ))}
-                <button
-                  onClick={onAddCard}
-                  className="w-full border border-dashed border-gray-300 py-3 flex items-center justify-center gap-2 text-gray-500 hover:bg-gray-50 transition-colors text-sm"
-                >
-                  <Plus size={16} /> Add another card
-                </button>
-              </div>
+          {/* JCB VIP banner */}
+          {paymentMethod === "jcb" && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-3">
+              <p className="text-sm text-gray-800 font-medium">
+                Upgrade to VIP3 to use Triple A payment.
+              </p>
             </div>
           )}
 
-          {bankCards.length === 0 && (
-            <button
-              onClick={onAddCard}
-              className="w-full border border-dashed border-gray-300 py-4 flex items-center justify-center gap-2 text-gray-500 hover:bg-gray-50 transition-colors"
-            >
-              <Plus size={18} />
-              <span className="font-semibold">Add a bank card</span>
-            </button>
+          {/* PayPal / Crypto note */}
+          {(paymentMethod === "paypal" || paymentMethod === "crypto") && (
+            <div className="bg-blue-50 border border-blue-100 rounded-lg px-4 py-3 text-xs text-blue-700 leading-relaxed">
+              <p className="font-semibold mb-1">Payment Notice</p>
+              <p>Payment processing fees: 3.99% + $0.3, Actual payment amount: ${totalAmount.toFixed(2)}, processing fee:${processingFee.toFixed(2)}. Deposit balance can only be used to purchase items on this platform.</p>
+            </div>
           )}
 
-          {amount > 0 && (
-            <div className="bg-yellow-50 border border-yellow-200 px-4 py-3">
+          {/* Saved cards - only show for card method */}
+          {paymentMethod === "card" && (
+            <>
+              {bankCards.length > 0 ? (
+                <div>
+                  <h3 className="font-bold text-gray-900 mb-3 text-base">Payment Account</h3>
+                  <div className="space-y-2">
+                    {bankCards.map((card) => (
+                      <div key={card.id} className="border border-gray-200 rounded-lg px-4 py-3 flex items-center gap-3">
+                        {getCardLogo(card.card_type)}
+                        <span className="text-sm font-semibold text-gray-700">{card.card_number_masked}</span>
+                        {card.is_default && <span className="ml-auto text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 font-semibold rounded">Default</span>}
+                      </div>
+                    ))}
+                    <button
+                      onClick={onAddCard}
+                      className="w-full border border-dashed border-gray-300 rounded-lg py-3 flex items-center justify-center gap-2 text-gray-500 hover:bg-gray-50 transition-colors text-sm"
+                    >
+                      <Plus size={16} /> Add another card
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={onAddCard}
+                  className="w-full border border-dashed border-gray-300 rounded-lg py-4 flex items-center justify-center gap-2 text-gray-500 hover:bg-gray-50 transition-colors"
+                >
+                  <Plus size={18} />
+                  <span className="font-semibold">Add an account for payment</span>
+                </button>
+              )}
+            </>
+          )}
+
+          {/* Card method fee info */}
+          {paymentMethod === "card" && amount > 0 && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-3">
               <p className="text-xs text-gray-600 leading-relaxed">
-                Processing fee: <span className="text-orange-500 font-semibold">3.5% + $0.15 = ${processingFee.toFixed(2)}</span>
-                <span className="mx-1">·</span>
-                Total charged: <span className="text-orange-500 font-semibold">${totalAmount.toFixed(2)}</span>
+                Payment processing fees: 3.99% + $0.3, Actual payment amount: ${totalAmount.toFixed(2)}, processing fee:${processingFee.toFixed(2)}. Deposit balance can only be used to purchase items on this platform.
               </p>
             </div>
           )}
 
           <button
-            onClick={onStripeTopup}
+            onClick={onShowConfirm}
             disabled={isProcessingTopup || amount <= 0}
-            className="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-bold py-4 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+            className="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-bold py-4 rounded-lg transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
           >
             {isProcessingTopup ? (
               <><Loader2 size={18} className="animate-spin" /> Processing...</>
@@ -514,6 +688,8 @@ export function BalancePage() {
   const [cashflowFilter, setCashflowFilter] = useState("All");
   const [balance, setBalance] = useState<number>(user?.balance || 0);
   const [isProcessingTopup, setIsProcessingTopup] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   // Fetch real wallet balance from wallet_transactions (credits - debits)
   useEffect(() => {
@@ -622,6 +798,36 @@ export function BalancePage() {
     }
   };
 
+  // Handle PayPal topup
+  const handlePayPalTopup = async () => {
+    if (!user?.email) { toast.error("Please login to continue"); navigate("/login"); return; }
+    const amount = parseFloat(topupAmount || "0");
+    if (amount <= 0) { toast.error("Please enter a valid amount"); return; }
+    
+    setIsProcessingTopup(true);
+    // Simulate PayPal processing - replace with actual PayPal integration
+    setTimeout(() => {
+      toast.success("PayPal top-up initiated!");
+      setIsProcessingTopup(false);
+      setShowConfirmModal(false);
+    }, 1500);
+  };
+
+  // Handle confirmation
+  const handleConfirmTopup = () => {
+    if (paymentMethod === "paypal") {
+      handlePayPalTopup();
+    } else if (paymentMethod === "card") {
+      handleStripeTopup();
+    } else if (paymentMethod === "crypto") {
+      toast.info("Crypto payment coming soon!");
+      setShowConfirmModal(false);
+    } else if (paymentMethod === "jcb") {
+      toast.error("Please upgrade to VIP3 to use this payment method.");
+      setShowConfirmModal(false);
+    }
+  };
+
   // Handle Stripe success redirect → record deposit in wallet_transactions
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -675,6 +881,9 @@ export function BalancePage() {
     onAddCard: () => setShowAddCard(true),
     onStripeTopup: handleStripeTopup,
     isProcessingTopup,
+    paymentMethod,
+    setPaymentMethod,
+    onShowConfirm: () => setShowConfirmModal(true),
   };
 
   const TABS: [BalanceTab, string][] = [
@@ -682,6 +891,9 @@ export function BalancePage() {
     ["withdraw", "Withdraw"],
     ["cashflow", "Cash Flow"],
   ];
+
+  const amount = parseFloat(topupAmount || "0");
+  const processingFee = amount * 0.0399 + (amount > 0 ? 0.3 : 0);
 
   return (
     <>
@@ -703,7 +915,7 @@ export function BalancePage() {
 
             {/* Content */}
             <div className="flex-1">
-              <div className="bg-gradient-to-r from-yellow-400 to-amber-400 p-6 mb-6 flex items-center justify-between">
+              <div className="bg-gradient-to-r from-yellow-400 to-amber-400 p-6 mb-6 flex items-center justify-between rounded-xl">
                 <div>
                   <p className="text-sm font-semibold text-yellow-900 opacity-75">Current Balance</p>
                   <p className="text-5xl font-black text-black mt-1">
@@ -721,7 +933,7 @@ export function BalancePage() {
                   </svg>
                 </div>
               </div>
-              <div className="bg-white overflow-hidden">
+              <div className="bg-white overflow-hidden rounded-xl shadow-sm">
                 <div className="flex border-b border-gray-200">
                   {TABS.map(([tab, label]) => (
                     <button
@@ -757,37 +969,21 @@ export function BalancePage() {
           </div>
         </div>
 
-        {/* Balance card */}
-        <div className="bg-gradient-to-br from-yellow-400 to-amber-400 px-5 py-6 flex items-center justify-between shadow-sm">
+        {/* Balance card - matching screenshot style */}
+        <div className="bg-white px-5 py-5 flex items-center justify-between">
           <div>
-            <p className="text-sm font-semibold text-yellow-900/70">Current Balance</p>
+            <p className="text-base font-bold text-gray-900">Balance</p>
             <p className="text-4xl font-black text-black mt-1">
               <span className="text-2xl">$</span>{balance.toFixed(2)}
             </p>
-            <p className="text-xs text-yellow-900/60 mt-0.5">Available for purchases</p>
-            {/* Quick action buttons */}
-            <div className="flex items-center gap-2 mt-4">
-              <button
-                onClick={() => setActiveTab("topup")}
-                className="flex items-center gap-1.5 bg-black/20 hover:bg-black/30 text-black font-bold text-xs px-3 py-1.5 rounded-full transition-colors"
-              >
-                <Plus size={12} /> Top Up
-              </button>
-              <button
-                onClick={() => setActiveTab("cashflow")}
-                className="flex items-center gap-1.5 bg-black/10 hover:bg-black/20 text-black font-semibold text-xs px-3 py-1.5 rounded-full transition-colors"
-              >
-                History
-              </button>
-            </div>
           </div>
           <div className="w-20 h-20 opacity-90 flex-shrink-0">
             <svg viewBox="0 0 100 100" fill="none">
-              <rect x="10" y="20" width="80" height="60" rx="8" fill="rgba(0,0,0,0.15)" stroke="rgba(0,0,0,0.2)" strokeWidth="2"/>
-              <rect x="10" y="30" width="80" height="15" fill="rgba(0,0,0,0.1)"/>
-              <circle cx="75" cy="65" r="10" fill="rgba(255,255,255,0.4)"/>
-              <path d="M20 55 L40 55" stroke="white" strokeWidth="3" strokeLinecap="round"/>
-              <path d="M20 62 L35 62" stroke="white" strokeWidth="3" strokeLinecap="round"/>
+              <rect x="10" y="20" width="80" height="60" rx="8" fill="rgba(0,0,0,0.08)" stroke="rgba(0,0,0,0.15)" strokeWidth="2"/>
+              <rect x="10" y="30" width="80" height="15" fill="rgba(0,0,0,0.05)"/>
+              <circle cx="75" cy="65" r="10" fill="rgba(0,0,0,0.1)"/>
+              <path d="M20 55 L40 55" stroke="rgba(0,0,0,0.3)" strokeWidth="3" strokeLinecap="round"/>
+              <path d="M20 62 L35 62" stroke="rgba(0,0,0,0.3)" strokeWidth="3" strokeLinecap="round"/>
             </svg>
           </div>
         </div>
@@ -814,6 +1010,19 @@ export function BalancePage() {
         <BottomNav />
       </div>
 
+      {/* Top-up Confirmation Modal */}
+      <TopUpConfirmationModal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={handleConfirmTopup}
+        amount={amount}
+        feeRate={0.0399}
+        feeFixed={0.3}
+        method={paymentMethod}
+        isProcessing={isProcessingTopup}
+      />
+
+      {/* Add Bank Card Modal - Desktop: centered modal, Mobile: full page */}
       {showAddCard && (
         <AddBankCardModal
           onClose={() => setShowAddCard(false)}
@@ -836,10 +1045,11 @@ function AddBankCardModal({ onClose, onSave, userEmail, userId }: {
   const [cardNumber, setCardNumber] = useState("");
   const [expiry, setExpiry] = useState("");
   const [cvv, setCvv] = useState("");
+  const [cardHolderName, setCardHolderName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
   const detectCardType = (num: string): string => {
-    const n = num.replace(/\s/g, "");
+    const n = num.replace(/\\s/g, "");
     if (n.startsWith("4")) return "visa";
     if (/^5[1-5]/.test(n)) return "mastercard";
     if (/^3[47]/.test(n)) return "amex";
@@ -848,21 +1058,22 @@ function AddBankCardModal({ onClose, onSave, userEmail, userId }: {
   };
 
   const formatCardNumber = (val: string) =>
-    val.replace(/\D/g, "").replace(/(.{4})/g, "$1 ").trim().slice(0, 19);
+    val.replace(/\\D/g, "").replace(/(.{4})/g, "$1 ").trim().slice(0, 23);
 
   const formatExpiry = (val: string) => {
-    const v = val.replace(/\D/g, "");
+    const v = val.replace(/\\D/g, "");
     return v.length >= 2 ? v.slice(0, 2) + "/" + v.slice(2, 4) : v;
   };
 
   const handleSave = async () => {
-    if (cardNumber.replace(/\s/g, "").length < 13) { toast.error("Invalid card number"); return; }
+    if (cardNumber.replace(/\\s/g, "").length < 13) { toast.error("Invalid card number"); return; }
     if (!expiry || expiry.length < 5) { toast.error("Invalid expiry date"); return; }
     if (!cvv || cvv.length < 3) { toast.error("Invalid CVV"); return; }
+    if (!cardHolderName.trim()) { toast.error("Please enter name on card"); return; }
 
     setIsSaving(true);
     const cardType = detectCardType(cardNumber);
-    const last4 = cardNumber.replace(/\s/g, "").slice(-4);
+    const last4 = cardNumber.replace(/\\s/g, "").slice(-4);
     const masked = `**** **** **** ${last4}`;
 
     const { data, error } = await supabase.from("user_bank_cards").insert({
@@ -882,84 +1093,117 @@ function AddBankCardModal({ onClose, onSave, userEmail, userId }: {
 
   const cardType = detectCardType(cardNumber);
 
+  // All card brand logos for the input area
+  const cardBrandLogos = [
+    { name: "visa", src: "https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" },
+    { name: "mastercard", src: "https://upload.wikimedia.org/wikipedia/commons/b/b7/MasterCard_Logo.svg" },
+    { name: "amex", src: "https://upload.wikimedia.org/wikipedia/commons/3/30/American_Express_logo.svg" },
+    { name: "jcb", src: "https://upload.wikimedia.org/wikipedia/commons/6/6c/JCB_logo.svg" },
+    { name: "discover", src: "https://upload.wikimedia.org/wikipedia/commons/5/57/Discover_Card_logo.svg" },
+    { name: "diners", src: "https://upload.wikimedia.org/wikipedia/commons/0/0d/Diners_Club_International_logo.svg" },
+  ];
+
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex flex-col">
-      <div className="bg-white flex-1 flex flex-col max-w-lg mx-auto w-full mt-auto lg:my-auto lg:max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/50 z-50 flex flex-col lg:items-center lg:justify-center lg:p-4">
+      <div className="bg-white flex-1 lg:flex-none flex flex-col lg:w-full lg:max-w-lg lg:max-h-[90vh] lg:rounded-xl overflow-hidden w-full">
         <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100">
           <button onClick={onClose}><X size={22} className="text-gray-700" /></button>
-          <h2 className="font-bold text-gray-900">Payment Information</h2>
+          <h2 className="font-bold text-gray-900">Bank Information</h2>
           <div className="w-8" />
         </div>
 
-        <div className="flex-1 px-4 py-5 space-y-5">
-          <div className="flex items-center gap-2 text-green-600 text-sm font-semibold">
-            <div className="w-5 h-5 bg-green-600 flex items-center justify-center">
-              <Check size={12} className="text-white" />
-            </div>
-            Your payment information are encrypted
-          </div>
+        <div className="flex-1 overflow-y-auto px-4 py-5 space-y-5">
+          <p className="text-sm text-gray-600">All fields are required unless marked otherwise.</p>
 
-          <div className="flex items-center gap-3">
-            <div className={`border-2 px-3 py-1.5 transition-all ${cardType === "visa" ? "border-blue-500" : "border-gray-200"}`}>
-              <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" alt="Visa" className="h-4" />
-            </div>
-            <div className={`border-2 px-3 py-1.5 transition-all ${cardType === "mastercard" ? "border-red-500" : "border-gray-200"}`}>
-              <img src="https://upload.wikimedia.org/wikipedia/commons/b/b7/MasterCard_Logo.svg" alt="MC" className="h-5" />
-            </div>
-          </div>
-
+          {/* Card number */}
           <div>
-            <label className="block text-sm font-bold text-gray-800 mb-2">*Bank card number</label>
-            <div className="bg-gray-100 px-4 py-3.5 flex items-center gap-3">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Card number</label>
+            <div className="border border-gray-300 rounded-lg px-4 py-3.5 flex items-center gap-3">
               <CreditCard size={18} className="text-gray-400 flex-shrink-0" />
               <input
                 type="text"
                 value={cardNumber}
                 onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
-                placeholder="Enter card number"
+                placeholder="1234 5678 9012 3456"
                 className="flex-1 bg-transparent outline-none text-gray-700 text-base"
-                maxLength={19}
+                maxLength={23}
                 inputMode="numeric"
               />
             </div>
+            {/* Card brand logos */}
+            <div className="flex items-center gap-2 mt-2 flex-wrap">
+              {cardBrandLogos.map((brand) => (
+                <img
+                  key={brand.name}
+                  src={brand.src}
+                  alt={brand.name}
+                  className={`h-5 object-contain transition-opacity ${
+                    cardType === brand.name ? "opacity-100" : "opacity-40 grayscale"
+                  }`}
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                />
+              ))}
+            </div>
           </div>
 
+          {/* Expiry and CVV row */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Expiry date</label>
+              <div className="border border-gray-300 rounded-lg px-4 py-3.5">
+                <input
+                  type="text"
+                  value={expiry}
+                  onChange={(e) => setExpiry(formatExpiry(e.target.value))}
+                  placeholder="MM/YY"
+                  className="w-full bg-transparent outline-none text-gray-700 text-base"
+                  maxLength={5}
+                  inputMode="numeric"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Security code</label>
+              <div className="border border-gray-300 rounded-lg px-4 py-3.5 flex items-center gap-2">
+                <input
+                  type="password"
+                  value={cvv}
+                  onChange={(e) => setCvv(e.target.value.replace(/\\D/g, "").slice(0, 4))}
+                  placeholder="3 digits"
+                  className="w-full bg-transparent outline-none text-gray-700 text-base"
+                  maxLength={4}
+                  inputMode="numeric"
+                />
+                <img 
+                  src="https://upload.wikimedia.org/wikipedia/commons/0/0d/CVV2_sample.png" 
+                  alt="CVV" 
+                  className="h-6 opacity-50"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Name on card */}
           <div>
-            <label className="block text-sm font-bold text-gray-800 mb-2">*Expiry date</label>
-            <div className="bg-gray-100 px-4 py-3.5">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Name on card</label>
+            <div className="border border-gray-300 rounded-lg px-4 py-3.5">
               <input
                 type="text"
-                value={expiry}
-                onChange={(e) => setExpiry(formatExpiry(e.target.value))}
-                placeholder="MM/YY"
+                value={cardHolderName}
+                onChange={(e) => setCardHolderName(e.target.value)}
+                placeholder="J. Smith"
                 className="w-full bg-transparent outline-none text-gray-700 text-base"
-                maxLength={5}
-                inputMode="numeric"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-bold text-gray-800 mb-2">*CVV</label>
-            <div className="bg-gray-100 px-4 py-3.5">
-              <input
-                type="password"
-                value={cvv}
-                onChange={(e) => setCvv(e.target.value.replace(/\D/g, "").slice(0, 4))}
-                placeholder="CVV"
-                className="w-full bg-transparent outline-none text-gray-700 text-base"
-                maxLength={4}
-                inputMode="numeric"
               />
             </div>
           </div>
         </div>
 
-        <div className="px-4 pb-8">
+        <div className="px-4 pb-8 pt-2">
           <button
             onClick={handleSave}
             disabled={isSaving}
-            className="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-bold py-4 transition-colors"
+            className="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-bold py-4 rounded-lg transition-colors disabled:opacity-60"
           >
             {isSaving ? "Saving..." : "Submit"}
           </button>
