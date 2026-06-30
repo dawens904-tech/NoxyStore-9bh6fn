@@ -1015,3 +1015,9 @@ export function GroupChatPage() {
     </div>
   );
 }
+fix error {
+  "eventMessage": "Create | 0 | 71.199.93.2 | 8caeffa3a873046:69081d9cae9b86aa:674bcc6d697b25c9:1 | 500",
+  "id": "16141054",
+  "logLevel": "ERROR",
+  "timestamp": 1782812467
+} and add typing indicator to all user typing with their photo perfile avatar and fix scroll fix voice sending make the page more clean and In AdminCouponsPage, add a 'Bulk Generate' button that lets admin specify a count (e.g. 10-100) and creates multiple unique codes at once with the same settings, then shows a downloadable CSV export of the generated codes.
