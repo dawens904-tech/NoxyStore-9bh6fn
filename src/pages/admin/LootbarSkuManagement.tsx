@@ -244,7 +244,15 @@ export default function LootbarSkuManagement() {
   const [gameName, setGameName] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [selectedRegion, setSelectedRegion] = useState<string>(searchParams.get("region") || "");
+  const regionStorageKey = `lootbar-region-${gameId}`;
+  const [selectedRegion, setSelectedRegion] = useState<string>(
+    searchParams.get("region") || localStorage.getItem(`lootbar-region-${gameId}`) || ""
+  );
+
+  // Persist selected region to localStorage whenever it changes
+  useEffect(() => {
+    if (selectedRegion && gameId) localStorage.setItem(`lootbar-region-${gameId}`, selectedRegion);
+  }, [selectedRegion, gameId]);
   const [search, setSearch] = useState("");
   const [editSku, setEditSku] = useState<MergedSku | null>(null);
   const [cacheTimestamp, setCacheTimestamp] = useState<string | null>(null);
@@ -306,9 +314,10 @@ export default function LootbarSkuManagement() {
         const merged = buildMerged(rawSkus, overrideMap);
         setSkus(merged);
         if (merged.length > 0) {
-          const savedRegion = searchParams.get("region");
+          const savedRegion = searchParams.get("region") || localStorage.getItem(`lootbar-region-${gameId}`);
           const validRegion = savedRegion && merged.some(s => s._region === savedRegion) ? savedRegion : merged[0]._region;
           setSelectedRegion(validRegion);
+          localStorage.setItem(`lootbar-region-${gameId}`, validRegion);
         }
       } else {
         // No cache — trigger live sync automatically
@@ -380,8 +389,10 @@ export default function LootbarSkuManagement() {
       const merged = buildMerged(rawSkus, overrideMap);
       setSkus(merged);
       if (merged.length > 0) {
-        const savedRegion = searchParams.get("region");
-        if (!selectedRegion && !savedRegion) setSelectedRegion(merged[0]._region);
+        const savedRegion = searchParams.get("region") || localStorage.getItem(`lootbar-region-${gameId}`);
+        const curr = selectedRegion;
+        if (!curr && !savedRegion) { setSelectedRegion(merged[0]._region); localStorage.setItem(`lootbar-region-${gameId}`, merged[0]._region); }
+        else if (!curr && savedRegion && merged.some(s => s._region === savedRegion)) setSelectedRegion(savedRegion);
       }
       setCacheTimestamp(now);
 
@@ -614,7 +625,7 @@ export default function LootbarSkuManagement() {
                       return (
                         <button
                           key={r.value}
-                          onClick={() => { setSelectedRegion(r.value); setSearch(""); setSearchParams({ region: r.value }); }}
+                          onClick={() => { setSelectedRegion(r.value); setSearch(""); setSearchParams({ region: r.value }); localStorage.setItem(regionStorageKey, r.value); }}
                           className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                             isSelected ? "bg-gray-900 text-white" : "text-gray-600 hover:bg-gray-50"
                           }`}
@@ -847,4 +858,4 @@ export default function LootbarSkuManagement() {
     </div>
   );
 }
-fix error when i in a region tabs example usa and soti re antre its go up to nuber 1 region fix it must stay in the tabs i put it.
+
