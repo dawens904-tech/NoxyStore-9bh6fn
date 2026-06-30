@@ -1015,4 +1015,3 @@ export function GroupChatPage() {
     </div>
   );
 }
-
