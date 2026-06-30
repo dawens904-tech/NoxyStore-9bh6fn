@@ -478,38 +478,32 @@ export default function LootbarSkuManagement() {
     sort_order: 0,
   });
 
-  const handleMoveUp = async (sku: MergedSku, idx: number) => {
-    if (idx === 0) return;
-    const prev = regionSkus[idx - 1];
-    const aOrder = sku.override?.sort_order ?? idx;
-    const bOrder = prev.override?.sort_order ?? idx - 1;
-    await Promise.all([
-      supabase.from("sku_overrides").upsert({ ...mkBlank(sku), sort_order: bOrder }, { onConflict: "game_id,sku_id" }),
-      supabase.from("sku_overrides").upsert({ ...mkBlank(prev), sort_order: aOrder }, { onConflict: "game_id,sku_id" }),
-    ]);
+  // Reindex an ordered list of SKUs with sequential sort_order and batch upsert
+  const reindexAndSave = async (ordered: MergedSku[]) => {
+    const rows = ordered.map((s, i) => ({ ...mkBlank(s), sort_order: i * 10 }));
+    const { error } = await supabase.from("sku_overrides").upsert(rows, { onConflict: "game_id,sku_id" });
+    if (error) { toast.error(error.message); return; }
+    const orderMap = new Map(rows.map(r => [r.sku_id, r.sort_order]));
     setSkus(old => old.map(s => {
-      if (String(s.sku_id) === String(sku.sku_id)) return { ...s, override: { ...(s.override ?? { ...mkBlank(s), sort_order: 9999 }), sort_order: bOrder } };
-      if (String(s.sku_id) === String(prev.sku_id)) return { ...s, override: { ...(s.override ?? { ...mkBlank(s), sort_order: 9999 }), sort_order: aOrder } };
-      return s;
+      const newOrder = orderMap.get(String(s.sku_id));
+      if (newOrder === undefined) return s;
+      return { ...s, override: { ...(s.override ?? { ...mkBlank(s) }), sort_order: newOrder } };
     }));
     toast.success("Order updated");
   };
 
-  const handleMoveDown = async (sku: MergedSku, idx: number) => {
+  const handleMoveUp = async (_sku: MergedSku, idx: number) => {
+    if (idx === 0) return;
+    const reordered = [...regionSkus];
+    [reordered[idx - 1], reordered[idx]] = [reordered[idx], reordered[idx - 1]];
+    await reindexAndSave(reordered);
+  };
+
+  const handleMoveDown = async (_sku: MergedSku, idx: number) => {
     if (idx >= regionSkus.length - 1) return;
-    const next = regionSkus[idx + 1];
-    const aOrder = sku.override?.sort_order ?? idx;
-    const bOrder = next.override?.sort_order ?? idx + 1;
-    await Promise.all([
-      supabase.from("sku_overrides").upsert({ ...mkBlank(sku), sort_order: bOrder }, { onConflict: "game_id,sku_id" }),
-      supabase.from("sku_overrides").upsert({ ...mkBlank(next), sort_order: aOrder }, { onConflict: "game_id,sku_id" }),
-    ]);
-    setSkus(old => old.map(s => {
-      if (String(s.sku_id) === String(sku.sku_id)) return { ...s, override: { ...(s.override ?? { ...mkBlank(s), sort_order: 9999 }), sort_order: bOrder } };
-      if (String(s.sku_id) === String(next.sku_id)) return { ...s, override: { ...(s.override ?? { ...mkBlank(s), sort_order: 9999 }), sort_order: aOrder } };
-      return s;
-    }));
-    toast.success("Order updated");
+    const reordered = [...regionSkus];
+    [reordered[idx], reordered[idx + 1]] = [reordered[idx + 1], reordered[idx]];
+    await reindexAndSave(reordered);
   };
 
   // Move to very top globally (sort_order = min - 1)
@@ -859,4 +853,4 @@ export default function LootbarSkuManagement() {
   );
 }
 
-please fix sku move up and down please just allow admin tap a button and li just deplasel mete kotel li vle an lika anba nenpot anle nenpot epa komsi just up allow admin ka deplase all products yo ka move.
+
