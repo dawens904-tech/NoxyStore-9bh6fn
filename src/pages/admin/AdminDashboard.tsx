@@ -566,4 +566,4 @@ export default function AdminDashboard() {
     </div>
   );
 }
-Create a new admin page at /secure-dashboard-92x2011/coupons to manage admin_redeem_codes: list all codes with type/value/usage stats, a form to create new codes (type: coupon/gift, value, max_uses, expiry), toggle active/inactive, and a copy-to-clipboard button for each code.
+
