@@ -10,7 +10,7 @@ import AdminSidebar from "./AdminSidebar";
 import {
   ArrowLeft, Search, Edit2, Save, X, Loader2, RefreshCw,
   EyeOff, Eye, ChevronUp, ChevronDown, Globe, Package, DollarSign, Image,
-  Database, Upload, ChevronsUp,
+  Database, Upload, ChevronsUp, GripVertical,
 } from "lucide-react";
 import { toast } from "sonner";
 import { FunctionsHttpError } from "@supabase/supabase-js";
@@ -258,6 +258,8 @@ export default function LootbarSkuManagement() {
   const [cacheTimestamp, setCacheTimestamp] = useState<string | null>(null);
   const [previewImages, setPreviewImages] = useState(false);
   const [gameImage, setGameImage] = useState<string | null>(null);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   useEffect(() => {
     if (!user) { navigate("/login"); return; }
@@ -521,6 +523,22 @@ export default function LootbarSkuManagement() {
     toast.success("Moved to global top — will show first in game detail");
   };
 
+  const handleDragStart = (idx: number) => setDragIndex(idx);
+  const handleDragOver = (e: React.DragEvent, idx: number) => {
+    e.preventDefault();
+    if (dragOverIndex !== idx) setDragOverIndex(idx);
+  };
+  const handleDrop = async (idx: number) => {
+    if (dragIndex === null || dragIndex === idx) { setDragIndex(null); setDragOverIndex(null); return; }
+    const reordered = [...regionSkus];
+    const [moved] = reordered.splice(dragIndex, 1);
+    reordered.splice(idx, 0, moved);
+    setDragIndex(null);
+    setDragOverIndex(null);
+    await reindexAndSave(reordered);
+  };
+  const handleDragEnd = () => { setDragIndex(null); setDragOverIndex(null); };
+
   if (!user || user.role !== "admin") return null;
 
   return (
@@ -696,12 +714,29 @@ export default function LootbarSkuManagement() {
                     return (
                       <div
                         key={sku.sku_id}
-                        className={`bg-white rounded-2xl border border-gray-100 p-4 flex items-center gap-4 transition-all hover:shadow-sm ${
-                          isHidden ? "opacity-50" : ""
+                        draggable
+                        onDragStart={() => handleDragStart(idx)}
+                        onDragOver={(e) => handleDragOver(e, idx)}
+                        onDrop={() => handleDrop(idx)}
+                        onDragEnd={handleDragEnd}
+                        className={`bg-white rounded-2xl border-2 p-4 flex items-center gap-4 transition-all hover:shadow-sm select-none ${
+                          dragIndex === idx
+                            ? "opacity-40 border-gray-300"
+                            : dragOverIndex === idx
+                            ? "border-yellow-400 shadow-md"
+                            : isHidden
+                            ? "opacity-50 border-gray-100"
+                            : "border-gray-100"
                         }`}
                       >
-                        {/* Reorder buttons */}
-                        <div className="flex flex-col gap-0.5 flex-shrink-0">
+                        {/* Drag handle + reorder buttons */}
+                        <div className="flex flex-col items-center gap-0.5 flex-shrink-0">
+                          <div
+                            className="w-6 h-7 flex items-center justify-center cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 transition-colors"
+                            title="Drag to reorder"
+                          >
+                            <GripVertical size={14} />
+                          </div>
                           <button
                             onClick={() => handleMoveToGlobalTop(sku)}
                             title="Move to global top (first in game detail)"
@@ -852,6 +887,5 @@ export default function LootbarSkuManagement() {
     </div>
   );
 }
-Hello AI, please improve the Region Products reorder system. Instead of only using Up/Down buttons, allow admins to long-press and drag any product to move it anywhere in the list, then drop it above or below another product to instantly reorder and replace its position.
 
 
