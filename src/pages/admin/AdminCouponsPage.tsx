@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import {
   Plus, Copy, Check, ToggleLeft, ToggleRight, Loader2, RefreshCw,
   Ticket, Gift, Tag, Search, X, Calendar, Hash, Users, TrendingUp,
+  Download, Zap,
 } from "lucide-react";
 
 interface RedeemCode {
@@ -43,7 +44,19 @@ export default function AdminCouponsPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [showBulkForm, setShowBulkForm] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  // Bulk generate state
+  const [bulkCount, setBulkCount] = useState("10");
+  const [bulkGenerating, setBulkGenerating] = useState(false);
+  const [bulkForm, setBulkForm] = useState({
+    type: "coupon" as "coupon" | "gift",
+    value: "",
+    max_uses: "1",
+    expires_at: "",
+    is_active: true,
+  });
 
   // Form state
   const [form, setForm] = useState({
@@ -93,6 +106,68 @@ export default function AdminCouponsPage() {
       toast.success(code.is_active ? "Code deactivated" : "Code activated");
     }
     setTogglingId(null);
+  };
+
+  const handleBulkGenerate = async () => {
+    if (!bulkForm.value || isNaN(Number(bulkForm.value)) || Number(bulkForm.value) <= 0) {
+      toast.error("Enter a valid value greater than 0");
+      return;
+    }
+    const count = Math.min(Math.max(parseInt(bulkCount) || 10, 1), 100);
+    setBulkGenerating(true);
+
+    const generatedCodes: string[] = [];
+    const existingCodes = new Set(codes.map(c => c.code));
+    while (generatedCodes.length < count) {
+      const code = generateCode();
+      if (!existingCodes.has(code)) {
+        existingCodes.add(code);
+        generatedCodes.push(code);
+      }
+    }
+
+    const payload = generatedCodes.map(code => ({
+      code,
+      type: bulkForm.type,
+      value: Number(bulkForm.value),
+      max_uses: bulkForm.max_uses ? Number(bulkForm.max_uses) : null,
+      expires_at: bulkForm.expires_at ? new Date(bulkForm.expires_at).toISOString() : null,
+      is_active: bulkForm.is_active,
+      used_count: 0,
+      created_by: user?.email || null,
+    }));
+
+    const { data, error } = await supabase
+      .from("admin_redeem_codes")
+      .insert(payload)
+      .select();
+
+    if (error) {
+      toast.error(error.message.includes("unique") ? "Some codes already exist, try again" : error.message);
+      setBulkGenerating(false);
+      return;
+    }
+
+    const inserted = data || [];
+    setCodes(prev => [...inserted, ...prev]);
+    toast.success(`${inserted.length} codes created!`);
+
+    // Build CSV and trigger download
+    const header = "Code,Type,Value,Max Uses,Expires At,Active";
+    const rows = inserted.map((c: any) =>
+      `${c.code},${c.type},${c.value},${c.max_uses ?? "unlimited"},${c.expires_at ? new Date(c.expires_at).toLocaleDateString() : "never"},${c.is_active}`
+    );
+    const csv = [header, ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `noxy-codes-${Date.now()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    setShowBulkForm(false);
+    setBulkGenerating(false);
   };
 
   const handleSubmit = async () => {
@@ -171,6 +246,12 @@ export default function AdminCouponsPage() {
               title="Refresh"
             >
               <RefreshCw size={14} className={isLoading ? "animate-spin text-gray-400" : "text-gray-600"} />
+            </button>
+            <button
+              onClick={() => setShowBulkForm(true)}
+              className="flex items-center gap-2 bg-gray-900 hover:bg-gray-800 text-white font-bold px-4 py-2.5 rounded-xl transition-colors text-sm"
+            >
+              <Zap size={15} /> Bulk Generate
             </button>
             <button
               onClick={() => setShowForm(true)}
@@ -403,6 +484,139 @@ export default function AdminCouponsPage() {
           <p className="text-xs text-gray-400 mt-3 text-right">{filtered.length} of {codes.length} codes</p>
         )}
       </main>
+
+      {/* Bulk Generate Modal */}
+      {showBulkForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowBulkForm(false)} />
+          <div className="relative bg-white w-full max-w-md mx-4 rounded-2xl shadow-2xl overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-gray-900 rounded-lg flex items-center justify-center">
+                  <Zap size={15} className="text-yellow-400" />
+                </div>
+                <h3 className="font-bold text-gray-900">Bulk Generate Codes</h3>
+              </div>
+              <button onClick={() => setShowBulkForm(false)} className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600">
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="px-6 py-5 space-y-4">
+              {/* Count */}
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1.5">Number of Codes (1–100)</label>
+                <input
+                  type="number"
+                  value={bulkCount}
+                  onChange={e => setBulkCount(e.target.value)}
+                  min="1" max="100"
+                  className="w-full border border-gray-200 px-4 py-3 text-sm outline-none focus:border-yellow-400 rounded-xl"
+                  placeholder="10"
+                />
+                <p className="text-[10px] text-gray-400 mt-1">All codes will share the same settings below</p>
+              </div>
+
+              {/* Type */}
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1.5">Type *</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {(["coupon", "gift"] as const).map(t => (
+                    <button
+                      key={t}
+                      onClick={() => setBulkForm(f => ({ ...f, type: t }))}
+                      className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 text-sm font-semibold capitalize transition-all ${
+                        bulkForm.type === t ? "border-yellow-400 bg-yellow-50 text-gray-900" : "border-gray-200 text-gray-500 hover:border-gray-300"
+                      }`}
+                    >
+                      {t === "coupon" ? <Tag size={14} /> : <Gift size={14} />}
+                      {t === "coupon" ? "Coupon (% off)" : "Gift ($)"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Value */}
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                  Value * {bulkForm.type === "coupon" ? "(%) " : "($) "}
+                </label>
+                <input
+                  type="number"
+                  value={bulkForm.value}
+                  onChange={e => setBulkForm(f => ({ ...f, value: e.target.value }))}
+                  placeholder={bulkForm.type === "coupon" ? "e.g. 10 for 10%" : "e.g. 5.00 for $5"}
+                  min="0"
+                  max={bulkForm.type === "coupon" ? "100" : undefined}
+                  step={bulkForm.type === "coupon" ? "1" : "0.01"}
+                  className="w-full border border-gray-200 px-4 py-3 text-sm outline-none focus:border-yellow-400 rounded-xl"
+                />
+              </div>
+
+              {/* Max Uses */}
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1.5">Max Uses per Code</label>
+                <input
+                  type="number"
+                  value={bulkForm.max_uses}
+                  onChange={e => setBulkForm(f => ({ ...f, max_uses: e.target.value }))}
+                  placeholder="Leave empty for unlimited"
+                  min="1"
+                  className="w-full border border-gray-200 px-4 py-3 text-sm outline-none focus:border-yellow-400 rounded-xl"
+                />
+              </div>
+
+              {/* Expiry */}
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1.5">Expiry Date (optional)</label>
+                <input
+                  type="datetime-local"
+                  value={bulkForm.expires_at}
+                  onChange={e => setBulkForm(f => ({ ...f, expires_at: e.target.value }))}
+                  className="w-full border border-gray-200 px-4 py-3 text-sm outline-none focus:border-yellow-400 rounded-xl"
+                />
+              </div>
+
+              {/* Active toggle */}
+              <label className="flex items-center justify-between p-3 bg-gray-50 rounded-xl cursor-pointer">
+                <span className="text-sm font-semibold text-gray-700">Activate all codes immediately</span>
+                <div
+                  onClick={() => setBulkForm(f => ({ ...f, is_active: !f.is_active }))}
+                  className={`w-10 h-6 rounded-full transition-colors flex items-center px-1 ${bulkForm.is_active ? "bg-green-500" : "bg-gray-300"}`}
+                >
+                  <div className={`w-4 h-4 rounded-full bg-white shadow transition-transform ${bulkForm.is_active ? "translate-x-4" : "translate-x-0"}`} />
+                </div>
+              </label>
+
+              <div className="bg-blue-50 border border-blue-100 px-4 py-3 rounded-xl text-xs text-blue-700">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Download size={12} />
+                  <span className="font-semibold">CSV Auto-Download</span>
+                </div>
+                After generating, a CSV file with all codes will be downloaded automatically.
+              </div>
+            </div>
+
+            <div className="px-6 pb-6 flex gap-2">
+              <button
+                onClick={() => setShowBulkForm(false)}
+                className="flex-1 border border-gray-200 text-gray-700 font-semibold py-3 rounded-xl text-sm hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleBulkGenerate}
+                disabled={bulkGenerating}
+                className="flex-1 bg-gray-900 hover:bg-gray-800 text-white font-bold py-3 rounded-xl text-sm transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+              >
+                {bulkGenerating
+                  ? <><Loader2 size={14} className="animate-spin" /> Generating…</>
+                  : <><Zap size={14} /> Generate {bulkCount || "10"} Codes</>}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Create Code Modal */}
       {showForm && (

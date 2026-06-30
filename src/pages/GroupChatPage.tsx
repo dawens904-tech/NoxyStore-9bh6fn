@@ -3,7 +3,7 @@
  * Stable layout (only messages scroll) · WhatsApp-style bubbles
  * Profile modal on avatar tap · Long-press context menu (react/reply/copy/edit/report)
  * Real voice recording · Anti-spam (6× same word → 24h ban, 2× → permanent)
- * Admin gold crown badge · Pinned welcome message · Read receipts
+ * Admin gold crown badge · Pinned welcome message · Read receipts · Typing indicators
  */
 import { useState, useEffect, useRef, useCallback, TouchEvent } from "react";
 import { useNavigate } from "react-router-dom";
@@ -19,6 +19,7 @@ import { toast } from "sonner";
 const POLL_INTERVAL = 3000;
 const PRESENCE_TTL = 20000;
 const PRESENCE_HEARTBEAT = 15000;
+const TYPING_TTL = 5000;
 const BUCKET = "chat-images";
 const SESSION_ID = "group-chat-main";
 const MAX_VOICE_SECONDS = 60;
@@ -40,6 +41,12 @@ interface ReadReceipt {
   user_id: string;
   sender: string;
   last_message_id: string;
+}
+
+interface TypingUser {
+  user_id: string;
+  sender: string;
+  ts: number;
 }
 
 interface ContextMenuState {
@@ -466,6 +473,7 @@ export function GroupChatPage() {
   const [adminEmails, setAdminEmails] = useState<Set<string>>(new Set());
   const [banned, setBanned] = useState<{ permanent: boolean; until?: number } | null>(null);
   const [readReceipts, setReadReceipts] = useState<Record<string, ReadReceipt[]>>({});
+  const [typingUsers, setTypingUsers] = useState<TypingUser[]>([]);
 
   const [imagePreview, setImagePreview] = useState<{ file: File; url: string } | null>(null);
   const [replyTo, setReplyTo] = useState<ChatMessage | null>(null);
@@ -474,10 +482,13 @@ export function GroupChatPage() {
   const [profileModal, setProfileModal] = useState<ProfileModalState | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textRef = useRef<HTMLInputElement>(null);
   const pollerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const presenceRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastTypingRef = useRef<number>(0);
   const voice = useVoiceRecorder();
 
   const displayName = user?.username || user?.email?.split("@")[0] || "Guest";
@@ -485,6 +496,44 @@ export function GroupChatPage() {
 
   const [announceMode, setAnnounceMode] = useState(false);
   const [announceText, setAnnounceText] = useState("");
+
+  // ─── Typing broadcast ──────────────────────────────────────────────────────
+  const broadcastTyping = useCallback(async () => {
+    if (!user?.id || !user?.email) return;
+    const now = Date.now();
+    if (now - lastTypingRef.current < 2000) return; // throttle to every 2s
+    lastTypingRef.current = now;
+    await supabase.from("analytics_events").insert({
+      event_type: "group_chat_typing",
+      page: "/support/group",
+      user_id: user.id,
+      session_id: `typing_${user.id}`,
+      extra_data: { sender: displayName, ts: now },
+    });
+  }, [user, displayName]);
+
+  const fetchTypingUsers = useCallback(async () => {
+    const since = new Date(Date.now() - TYPING_TTL).toISOString();
+    const { data } = await supabase
+      .from("analytics_events")
+      .select("user_id, extra_data")
+      .eq("event_type", "group_chat_typing")
+      .gte("created_at", since)
+      .order("created_at", { ascending: false });
+    if (!data) return;
+    // Deduplicate by user_id, take most recent
+    const seen = new Set<string>();
+    const active: TypingUser[] = [];
+    for (const row of data) {
+      const uid = row.user_id as string;
+      if (uid === user?.id) continue; // skip self
+      if (seen.has(uid)) continue;
+      seen.add(uid);
+      const extra = row.extra_data as any;
+      active.push({ user_id: uid, sender: extra?.sender || "User", ts: extra?.ts || 0 });
+    }
+    setTypingUsers(active.filter(u => Date.now() - u.ts < TYPING_TTL));
+  }, [user]);
 
   // ─── Fetch helpers ────────────────────────────────────────────────────────
   const fetchAdmins = useCallback(async () => {
@@ -580,23 +629,32 @@ export function GroupChatPage() {
     fetchMessages();
     fetchOnlineCount();
     checkBan();
+    fetchTypingUsers();
     if (isAuthenticated) updatePresence();
 
     pollerRef.current = setInterval(async () => {
       await fetchMessages();
       fetchOnlineCount();
+      fetchTypingUsers();
     }, POLL_INTERVAL);
     if (isAuthenticated) presenceRef.current = setInterval(updatePresence, PRESENCE_HEARTBEAT);
 
     return () => {
       if (pollerRef.current) clearInterval(pollerRef.current);
       if (presenceRef.current) clearInterval(presenceRef.current);
+      if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
     };
-  }, [fetchMessages, fetchAdmins, fetchOnlineCount, updatePresence, isAuthenticated, checkBan]);
+  }, [fetchMessages, fetchAdmins, fetchOnlineCount, updatePresence, isAuthenticated, checkBan, fetchTypingUsers]);
 
   // Scroll to bottom & mark read when messages update
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    // Auto-scroll if near bottom (within 200px)
+    const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 200;
+    if (isNearBottom) {
+      el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+    }
     if (messages.length > 0 && user?.id) {
       const lastId = messages[messages.length - 1].id;
       markRead(lastId);
@@ -661,14 +719,32 @@ export function GroupChatPage() {
       is_read: false,
     });
 
-    if (error) { toast.error("Failed to send message"); setSending(false); return; }
+    if (error) {
+      console.error("Chat insert error:", error);
+      toast.error("Failed to send message");
+      setSending(false);
+      return;
+    }
     setText("");
     setReplyTo(null);
     await fetchMessages();
     setSending(false);
   };
 
-  const handleSendText = () => { if (text.trim()) sendMessage({ content: text.trim() }); };
+  const handleSendText = () => {
+    if (text.trim()) {
+      sendMessage({ content: text.trim() });
+      setTypingUsers([]);
+    }
+  };
+
+  const handleTextChange = (val: string) => {
+    setText(val);
+    if (val.trim() && isAuthenticated && !banned) broadcastTyping();
+    if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+    if (!val.trim()) return;
+    typingTimerRef.current = setTimeout(() => setTypingUsers([]), TYPING_TTL + 500);
+  };
 
   const handleSendAnnouncement = async () => {
     if (!announceText.trim() || !isCurrentUserAdmin) return;
@@ -710,7 +786,11 @@ export function GroupChatPage() {
     const file = new File([voice.audioBlob], `voice-${Date.now()}.webm`, { type: "audio/webm" });
     const imageUrl = await uploadFile(file, "voice");
     voice.setAudioBlob(null);
-    if (imageUrl) await sendMessage({ imageUrl, isVoice: true });
+    if (imageUrl) {
+      await sendMessage({ imageUrl, isVoice: true });
+    } else {
+      toast.error("Failed to upload voice message");
+    }
     setSending(false);
   };
 
@@ -801,7 +881,7 @@ export function GroupChatPage() {
       </div>
 
       {/* ─── MESSAGES (scrollable) ───────────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
         <div className="pt-3">
           <PinnedWelcome />
 
@@ -829,6 +909,44 @@ export function GroupChatPage() {
               />
             ))}
           </div>
+
+          {/* ─── TYPING INDICATOR ──────────────────────────────────────── */}
+          {typingUsers.length > 0 && (
+            <div className="flex items-center gap-2 px-3 py-2">
+              <div className="flex items-center">
+                {typingUsers.slice(0, 3).map((u, i) => (
+                  <div
+                    key={u.user_id}
+                    className="w-6 h-6 rounded-full overflow-hidden border-2 border-white shadow-sm flex-shrink-0"
+                    style={{ marginLeft: i > 0 ? "-6px" : "0" }}
+                  >
+                    <img
+                      src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(u.sender)}&backgroundColor=fef3c7`}
+                      alt={u.sender}
+                      className="w-full h-full"
+                    />
+                  </div>
+                ))}
+              </div>
+              <div className="bg-white border border-gray-200 rounded-2xl px-3 py-2 flex items-center gap-1.5 shadow-sm">
+                <span className="text-xs text-gray-500">
+                  {typingUsers.length === 1
+                    ? `${typingUsers[0].sender} is typing`
+                    : `${typingUsers.length} people are typing`}
+                </span>
+                <span className="flex gap-0.5 ml-1">
+                  {[0, 1, 2].map((i) => (
+                    <span
+                      key={i}
+                      className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"
+                      style={{ animationDelay: `${i * 150}ms` }}
+                    />
+                  ))}
+                </span>
+              </div>
+            </div>
+          )}
+
           <div ref={messagesEndRef} className="h-2" />
         </div>
       </div>
@@ -863,7 +981,7 @@ export function GroupChatPage() {
             </button>
           </div>
           <p className="text-xs text-gray-400 flex-1">Ready to send photo</p>
-          <button onClick={handleSendImage} disabled={sending} className="bg-yellow-400 text-black font-bold px-4 py-2 text-sm disabled:opacity-60">
+          <button onClick={handleSendImage} disabled={sending} className="bg-yellow-400 text-black font-bold px-4 py-2 text-sm rounded-lg disabled:opacity-60">
             {sending ? "..." : "Send"}
           </button>
         </div>
@@ -873,9 +991,13 @@ export function GroupChatPage() {
       {voice.audioBlob && !voice.recording && (
         <div className="px-3 py-2 bg-white border-t border-gray-200 flex items-center gap-3 flex-shrink-0">
           <div className="flex-1"><AudioBubble src={URL.createObjectURL(voice.audioBlob)} /></div>
-          <button onClick={voice.cancel} className="text-gray-400"><X size={16} /></button>
-          <button onClick={handleSendVoice} disabled={sending} className="bg-yellow-400 text-black font-bold px-4 py-2 text-sm disabled:opacity-60">
-            {sending ? "..." : <Send size={14} />}
+          <button onClick={voice.cancel} className="text-gray-400 hover:text-gray-600 transition-colors"><X size={16} /></button>
+          <button
+            onClick={handleSendVoice}
+            disabled={sending}
+            className="w-9 h-9 bg-yellow-400 rounded-full flex items-center justify-center disabled:opacity-60 flex-shrink-0 hover:bg-yellow-300 transition-colors"
+          >
+            {sending ? <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" /> : <Send size={14} className="text-black" />}
           </button>
         </div>
       )}
@@ -952,7 +1074,7 @@ export function GroupChatPage() {
             ref={textRef}
             type="text"
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={(e) => handleTextChange(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSendText(); } }}
             placeholder={banned ? "Account restricted — contact support" : isAuthenticated ? (editingId ? "Edit message..." : "Message community...") : "Log in to chat"}
             disabled={!isAuthenticated || !!banned}
@@ -968,6 +1090,11 @@ export function GroupChatPage() {
           {!text.trim() && !editingId && (
             <button
               onMouseDown={isAuthenticated && !banned ? voice.start : undefined}
+              onTouchStart={(e) => {
+                if (!isAuthenticated || !!banned) return;
+                e.preventDefault();
+                voice.start();
+              }}
               onClick={() => { if (!isAuthenticated) { toast.error("Please log in to send voice messages"); navigate("/login"); } }}
               disabled={!isAuthenticated || !!banned}
               className="w-9 h-9 flex items-center justify-center text-gray-500 hover:text-yellow-500 transition-colors flex-shrink-0 disabled:opacity-40"
@@ -981,7 +1108,7 @@ export function GroupChatPage() {
             <button
               onClick={handleSendText}
               disabled={sending || !isAuthenticated || !!banned}
-              className="w-9 h-9 bg-yellow-400 rounded-full flex items-center justify-center disabled:opacity-60 flex-shrink-0"
+              className="w-9 h-9 bg-yellow-400 rounded-full flex items-center justify-center disabled:opacity-60 flex-shrink-0 hover:bg-yellow-300 transition-colors"
             >
               <Send size={15} className="text-black" />
             </button>
@@ -1015,9 +1142,3 @@ export function GroupChatPage() {
     </div>
   );
 }
-fix error {
-  "eventMessage": "Create | 0 | 71.199.93.2 | 8caeffa3a873046:69081d9cae9b86aa:674bcc6d697b25c9:1 | 500",
-  "id": "16141054",
-  "logLevel": "ERROR",
-  "timestamp": 1782812467
-} and add typing indicator to all user typing with their photo perfile avatar and fix scroll fix voice sending make the page more clean and In AdminCouponsPage, add a 'Bulk Generate' button that lets admin specify a count (e.g. 10-100) and creates multiple unique codes at once with the same settings, then shows a downloadable CSV export of the generated codes.
