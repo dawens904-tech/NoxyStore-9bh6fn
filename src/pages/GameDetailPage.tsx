@@ -1357,5 +1357,5 @@ export function GameDetailPage() {
     </>
   );
 }
-
+hello ai when i save a img to sku lootbar page auto set it frim the region and sku img in game detail real saved please snd saved to database also In LootbarSkuManagement, the 'Sync from Lootbar' button already saves SKU data including the image field. Add a 'Preview SKU Images' toggle that shows the actual SKU image thumbnail in the region SKU list so admins can verify which SKUs have their own images vs falling back to the game cover.
 
