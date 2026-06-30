@@ -289,7 +289,7 @@ export default function AdminDashboard() {
     <div className={`flex min-h-screen ${theme.bg} transition-colors duration-300`}>
       <AdminSidebar collapsed={sidebarCollapsed} onCollapsedChange={setSidebarCollapsed} />
 
-      <main className={`ml-0 ${sidebarWidth} flex-1 p-4 md:p-8 max-w-full overflow-x-hidden transition-all duration-300`}>
+      <main className={`ml-0 ${sidebarWidth} flex-1 p-4 md:p-8 max-w-full overflow-x-hidden transition-all duration-300 pt-16 md:pt-8`}>
         {/* Header */}
         <div className="flex items-center justify-between mb-6 md:mb-8 gap-3">
           <div>

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, Gamepad2, Box, PlusCircle, LogOut,
-  Joystick, Layers, ChevronLeft, ChevronRight, Menu, ShoppingBag,
+  Joystick, Layers, ChevronLeft, ChevronRight, Menu, ShoppingBag, X,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { supabase } from '@/lib/supabase';
@@ -42,18 +42,18 @@ export default function AdminSidebar({ collapsed: controlledCollapsed, onCollaps
 
   const sidebarContent = (isMobile = false) => (
     <div className={`flex flex-col h-full transition-all duration-300 ${!isMobile && collapsed ? 'items-center' : ''}`}>
-      {/* Brand + collapse toggle */}
-      <div className={`mb-8 flex items-start justify-between ${!isMobile && collapsed ? 'flex-col items-center gap-3 px-0' : 'px-1'}`}>
-        {(!collapsed || isMobile) && (
-          <div>
-            <div className="text-[10px] font-bold uppercase tracking-[0.25em] text-slate-400 mb-1">Admin Panel</div>
-            <div className="text-xl font-black text-slate-900 leading-tight">NoxyStore</div>
-            <div className="text-[10px] text-slate-400 font-mono mt-0.5 truncate max-w-[160px]">
-              {user?.email ?? '—'}
+      {/* Brand + collapse toggle — hidden on mobile since header handles it */}
+      {!isMobile && (
+        <div className={`mb-8 flex items-start justify-between ${collapsed ? 'flex-col items-center gap-3 px-0' : 'px-1'}`}>
+          {!collapsed && (
+            <div>
+              <div className="text-[10px] font-bold uppercase tracking-[0.25em] text-slate-400 mb-1">Admin Panel</div>
+              <div className="text-xl font-black text-slate-900 leading-tight">NoxyStore</div>
+              <div className="text-[10px] text-slate-400 font-mono mt-0.5 truncate max-w-[160px]">
+                {user?.email ?? '—'}
+              </div>
             </div>
-          </div>
-        )}
-        {!isMobile && (
+          )}
           <button
             onClick={() => setCollapsed(!collapsed)}
             className="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 transition-colors flex-shrink-0"
@@ -61,8 +61,8 @@ export default function AdminSidebar({ collapsed: controlledCollapsed, onCollaps
           >
             {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Role badge */}
       {(!collapsed || isMobile) && (
@@ -70,6 +70,9 @@ export default function AdminSidebar({ collapsed: controlledCollapsed, onCollaps
           <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-yellow-100 text-yellow-800 text-xs font-bold uppercase tracking-wide">
             {user?.role ?? 'admin'}
           </span>
+          {isMobile && (
+            <p className="text-[10px] text-slate-400 font-mono mt-1.5 truncate">{user?.email ?? '—'}</p>
+          )}
         </div>
       )}
 
@@ -120,17 +123,33 @@ export default function AdminSidebar({ collapsed: controlledCollapsed, onCollaps
       {/* Mobile hamburger */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="fixed top-4 left-4 z-50 md:hidden w-9 h-9 bg-white border border-slate-200 rounded-xl flex items-center justify-center shadow-sm"
+        className="fixed z-50 md:hidden w-10 h-10 bg-white border border-slate-200 rounded-xl flex items-center justify-center shadow-md"
+        style={{ top: "calc(0.875rem + env(safe-area-inset-top))", left: "1rem" }}
       >
-        <Menu size={16} />
+        <Menu size={16} className="text-slate-700" />
       </button>
 
       {/* Mobile drawer */}
       {mobileOpen && (
         <div className="fixed inset-0 z-50 md:hidden">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setMobileOpen(false)} />
-          <aside className="absolute inset-y-0 left-0 w-64 bg-white px-5 py-7 shadow-xl overflow-y-auto">
-            {sidebarContent(true)}
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
+          <aside className="absolute inset-y-0 left-0 w-72 bg-white shadow-2xl overflow-y-auto flex flex-col" style={{ paddingTop: "env(safe-area-inset-top)" }}>
+            {/* Mobile header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-[0.25em] text-slate-400">Admin Panel</div>
+                <div className="text-lg font-black text-slate-900">NoxyStore</div>
+              </div>
+              <button
+                onClick={() => setMobileOpen(false)}
+                className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <div className="px-4 py-5 flex-1">
+              {sidebarContent(true)}
+            </div>
           </aside>
         </div>
       )}

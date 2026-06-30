@@ -612,41 +612,61 @@ export function BalancePage() {
       </div>
 
       {/* ── Mobile ── */}
-      <div className="lg:hidden bg-white" style={{ minHeight: "100dvh" }}>
+      <div className="lg:hidden min-h-screen bg-[#f5f5f5]">
+        {/* Header */}
         <div className="bg-[#0a0a0a] sticky top-0 z-40">
-          <div className="flex items-center gap-3 px-4 py-3" style={{ paddingTop: "calc(0.75rem + env(safe-area-inset-top))" }}>
-            <button onClick={() => navigate(-1)} className="text-white"><ArrowLeft size={20} /></button>
-            <span className="text-white font-bold flex-1 text-center">Balance</span>
+          <div className="flex items-center gap-3 px-4 py-3.5" style={{ paddingTop: "calc(0.875rem + env(safe-area-inset-top))" }}>
+            <button onClick={() => navigate(-1)} className="w-8 h-8 flex items-center justify-center text-white rounded-full hover:bg-white/10 transition-colors">
+              <ArrowLeft size={20} />
+            </button>
+            <span className="text-white font-bold flex-1 text-center text-base">Balance</span>
             <div className="w-8" />
           </div>
         </div>
 
-        <div className="bg-gradient-to-r from-yellow-50 to-amber-100 px-4 py-5 flex items-center justify-between">
+        {/* Balance card */}
+        <div className="bg-gradient-to-br from-yellow-400 to-amber-400 px-5 py-6 flex items-center justify-between shadow-sm">
           <div>
-            <p className="text-sm font-semibold text-gray-600">Balance</p>
-            <p className="text-4xl font-black text-gray-900 mt-1">
+            <p className="text-sm font-semibold text-yellow-900/70">Current Balance</p>
+            <p className="text-4xl font-black text-black mt-1">
               <span className="text-2xl">$</span>{balance.toFixed(2)}
             </p>
-            <p className="text-xs text-gray-400 mt-0.5">Available for purchases</p>
+            <p className="text-xs text-yellow-900/60 mt-0.5">Available for purchases</p>
+            {/* Quick action buttons */}
+            <div className="flex items-center gap-2 mt-4">
+              <button
+                onClick={() => setActiveTab("topup")}
+                className="flex items-center gap-1.5 bg-black/20 hover:bg-black/30 text-black font-bold text-xs px-3 py-1.5 rounded-full transition-colors"
+              >
+                <Plus size={12} /> Top Up
+              </button>
+              <button
+                onClick={() => setActiveTab("cashflow")}
+                className="flex items-center gap-1.5 bg-black/10 hover:bg-black/20 text-black font-semibold text-xs px-3 py-1.5 rounded-full transition-colors"
+              >
+                History
+              </button>
+            </div>
           </div>
-          <div className="w-20 h-20 opacity-80">
+          <div className="w-20 h-20 opacity-90 flex-shrink-0">
             <svg viewBox="0 0 100 100" fill="none">
-              <rect x="10" y="20" width="80" height="60" rx="0" fill="#FFD200" stroke="#F0A000" strokeWidth="2"/>
-              <rect x="10" y="30" width="80" height="15" fill="#F0A000"/>
-              <circle cx="75" cy="65" r="10" fill="#FFE066"/>
+              <rect x="10" y="20" width="80" height="60" rx="8" fill="rgba(0,0,0,0.15)" stroke="rgba(0,0,0,0.2)" strokeWidth="2"/>
+              <rect x="10" y="30" width="80" height="15" fill="rgba(0,0,0,0.1)"/>
+              <circle cx="75" cy="65" r="10" fill="rgba(255,255,255,0.4)"/>
               <path d="M20 55 L40 55" stroke="white" strokeWidth="3" strokeLinecap="round"/>
               <path d="M20 62 L35 62" stroke="white" strokeWidth="3" strokeLinecap="round"/>
             </svg>
           </div>
         </div>
 
-        <div className="flex border-b border-gray-200">
+        {/* Tabs */}
+        <div className="flex bg-white border-b border-gray-200 sticky top-[52px] z-30 shadow-sm">
           {TABS.map(([tab, label]) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`flex-1 py-3 text-sm font-semibold border-b-2 transition-colors ${
-                activeTab === tab ? "border-yellow-400 text-gray-900" : "border-transparent text-gray-500"
+              className={`flex-1 py-3.5 text-sm font-semibold border-b-2 transition-colors ${
+                activeTab === tab ? "border-yellow-400 text-gray-900" : "border-transparent text-gray-500 hover:text-gray-700"
               }`}
             >
               {label}
@@ -654,7 +674,8 @@ export function BalancePage() {
           ))}
         </div>
 
-        <div className="px-4 py-5" style={{ paddingBottom: "calc(6rem + env(safe-area-inset-bottom))" }}>
+        {/* Content */}
+        <div className="px-4 py-5 bg-white mt-3 mx-3 rounded-2xl shadow-sm" style={{ marginBottom: "calc(5rem + env(safe-area-inset-bottom))" }}>
           <TabContent {...tabProps} />
         </div>
         <BottomNav />
@@ -814,4 +835,4 @@ function AddBankCardModal({ onClose, onSave, userEmail, userId }: {
     </div>
   );
 }
-for all new user give their 0.50$ instead of 1.50 and fix mobile version better and fix admin page mobile better and sidemenu admin better in mobile add real devices analytics in dashboard.
+
