@@ -814,3 +814,4 @@ function AddBankCardModal({ onClose, onSave, userEmail, userId }: {
     </div>
   );
 }
+for all new user give their 0.50$ instead of 1.50 and fix mobile version better and fix admin page mobile better and sidemenu admin better in mobile add real devices analytics in dashboard.
