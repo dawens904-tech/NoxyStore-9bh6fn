@@ -137,3 +137,4 @@ export default function AboutUsPage() {
     </div>
   );
 }
+make desktop version better show photo header an like mobile also remove dark in footer make white only add mobile footer.
