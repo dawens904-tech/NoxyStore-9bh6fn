@@ -22,6 +22,7 @@ import { MobileFooter } from "@/components/layout/MobileFooter";
 import gameKeysBg from "@/assets/game-keys-bg.jpg";
 import { useSettingsStore } from "@/stores/settingsStore";
 import { CURRENCY_RATES } from "@/constants/translations";
+import { item4gamerApi } from "@/lib/item4gamer";
 
 interface HomeSection {
   id: string;
@@ -159,7 +160,7 @@ export function HomePage() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { isAuthenticated } = useAuthStore();
-  const { currency } = useSettingsStore();
+  const { currency, isHaitiMode } = useSettingsStore();
   const [games, setGames] = useState<LootbarGame[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [sections, setSections] = useState<HomeSection[]>([]);
@@ -207,6 +208,27 @@ export function HomePage() {
   useEffect(() => {
     trackEvent("page_view", { page: "/" });
 
+    if (isHaitiMode) {
+      // 🇭🇹 Haiti mode: load Item4Gamer products instead of LootBar
+      setIsLoading(true);
+      item4gamerApi.getCategories()
+        .then(async (categories) => {
+          const productArrays = await Promise.all(
+            categories.slice(0, 8).map((cat) =>
+              item4gamerApi.getProducts(cat.category_id).catch(() => [])
+            )
+          );
+          const allI4GProducts = productArrays.flat();
+          const i4gGames = item4gamerApi.productsToGames(allI4GProducts) as LootbarGame[];
+          setGames(i4gGames);
+          setIsLoading(false);
+        })
+        .catch(() => setIsLoading(false));
+      loadBanners((b) => setDynamicBanners(b));
+      loadSections((s) => setSections(s as HomeSection[]));
+      return;
+    }
+
     // Load games with 3-day localStorage cache — instant on repeat visits
     loadGames((rawGames, overrides) => {
       const merged = mergeGamesWithOverrides(rawGames, overrides);
@@ -217,7 +239,7 @@ export function HomePage() {
     loadManualGames((manual) => setManualGames(manual));
     loadBanners((b) => setDynamicBanners(b));
     loadSections((s) => setSections(s as HomeSection[]));
-  }, []);
+  }, [isHaitiMode]);
 
   const getSectionGames = (section: HomeSection): LootbarGame[] => {
     if (section.game_ids.length === 0) return [];
@@ -810,4 +832,4 @@ export function HomePage() {
     </div>
   );
 }
-hello ai please Add Item4Gamer order status support to OrderTrackingPage When the order reference_id starts with i4g_, call item4gamerApi.getOrder(orderId) via the item4gamer-proxy edge function and display the real Item4Gamer order status, product name, and price in the same UI layout as LootBar orders and When a user in Haiti mode (isHaitiMode=true) visits a game detail page with an i4g_ prefixed game_id, fetch the product and its variations from Item4Gamer using item4gamerApi getProduct() and item4gamerApi.getVariation() Display variations as SKU cards and connect to the Item4Gamer checkout flow using item4gamerApi.createOrder() and When isHaitiMode is true in the settings store, load Item4Gamer products on the HomePage instead of LootBar products Fetch all I4G categories, get products for each, and display them in the same grid sections. Use the item4gamerApi.getProducts() and item4gamerApi.getCategories() functions already created in src/lib/item4gamer ts.
+

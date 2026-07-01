@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
+import { item4gamerApi } from "@/lib/item4gamer";
 import { DesktopHeader } from "@/components/layout/DesktopHeader";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
@@ -73,6 +74,15 @@ const STATE_CONFIG: Record<number, {
   },
 };
 
+// Map Item4Gamer status strings to our state numbers
+function i4gStatusToState(status: string): number {
+  const s = status?.toLowerCase() || "";
+  if (s === "completed" || s === "success" || s === "delivered") return 3;
+  if (s === "processing" || s === "pending_fulfillment" || s === "in_progress") return 2;
+  if (s === "failed" || s === "cancelled" || s === "refunded") return 4;
+  return 1; // default: pending
+}
+
 const STEPS = ["Order Placed", "Processing", "Completed"];
 
 function CopyButton({ text }: { text: string }) {
@@ -100,8 +110,50 @@ export function OrderTrackingPage() {
   const [notFound, setNotFound] = useState(false);
   const [polling, setPolling] = useState(false);
 
+  // Check if this is an Item4Gamer order
+  const isI4GOrder = !!(referenceId?.startsWith("i4g_"));
+
   const fetchOrder = async () => {
     if (!referenceId) return;
+
+    if (isI4GOrder) {
+      // Extract numeric order_id from reference like "i4g_12345"
+      const orderId = referenceId.replace("i4g_", "");
+      try {
+        const i4gOrder = await item4gamerApi.getOrder(orderId);
+        const state = i4gStatusToState(i4gOrder.status);
+        setOrder({
+          id: referenceId,
+          reference_id: referenceId,
+          order_id: String(i4gOrder.order_id),
+          game_name: i4gOrder.product_name || "Item4Gamer Product",
+          sku_name: i4gOrder.variation_name || "—",
+          quantity: i4gOrder.quantity ?? 1,
+          price: i4gOrder.total_price ?? 0,
+          state,
+          user_email: null,
+          extra_info: {},
+          created_at: i4gOrder.created_at || new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          callback_received_at: state === 3 ? (i4gOrder.created_at || null) : null,
+        });
+        setPolling(state === 1 || state === 2);
+        setNotFound(false);
+      } catch {
+        // Fall back to local DB
+        const { data } = await supabase.from("orders").select("*").eq("reference_id", referenceId).single();
+        if (data) {
+          setOrder(data as Order);
+          setPolling(data.state === 1 || data.state === 2);
+        } else {
+          setNotFound(true);
+        }
+      }
+      setIsLoading(false);
+      return;
+    }
+
+    // Standard LootBar order
     const { data, error } = await supabase
       .from("orders")
       .select("*")
@@ -112,12 +164,7 @@ export function OrderTrackingPage() {
       setNotFound(true);
     } else {
       setOrder(data as Order);
-      // Keep polling if pending or processing
-      if (data.state === 1 || data.state === 2) {
-        setPolling(true);
-      } else {
-        setPolling(false);
-      }
+      setPolling(data.state === 1 || data.state === 2);
     }
     setIsLoading(false);
   };
@@ -174,6 +221,11 @@ export function OrderTrackingPage() {
       <div className="flex items-center gap-1 text-sm text-gray-400 mb-6 font-mono">
         #{order!.reference_id}
         <CopyButton text={order!.reference_id} />
+        {isI4GOrder && (
+          <span className="ml-2 bg-red-100 text-red-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
+            🇭🇹 Item4Gamer
+          </span>
+        )}
       </div>
 
       {/* Status banner */}
@@ -193,7 +245,6 @@ export function OrderTrackingPage() {
               const stepNum = idx + 1;
               const isCompleted = stepNum < currentStep;
               const isCurrent = stepNum === currentStep;
-              const isPending = stepNum > currentStep;
               return (
                 <div key={step} className="flex items-center flex-1">
                   <div className="flex flex-col items-center flex-shrink-0">

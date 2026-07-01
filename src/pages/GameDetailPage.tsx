@@ -3,15 +3,19 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "@/hooks/useTranslation";
 import { Footer } from "@/components/layout/Footer";
 import { MobileFooter } from "@/components/layout/MobileFooter";
-import { Star, Zap, Shield, Clock, ChevronRight, Info, AlertCircle, X, Check, ChevronDown } from "lucide-react";
+import { Star, Zap, Shield, Clock, ChevronRight, Info, AlertCircle, X, Check, ChevronDown, Loader2 } from "lucide-react";
 import { DesktopHeader } from "@/components/layout/DesktopHeader";
 import { Header } from "@/components/layout/Header";
 import { FloatingChat } from "@/components/features/FloatingChat";
 import { lootbarApi } from "@/lib/lootbar-api";
+import { item4gamerApi } from "@/lib/item4gamer";
+import type { I4GProductDetail, I4GVariation } from "@/lib/item4gamer";
 import type { LootbarGame, SkuItem } from "@/types";
 import { trackEvent } from "@/lib/analytics";
 import { supabase } from "@/lib/supabase";
 import { invalidateGameCache } from "@/lib/gameCache";
+import { useSettingsStore } from "@/stores/settingsStore";
+import { CURRENCY_RATES } from "@/constants/translations";
 import { toast } from "sonner";
 
 // ── Country flag + name map ──────────────────────────────────────────────────
@@ -230,11 +234,244 @@ interface ManualSku {
 // ── UUID detection ───────────────────────────────────────────────────────────
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const isManualProduct = (id: string) => UUID_RE.test(id);
+const isI4GProduct = (id: string) => id.startsWith("i4g_");
+
+// ── Item4Gamer Game Detail Page ───────────────────────────────────────────────
+function I4GGameDetailPage({ gameId }: { gameId: string }) {
+  const navigate = useNavigate();
+  const { t } = useTranslation();
+  const { currency } = useSettingsStore();
+  const productId = gameId.replace("i4g_", "");
+
+  const [product, setProduct] = useState<I4GProductDetail | null>(null);
+  const [selectedVariation, setSelectedVariation] = useState<I4GVariation | null>(null);
+  const [quantity, setQuantity] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isOrdering, setIsOrdering] = useState(false);
+  const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
+
+  const formatPrice = (price: number) => {
+    const rate = CURRENCY_RATES[currency] ?? 1;
+    const converted = price * rate;
+    const symbols: Record<string, string> = { USD: "$", HTG: "G", EUR: "€", GBP: "£" };
+    const sym = symbols[currency] ?? "$";
+    if (currency === "HTG" || currency === "IDR" || currency === "VND") {
+      return `${sym}${Math.round(converted).toLocaleString()}`;
+    }
+    return `${sym}${converted.toFixed(2)}`;
+  };
+
+  useEffect(() => {
+    setIsLoading(true);
+    item4gamerApi.getProduct(productId)
+      .then(setProduct)
+      .finally(() => setIsLoading(false));
+  }, [productId]);
+
+  const handleBuyNow = async () => {
+    if (!selectedVariation) { toast.error("Please select a package"); return; }
+    setIsOrdering(true);
+    const refId = `i4g_${selectedVariation.variation_id}_${Date.now()}`;
+    try {
+      await item4gamerApi.createOrder({
+        variation_id: selectedVariation.variation_id,
+        quantity,
+        data: fieldValues,
+      });
+      navigate(`/orders/${encodeURIComponent(refId)}`);
+    } catch (err: any) {
+      toast.error(err.message || "Order failed");
+    }
+    setIsOrdering(false);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="animate-spin text-yellow-400" size={40} />
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+        <p className="text-gray-500">Product not found</p>
+        <button onClick={() => navigate(-1)} className="bg-yellow-400 text-black font-bold px-6 py-3">{t("cancel")}</button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[#f5f5f5]">
+      <div className="hidden lg:block"><DesktopHeader /></div>
+      <div className="lg:hidden"><Header showMenu /></div>
+
+      <div className="max-w-[1280px] mx-auto px-4 lg:px-6 py-4 lg:py-6">
+        {/* 🇭🇹 Haiti badge */}
+        <div className="flex items-center gap-2 mb-4">
+          <span className="bg-red-600 text-white text-xs font-bold px-2.5 py-1 rounded-full">🇭🇹 Item4Gamer</span>
+          <span className="text-sm text-gray-500">{product.category_name}</span>
+        </div>
+
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Left */}
+          <div className="flex-1">
+            {/* Header */}
+            <div className="bg-white p-5 rounded-2xl border border-gray-100 mb-4">
+              <div className="flex items-start gap-4">
+                <img
+                  src={product.thumbnail}
+                  alt={product.product_name}
+                  className="w-20 h-20 rounded-2xl object-cover flex-shrink-0"
+                  onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=80&h=80&fit=crop"; }}
+                />
+                <div className="flex-1">
+                  <h1 className="text-xl font-black text-gray-900 mb-1">{product.product_name}</h1>
+                  <p className="text-sm text-gray-500">{product.short_description}</p>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {["Fast Delivery", "Safe Top-Up", "24/7 Support"].map(t => (
+                      <span key={t} className="text-xs border border-gray-200 text-gray-600 px-2.5 py-1 rounded-full">{t}</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Variations */}
+            <div className="bg-white p-5 rounded-2xl border border-gray-100 mb-4">
+              <p className="text-sm font-bold text-gray-700 mb-3">Select Package</p>
+              {product.variations && product.variations.length > 0 ? (
+                <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                  {product.variations.map((v) => {
+                    const isSelected = selectedVariation?.variation_id === v.variation_id;
+                    return (
+                      <button
+                        key={v.variation_id}
+                        onClick={() => setSelectedVariation(v)}
+                        className={`relative flex flex-col p-3 border-2 rounded-xl text-left transition-all ${
+                          isSelected ? "border-yellow-400 bg-yellow-50 shadow-md" : "border-gray-200 hover:border-gray-300 bg-white"
+                        }`}
+                      >
+                        {isSelected && (
+                          <div className="absolute top-2 right-2 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center">
+                            <Check size={10} className="text-black" />
+                          </div>
+                        )}
+                        <p className="text-xs font-bold text-gray-900 leading-tight mb-1.5 pr-5">{v.variation_name}</p>
+                        <p className="text-sm font-black text-orange-500">{formatPrice(v.price)}</p>
+                        {v.original_price > v.price && (
+                          <p className="text-[10px] text-gray-400 line-through">{formatPrice(v.original_price)}</p>
+                        )}
+                        {v.stock === "out_of_stock" && (
+                          <span className="text-[10px] text-red-500 font-semibold mt-1">Out of stock</span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-400 text-center py-6">No packages available</p>
+              )}
+            </div>
+
+            {/* Required fields */}
+            {product.required_fields && product.required_fields.length > 0 && (
+              <div className="bg-white p-5 rounded-2xl border border-gray-100 mb-4">
+                <p className="text-sm font-bold text-gray-700 mb-3">Player Information</p>
+                <div className="space-y-3">
+                  {product.required_fields.map((field) => (
+                    <div key={field.field}>
+                      <label className="block text-xs font-semibold text-gray-600 mb-1">{field.label}</label>
+                      <input
+                        type={field.type === "number" ? "number" : "text"}
+                        value={fieldValues[field.field] || ""}
+                        onChange={(e) => setFieldValues(prev => ({ ...prev, [field.field]: e.target.value }))}
+                        placeholder={`Enter ${field.label}`}
+                        className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-yellow-400"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Right: order panel */}
+          <div className="w-full lg:w-72 flex-shrink-0">
+            <div className="lg:sticky lg:top-20 bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+              <div className="px-5 py-4 border-b border-gray-100">
+                <h3 className="font-bold text-gray-900">Order Summary</h3>
+              </div>
+              <div className="px-5 py-4 border-b border-gray-100">
+                {selectedVariation ? (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3">
+                    <p className="text-xs font-bold text-gray-900">{selectedVariation.variation_name}</p>
+                    <p className="text-base font-black text-orange-500">{formatPrice(selectedVariation.price * quantity)}</p>
+                  </div>
+                ) : (
+                  <div className="bg-gray-50 rounded-xl p-3 text-center text-sm text-gray-400 border border-dashed border-gray-200">
+                    ← Select a package
+                  </div>
+                )}
+              </div>
+              <div className="px-5 py-4 border-b border-gray-100">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold text-gray-700">{t("quantity")}</span>
+                  <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden">
+                    <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-50 border-r border-gray-300">−</button>
+                    <span className="text-sm font-bold w-10 text-center">{quantity}</span>
+                    <button onClick={() => setQuantity(quantity + 1)} className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-50 border-l border-gray-300">+</button>
+                  </div>
+                </div>
+              </div>
+              <div className="px-5 py-4">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm text-gray-500">Total</span>
+                  <span className="text-xl font-black text-orange-500">
+                    {selectedVariation ? formatPrice(selectedVariation.price * quantity) : "—"}
+                  </span>
+                </div>
+                <button
+                  onClick={handleBuyNow}
+                  disabled={!selectedVariation || isOrdering}
+                  className={`w-full py-3.5 font-bold text-base rounded-xl transition-all ${
+                    selectedVariation && !isOrdering
+                      ? "bg-yellow-400 hover:bg-yellow-300 text-black"
+                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  }`}
+                >
+                  {isOrdering ? (
+                    <span className="flex items-center justify-center gap-2"><Loader2 size={16} className="animate-spin" /> Processing...</span>
+                  ) : t("topupNow")}
+                </button>
+                <div className="flex items-center justify-center gap-1.5 mt-3">
+                  <Shield size={13} className="text-green-500" />
+                  <span className="text-xs text-gray-500">NoxyStore Security Guarantee</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <Footer />
+      <FloatingChat />
+    </div>
+  );
+}
 
 export function GameDetailPage() {
   const { gameId } = useParams<{ gameId: string }>();
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { isHaitiMode } = useSettingsStore();
+
+  // Render Item4Gamer page for i4g_ prefixed IDs or when Haiti mode + i4g product
+  if (gameId && isI4GProduct(gameId)) {
+    return <I4GGameDetailPage gameId={gameId} />;
+  }
+
   const isManual = gameId ? isManualProduct(gameId) : false;
 
   // ── Lootbar state ─────────────────────────────────────────────────────────
