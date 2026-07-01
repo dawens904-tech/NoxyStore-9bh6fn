@@ -1388,5 +1388,5 @@ export function AccountPage() {
     </>
   );
 }
-
+hello ai please if Update AccountPage to use the new translation keys from constants/translations.ts for all hardcoded English text: sidebar labels (My Orders, My Balance, My Points, etc.), profile section fields (Birthday, Age Range, Passkey, Bind Email, KYC), preferences labels (Display Currency, Language), and the activity feed empty state — replacing all hardcoded strings with t() calls and Update BalancePage to replace all hardcoded English text with t() calls using the new translation keys: walletBalance, topUpBalance, withdraw, transactionHistory, topUpAmount, paymentMethod, withdrawAmount, bankAccount, accountHolder, routingNumber, accountNumber, accountType, confirmWithdraw, noTransactions, creditCard, googlePay, applePay Update PointsPage.to replace all hardcoded English text with t() calls using the new translation keys: myPointsTitle, availablePoints, pointsHistory, earnPoints, redeemPoints, pointsExpiry, howToEarnPoints, dailyLogin, purchasePoints, invitePoints, noPointsYet.
 
