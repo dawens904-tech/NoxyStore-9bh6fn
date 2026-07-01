@@ -833,12 +833,3 @@ export function HomePage() {
     </div>
   );
 }
-hello ai please fix error {
-  "eventMessage": "POST | 403 | http://lcfbkgryqwjlbtowlcfb.backend.onspace.ai/functions/v1/item4gamer-proxy | Forbidden",
-  "functionId": "item4gamer-proxy",
-  "id": "a5516a61-f50d-4244-8a0e-f004866e44f0",
-  "logLevel": "ERROR",
-  "method": "POST",
-  "statusCode": 403,
-  "timestamp": 1782898450
-} and use server side.
