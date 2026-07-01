@@ -1,6 +1,7 @@
 /**
  * BuyHistoryPage — Full buy history page with LootBar-style order cards.
  * Features: All/Need Action/Processing/Refund tabs, Purchase Again, Customer Service modal.
+ * SKU images fetched from sku_cache + sku_overrides for real product thumbnails.
  */
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
@@ -21,6 +22,7 @@ interface Order {
   order_id: string | null;
   game_id: string;
   game_name: string;
+  sku_id: string;
   sku_name: string;
   quantity: number;
   price: number;
@@ -38,7 +40,33 @@ const STATE_MAP: Record<number, { label: string; color: string }> = {
   5: { label: "Failed", color: "text-red-500" },
 };
 
-// ─── Customer Service Modal (photo 19-20) ─────────────────────────────────────
+// ── SKU image cache (persists across renders) ──────────────────────────────────
+const _skuImgCache = new Map<string, string>();
+
+async function fetchSkuImage(gameId: string, skuId: string, fallback: string): Promise<string> {
+  const key = `${gameId}:${skuId}`;
+  if (_skuImgCache.has(key)) return _skuImgCache.get(key)!;
+  // Check sku_overrides (admin custom image first)
+  const { data: ov } = await supabase
+    .from("sku_overrides")
+    .select("custom_image_url")
+    .eq("game_id", gameId)
+    .eq("sku_id", skuId)
+    .single();
+  if (ov?.custom_image_url) { _skuImgCache.set(key, ov.custom_image_url); return ov.custom_image_url; }
+  // Then sku_cache Lootbar image
+  const { data: sc } = await supabase
+    .from("sku_cache")
+    .select("image")
+    .eq("game_id", gameId)
+    .eq("sku_id", skuId)
+    .single();
+  const img = sc?.image || fallback;
+  _skuImgCache.set(key, img);
+  return img;
+}
+
+// ─── Customer Service Modal ────────────────────────────────────────────────────
 function CustomerServiceModal({ order, onClose }: { order: Order; onClose: () => void }) {
   const { user } = useAuthStore();
   const [classification, setClassification] = useState("After-sales application");
@@ -85,22 +113,17 @@ function CustomerServiceModal({ order, onClose }: { order: Order; onClose: () =>
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center px-4">
       <div className="bg-white w-full max-w-md shadow-2xl overflow-hidden">
-        {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
           <h3 className="font-bold text-gray-900">New Ticket</h3>
           <button onClick={onClose}><X size={20} className="text-gray-500" /></button>
         </div>
-
-        {/* Banner */}
         <div className="bg-yellow-50 border-b border-yellow-100 px-5 py-3 flex items-center gap-2">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 text-yellow-600 flex-shrink-0">
             <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.88 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.81 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 8.91"/>
           </svg>
           <span className="text-sm text-yellow-800 font-medium">Submit your question or suggestion</span>
         </div>
-
         <div className="px-5 py-5 space-y-4 max-h-[60vh] overflow-y-auto">
-          {/* Classification */}
           <div>
             <label className="block text-sm text-gray-500 mb-1.5">Classification</label>
             <div className="relative">
@@ -121,8 +144,6 @@ function CustomerServiceModal({ order, onClose }: { order: Order; onClose: () =>
               )}
             </div>
           </div>
-
-          {/* Question content */}
           <div>
             <label className="block text-sm text-gray-500 mb-1.5">Question content</label>
             <div className="relative">
@@ -132,8 +153,6 @@ function CustomerServiceModal({ order, onClose }: { order: Order; onClose: () =>
               <span className="absolute bottom-2 right-3 text-xs text-gray-400">{content.length}/400</span>
             </div>
           </div>
-
-          {/* Screenshots */}
           <div>
             <label className="block text-sm text-gray-500 mb-1.5">Screenshots (optional)</label>
             <div className="flex gap-2 flex-wrap">
@@ -155,23 +174,18 @@ function CustomerServiceModal({ order, onClose }: { order: Order; onClose: () =>
             </div>
             <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
           </div>
-
-          {/* Contact email */}
           <div>
             <label className="block text-sm text-gray-500 mb-1.5">Contact details</label>
             <input type="email" value={contactEmail} onChange={e => setContactEmail(e.target.value)}
               placeholder="Please enter your email"
               className="w-full bg-gray-100 px-4 py-3 text-sm outline-none rounded" />
           </div>
-
-          {/* Order Number (auto-filled, read-only) */}
           <div>
             <label className="block text-sm text-gray-500 mb-1.5">*Order Number</label>
             <input type="text" value={order.order_id || order.reference_id} readOnly
               className="w-full bg-gray-100 px-4 py-3 text-sm outline-none rounded text-gray-700 cursor-not-allowed" />
           </div>
         </div>
-
         <div className="px-5 pb-5 pt-3 border-t border-gray-100">
           <button onClick={handleSubmit} disabled={isSubmitting}
             className="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-bold py-3 transition-colors">
@@ -183,32 +197,26 @@ function CustomerServiceModal({ order, onClose }: { order: Order; onClose: () =>
   );
 }
 
-// ─── Order Detail Panel (photos 17-18) ────────────────────────────────────────
-function OrderDetailPanel({ order, onBack, onCustomerService }: {
+// ─── Order Detail Panel ────────────────────────────────────────────────────────
+function OrderDetailPanel({ order, onBack, onCustomerService, skuImg }: {
   order: Order;
   onBack: () => void;
   onCustomerService: () => void;
+  skuImg?: string;
 }) {
   const navigate = useNavigate();
   const stateInfo = STATE_MAP[order.state] || STATE_MAP[1];
   const isCompleted = order.state === 3;
 
-  const handlePurchaseAgain = () => {
-    navigate(`/game/${order.game_id}`);
-  };
-
   return (
     <div>
-      {/* Header */}
       <div className="flex items-center gap-2 mb-5 px-6 py-4 border-b border-gray-100">
         <button onClick={onBack} className="p-1 hover:bg-gray-100 rounded transition-colors">
           <ArrowLeft size={18} className="text-gray-700" />
         </button>
         <h3 className="font-bold text-gray-900">Order Details</h3>
       </div>
-
       <div className="px-6 pb-6">
-        {/* Status */}
         <div className="mb-5">
           {isCompleted ? (
             <div className="flex items-center gap-2 mb-1">
@@ -227,8 +235,6 @@ function OrderDetailPanel({ order, onBack, onCustomerService }: {
             <p className="text-sm text-gray-500 ml-7">Order completed, please log in to the game to check if it has been credited</p>
           )}
         </div>
-
-        {/* Order info row */}
         <div className="flex items-center gap-2 mb-5 text-sm text-gray-500">
           <span>{new Date(order.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
           <span className="text-gray-300">|</span>
@@ -237,12 +243,10 @@ function OrderDetailPanel({ order, onBack, onCustomerService }: {
             {order.game_name} →
           </button>
         </div>
-
-        {/* SKU row */}
         <div className="border border-gray-100 p-4 mb-5">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 bg-gray-100 flex-shrink-0 overflow-hidden">
-              <img src={`https://images.unsplash.com/photo-1542751371-adc38448a05e?w=56&h=56&fit=crop`} alt={order.game_name}
+              <img src={skuImg || `https://images.unsplash.com/photo-1542751371-adc38448a05e?w=56&h=56&fit=crop`} alt={order.game_name}
                 className="w-full h-full object-cover" />
             </div>
             <div className="flex-1">
@@ -260,14 +264,12 @@ function OrderDetailPanel({ order, onBack, onCustomerService }: {
               className="border border-gray-300 text-gray-700 font-semibold text-sm px-4 py-2 hover:bg-gray-50 transition-colors">
               Customer Service
             </button>
-            <button onClick={handlePurchaseAgain}
+            <button onClick={() => navigate(`/game/${order.game_id}`)}
               className="bg-yellow-400 hover:bg-yellow-300 text-black font-bold text-sm px-4 py-2 transition-colors">
               Purchase Again
             </button>
           </div>
         </div>
-
-        {/* Order Information */}
         <div>
           <h4 className="font-bold text-gray-900 mb-3">Order Information</h4>
           <div className="space-y-0 divide-y divide-gray-50">
@@ -290,13 +292,12 @@ function OrderDetailPanel({ order, onBack, onCustomerService }: {
   );
 }
 
-// ─── Desktop Sidebar — replaced by shared AccountSidebar ────────────────────
-
 export function BuyHistoryPage() {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuthStore();
   const { t } = useTranslation();
   const [orders, setOrders] = useState<Order[]>([]);
+  const [skuImages, setSkuImages] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<"all" | "needaction" | "processing" | "refund">("all");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -312,7 +313,23 @@ export function BuyHistoryPage() {
     setIsLoading(true);
     const { data } = await supabase.from("orders").select("*")
       .eq("user_email", user?.email).order("created_at", { ascending: false }).limit(50);
-    if (data) setOrders(data as Order[]);
+    if (data) {
+      const ordersData = data as Order[];
+      setOrders(ordersData);
+      // Fetch real SKU images in background (doesn't block list rendering)
+      const gameIds = [...new Set(ordersData.map(o => o.game_id))];
+      const gameImgs: Record<string, string> = {};
+      await Promise.all(gameIds.map(async gid => {
+        const { data: gc } = await supabase.from("games_cache").select("game_image").eq("game_id", gid).single();
+        if (gc?.game_image) gameImgs[gid] = gc.game_image;
+      }));
+      const imgMap: Record<string, string> = {};
+      await Promise.all(ordersData.map(async o => {
+        const fallback = gameImgs[o.game_id] || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=56&h=56&fit=crop";
+        imgMap[o.id] = await fetchSkuImage(o.game_id, o.sku_id || "", fallback);
+      }));
+      setSkuImages(imgMap);
+    }
     setIsLoading(false);
   };
 
@@ -341,9 +358,9 @@ export function BuyHistoryPage() {
 
   const OrderCard = ({ order }: { order: Order }) => {
     const stateInfo = STATE_MAP[order.state] || STATE_MAP[1];
+    const img = skuImages[order.id] || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=56&h=56&fit=crop";
     return (
       <div className="border-b border-gray-100 py-5">
-        {/* Order header */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2 text-sm text-gray-500">
             <span>{new Date(order.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
@@ -355,12 +372,9 @@ export function BuyHistoryPage() {
           </div>
           <span className={`text-sm font-semibold ${stateInfo.color}`}>{stateInfo.label}</span>
         </div>
-
-        {/* SKU row */}
         <div className="flex items-center gap-4">
           <div className="w-14 h-14 bg-gray-100 flex-shrink-0 overflow-hidden">
-            <img src={`https://images.unsplash.com/photo-1542751371-adc38448a05e?w=56&h=56&fit=crop`}
-              alt={order.game_name} className="w-full h-full object-cover" />
+            <img src={img} alt={order.game_name} className="w-full h-full object-cover" />
           </div>
           <div className="flex-1">
             <p className="font-bold text-gray-900 text-sm">{order.sku_name}</p>
@@ -374,8 +388,6 @@ export function BuyHistoryPage() {
             </button>
           </div>
         </div>
-
-        {/* Action buttons */}
         <div className="flex gap-3 mt-4 justify-end">
           <button onClick={() => handleCustomerService(order)}
             className="border border-gray-300 text-gray-700 font-semibold text-sm px-4 py-2 hover:bg-gray-50 transition-colors">
@@ -414,12 +426,12 @@ export function BuyHistoryPage() {
             {selectedOrder ? (
               <OrderDetailPanel
                 order={selectedOrder}
+                skuImg={skuImages[selectedOrder.id]}
                 onBack={() => setSelectedOrder(null)}
                 onCustomerService={() => handleCustomerService(selectedOrder)}
               />
             ) : (
               <>
-                {/* Tabs */}
                 <div className="flex border-b border-gray-100 px-4">
                   {TABS.map(tab => (
                     <button key={tab.key} onClick={() => setActiveFilter(tab.key)}
@@ -429,7 +441,6 @@ export function BuyHistoryPage() {
                     </button>
                   ))}
                 </div>
-
                 <div className="px-4">
                   {isLoading ? (
                     <div className="space-y-4 py-6">{[1,2,3].map(i => <div key={i} className="h-24 bg-gray-100 animate-pulse" />)}</div>
@@ -459,13 +470,13 @@ export function BuyHistoryPage() {
           <div className="bg-white min-h-screen">
             <OrderDetailPanel
               order={selectedOrder}
+              skuImg={skuImages[selectedOrder.id]}
               onBack={() => setSelectedOrder(null)}
               onCustomerService={() => handleCustomerService(selectedOrder)}
             />
           </div>
         ) : (
           <>
-            {/* Filter tabs */}
             <div className="bg-white flex border-b border-gray-100 overflow-x-auto">
               {TABS.map(tab => (
                 <button key={tab.key} onClick={() => setActiveFilter(tab.key)}
@@ -496,7 +507,6 @@ export function BuyHistoryPage() {
         <BottomNav />
       </div>
 
-      {/* Customer Service Modal */}
       {showServiceModal && serviceOrder && (
         <CustomerServiceModal order={serviceOrder} onClose={() => { setShowServiceModal(false); setServiceOrder(null); }} />
       )}

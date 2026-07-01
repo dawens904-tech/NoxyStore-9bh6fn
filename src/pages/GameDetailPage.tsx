@@ -316,7 +316,7 @@ export function GameDetailPage() {
       // Load game info + override in parallel so custom image is always used
       Promise.all([
         supabase.from("games_cache").select("*").eq("game_id", gameId).single(),
-        supabase.from("game_overrides").select("custom_image_url").eq("game_id", gameId).single(),
+        supabase.from("game_overrides").select("custom_image_url, default_region_index").eq("game_id", gameId).single(),
       ]).then(([{ data: cached }, { data: overrideData }]) => {
         if (cached) {
           // custom_image_url from game_overrides takes priority — admin-set photo is permanent
@@ -367,8 +367,20 @@ export function GameDetailPage() {
 
         setSkus(sorted);
         if (sorted.length > 0) {
-          const firstRegion = sorted[0]?.attribute?.[0]?.value || "global";
-          setSelectedRegion(firstRegion);
+          // Use admin-set default region index if available
+          const defaultIdx = (overrideData as any)?.default_region_index ?? null;
+          let preferredRegion = sorted[0]?.attribute?.[0]?.value || "global";
+          if (defaultIdx !== null) {
+            // Extract unique regions in order
+            const seen = new Set<string>();
+            const orderedRegions: string[] = [];
+            sorted.forEach(s => {
+              const rv = s.attribute?.[0]?.value;
+              if (rv && !seen.has(rv)) { seen.add(rv); orderedRegions.push(rv); }
+            });
+            if (orderedRegions[defaultIdx]) preferredRegion = orderedRegions[defaultIdx];
+          }
+          setSelectedRegion(preferredRegion);
         }
         setIsLoading(false);
       }).catch(() => setIsLoading(false));

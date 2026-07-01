@@ -258,6 +258,8 @@ export default function LootbarSkuManagement() {
   const [cacheTimestamp, setCacheTimestamp] = useState<string | null>(null);
   const [previewImages, setPreviewImages] = useState(false);
   const [gameImage, setGameImage] = useState<string | null>(null);
+  const [defaultRegionIndex, setDefaultRegionIndex] = useState<number | null>(null);
+  const [savingRegionIndex, setSavingRegionIndex] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
@@ -288,6 +290,8 @@ export default function LootbarSkuManagement() {
 
     supabase.from("games_cache").select("game_name, game_image").eq("game_id", gameId).single()
       .then(({ data }) => { if (data) { setGameName(data.game_name); setGameImage(data.game_image || null); } });
+    supabase.from("game_overrides").select("default_region_index").eq("game_id", gameId).single()
+      .then(({ data }) => { if (data) setDefaultRegionIndex(data.default_region_index ?? null); });
 
     try {
       const [{ data: cachedSkus }, { data: overridesData }] = await Promise.all([
@@ -443,6 +447,19 @@ export default function LootbarSkuManagement() {
       String(s.sku_id) === String(saved.sku_id) ? { ...s, override: saved } : s
     ));
   }, []);
+
+  const handleSaveRegionIndex = async (idx: number | null) => {
+    if (!gameId) return;
+    setSavingRegionIndex(true);
+    const { error } = await supabase.from("game_overrides").upsert(
+      { game_id: gameId, default_region_index: idx },
+      { onConflict: "game_id" }
+    );
+    setSavingRegionIndex(false);
+    if (error) { toast.error("Failed to save region setting"); return; }
+    setDefaultRegionIndex(idx);
+    toast.success(idx !== null ? `Default region set to #${idx + 1} — GameDetail will auto-select this region` : "Default region cleared");
+  };
 
   const handleToggleHide = async (sku: MergedSku) => {
     const newHidden = !(sku.override?.is_hidden ?? false);
@@ -673,6 +690,28 @@ export default function LootbarSkuManagement() {
                   <span className="text-sm text-gray-400">·</span>
                   <span className="text-sm text-gray-500">{regionSkus.length} SKUs</span>
 
+                  {/* Region number setter */}
+                  <div className="flex items-center gap-1.5 bg-white border border-gray-200 rounded-xl px-3 py-1.5">
+                    <span className="text-xs font-semibold text-gray-500">Default Region:</span>
+                    {regions.map((r, rIdx) => (
+                      <button
+                        key={r.value}
+                        onClick={() => handleSaveRegionIndex(defaultRegionIndex === rIdx ? null : rIdx)}
+                        disabled={savingRegionIndex}
+                        title={`Set region #${rIdx + 1} (${r.label}) as default`}
+                        className={`w-6 h-6 rounded-lg text-xs font-black transition-all ${defaultRegionIndex === rIdx ? "bg-yellow-400 text-black" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}
+                      >
+                        {rIdx + 1}
+                      </button>
+                    ))}
+                    {defaultRegionIndex !== null && (
+                      <button onClick={() => handleSaveRegionIndex(null)} title="Clear default" className="text-gray-300 hover:text-gray-500 ml-0.5">
+                        <X size={12} />
+                      </button>
+                    )}
+                    {savingRegionIndex && <Loader2 size={11} className="animate-spin text-gray-400" />}
+                  </div>
+
                   {/* Preview Images toggle */}
                   <button
                     onClick={() => setPreviewImages(v => !v)}
@@ -887,5 +926,5 @@ export default function LootbarSkuManagement() {
     </div>
   );
 }
-please ai allow i can put a region number 1 or number 2 like porudtc move and auto set region la nn gamedetail an premier if i put it also fix buy history page fetch real product sku img and real price also fix gamedetail when open its take time for reload add cache all game and check api lootbar in silent if dont have game still save game ki already here if have new auto set.
+
 
