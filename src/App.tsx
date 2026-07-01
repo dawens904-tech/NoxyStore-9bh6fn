@@ -51,6 +51,7 @@ import LootbarSkuManagement from './pages/admin/LootbarSkuManagement';
 import AdminOrdersPage from './pages/admin/AdminOrdersPage';
 import AdminCouponsPage from './pages/admin/AdminCouponsPage';
 import AdminBannersPage from './pages/admin/AdminBannersPage';
+import AdminSectionsPage from './pages/admin/AdminSectionsPage';
 import { supabase } from "@/lib/supabase";
 import { SupportChatButton } from "@/components/features/SupportChatButton";
 import { useAuthStore, mapSupabaseUser } from "@/stores/authStore";
@@ -251,6 +252,7 @@ function App() {
         <Route path="/secure-dashboard-92x2011/orders" element={<AdminRoute><AdminOrdersPage /></AdminRoute>} />
         <Route path="/secure-dashboard-92x2011/coupons" element={<AdminRoute><AdminCouponsPage /></AdminRoute>} />
         <Route path="/secure-dashboard-92x2011/banners" element={<AdminRoute><AdminBannersPage /></AdminRoute>} />
+        <Route path="/secure-dashboard-92x2011/sections" element={<AdminRoute><AdminSectionsPage /></AdminRoute>} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </div>

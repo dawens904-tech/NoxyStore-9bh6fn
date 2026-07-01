@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, Gamepad2, Box, PlusCircle, LogOut,
-  Joystick, Layers, ChevronLeft, ChevronRight, Menu, ShoppingBag, X, Tag, Image,
+  Joystick, Layers, ChevronLeft, ChevronRight, Menu, ShoppingBag, X, Tag, Image, LayoutList,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { supabase } from '@/lib/supabase';
@@ -19,6 +19,7 @@ const navItems = [
   { label: 'SKU Overrides', path: `${BASE}/lootbar-games`, icon: Layers },
   { label: 'Redeem Codes', path: `${BASE}/coupons`, icon: Tag },
   { label: 'Banners', path: `${BASE}/banners`, icon: Image },
+  { label: 'Sections', path: `${BASE}/sections`, icon: LayoutList },
 ];
 
 interface Props {
