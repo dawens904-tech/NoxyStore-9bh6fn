@@ -1214,3 +1214,4 @@ function AddBankCardModal({ onClose, onSave, userEmail, userId }: {
     </div>
   );
 }
+make all page  square remove all border and fixm top kote baalance show left lan pa mete color kitel white and right lan bo icon lan only must have the yellow color a little bit.
