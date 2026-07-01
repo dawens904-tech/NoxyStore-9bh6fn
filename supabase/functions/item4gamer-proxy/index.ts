@@ -33,7 +33,7 @@ serve(async (req) => {
       });
     }
 
-    const apiKey = Deno.env.get("ITEM4GAMER_API_KEY") || "DEMO_API_KEY";
+    const apiKey = Deno.env.get("ITEM4GAMER_API_KEY") || "7cef0af463c89ae534ed67120492e4b2b230925ce9c6d55d";
 
     let body: { endpoint?: string; params?: Record<string, string | number>; method?: string; orderBody?: unknown };
     try {
