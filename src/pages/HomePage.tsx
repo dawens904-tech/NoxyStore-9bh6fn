@@ -325,12 +325,6 @@ export function HomePage() {
                 <span className="text-sm font-semibold text-gray-700 group-hover:text-black">{cat.label}</span>
               </button>
             ))}
-            <button onClick={() => navigate("/support")} className="flex flex-col items-center gap-2 ml-8">
-              <div className="w-14 h-14 rounded-full bg-yellow-400 flex items-center justify-center shadow-md hover:shadow-lg hover:scale-105 transition-all">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-7 h-7 text-black"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
-              </div>
-              <span className="text-xs font-semibold text-gray-600">{t("support24")}</span>
-            </button>
           </div>
 
           {/* Hot Selling Games */}
