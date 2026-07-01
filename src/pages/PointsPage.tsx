@@ -4,6 +4,7 @@
  * Points are fetched from orders table (1 point per $1 spent).
  */
 import { useState, useEffect } from "react";
+import { useTranslation } from "@/hooks/useTranslation";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, ChevronRight } from "lucide-react";
 import { AccountSidebar } from "@/components/features/AccountSidebar";
@@ -350,7 +351,7 @@ function DetailsTab({ userEmail }: { userEmail: string }) {
 
   if (history.length === 0) return (
     <div className="py-16 text-center">
-      <p className="text-gray-400 text-sm">No points history yet. Complete your first order to earn points!</p>
+      <p className="text-gray-400 text-sm">{t("noPointsYet")}</p>
     </div>
   );
 
@@ -379,6 +380,7 @@ function DetailsTab({ userEmail }: { userEmail: string }) {
 export function PointsPage() {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuthStore();
+  const { t } = useTranslation();
   const [tab, setTab] = useState<PointsTab>("earn");
   const [points, setPoints] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -421,7 +423,7 @@ export function PointsPage() {
           <div className="relative bg-white rounded-lg border border-gray-200 overflow-hidden mb-4">
             <div className="px-6 py-5 flex items-center justify-between">
               <div>
-                <p className="text-base font-bold text-gray-700 mb-1">Points</p>
+                <p className="text-base font-bold text-gray-700 mb-1">{t("myPointsTitle")}</p>
                 <div className="flex items-center gap-2">
                   <span className="text-2xl text-yellow-500">●</span>
                   <span className="text-4xl font-black text-gray-900">{isLoading ? "..." : points}</span>
@@ -445,14 +447,14 @@ export function PointsPage() {
           {/* Tabs */}
           <div className="bg-white rounded-lg border border-gray-200">
             <div className="flex border-b border-gray-100">
-              {(["earn", "redeem", "details"] as PointsTab[]).map(t => (
+              {(["earn", "redeem", "details"] as PointsTab[]).map(tabKey => (
                 <button
-                  key={t}
-                  onClick={() => setTab(t)}
-                  className={`px-6 py-4 text-sm font-semibold capitalize transition-colors relative ${tab === t ? "text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+                  key={tabKey}
+                  onClick={() => setTab(tabKey)}
+                  className={`px-6 py-4 text-sm font-semibold capitalize transition-colors relative ${tab === tabKey ? "text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
                 >
-                  {t === "earn" ? "Earn Points" : t === "redeem" ? "Redeem" : "Details"}
-                  {tab === t && <div className="absolute bottom-0 left-6 right-6 h-0.5 bg-yellow-400 rounded-full" />}
+                  {tabKey === "earn" ? "Earn Points" : tabKey === "redeem" ? "Redeem" : "Details"}
+                  {tab === tabKey && <div className="absolute bottom-0 left-6 right-6 h-0.5 bg-yellow-400 rounded-full" />}
                 </button>
               ))}
             </div>
@@ -460,6 +462,7 @@ export function PointsPage() {
               {tab === "earn" && <EarnTab vipLevel={vipLevel} points={points} />}
               {tab === "redeem" && <RedeemTab points={points} vipLevel={vipLevel} />}
               {tab === "details" && <DetailsTab userEmail={user?.email || ""} />}
+
             </div>
           </div>
         </div>
@@ -475,7 +478,7 @@ export function PointsPage() {
         <button onClick={() => navigate(-1)} className="text-white">
           <ArrowLeft size={20} />
         </button>
-        <p className="text-white font-bold">Points</p>
+        <p className="text-white font-bold">{t("myPointsTitle")}</p>
         <div className="w-8" />
       </div>
       {/* Gold banner */}
@@ -498,21 +501,21 @@ export function PointsPage() {
             </div>
           </div>
           <div className="text-right">
-            <p className="text-white/80 text-sm font-semibold">Points</p>
+            <p className="text-white/80 text-sm font-semibold">{t("myPointsTitle")}</p>
             <p className="text-white font-black text-5xl">{isLoading ? "..." : points}</p>
           </div>
         </div>
       </div>
       {/* Tabs */}
       <div className="bg-white border-b border-gray-200 flex">
-        {(["earn", "redeem", "details"] as PointsTab[]).map(t => (
+        {(["earn", "redeem", "details"] as PointsTab[]).map(tabKey => (
           <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`flex-1 py-3 text-sm font-semibold transition-colors relative ${tab === t ? "text-gray-900 font-bold" : "text-gray-500"}`}
+            key={tabKey}
+            onClick={() => setTab(tabKey)}
+            className={`flex-1 py-3 text-sm font-semibold transition-colors relative ${tab === tabKey ? "text-gray-900 font-bold" : "text-gray-500"}`}
           >
-            {t === "earn" ? "Earn Points" : t === "redeem" ? "Redeem" : "Details"}
-            {tab === t && <div className="absolute bottom-0 left-1/4 right-1/4 h-0.5 bg-yellow-400 rounded-full" />}
+            {tabKey === "earn" ? "Earn Points" : tabKey === "redeem" ? "Redeem" : "Details"}
+            {tab === tabKey && <div className="absolute bottom-0 left-1/4 right-1/4 h-0.5 bg-yellow-400 rounded-full" />}
           </button>
         ))}
       </div>

@@ -7,6 +7,7 @@
  */
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "@/hooks/useTranslation";
 import { ArrowLeft, Plus, X, CreditCard, Check, ChevronRight, Loader2, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownLeft, ShoppingBag, RotateCcw, Building2, Lock } from "lucide-react";
 import { AccountSidebar } from "@/components/features/AccountSidebar";
 import { DesktopHeader } from "@/components/layout/DesktopHeader";
@@ -679,6 +680,7 @@ function TabContent({
 export function BalancePage() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<BalanceTab>("topup");
   const [topupAmount, setTopupAmount] = useState("50.00");
   const [withdrawAmount, setWithdrawAmount] = useState("");
@@ -887,9 +889,9 @@ export function BalancePage() {
   };
 
   const TABS: [BalanceTab, string][] = [
-    ["topup", "Top Up"],
-    ["withdraw", "Withdraw"],
-    ["cashflow", "Cash Flow"],
+    ["topup", t("topUpBalance")],
+    ["withdraw", t("withdraw")],
+    ["cashflow", t("transactionHistory")],
   ];
 
   const amount = parseFloat(topupAmount || "0");
@@ -917,7 +919,7 @@ export function BalancePage() {
             <div className="flex-1">
               <div className="bg-gradient-to-r from-yellow-400 to-amber-400 p-6 mb-6 flex items-center justify-between rounded-xl">
                 <div>
-                  <p className="text-sm font-semibold text-yellow-900 opacity-75">Current Balance</p>
+                  <p className="text-sm font-semibold text-yellow-900 opacity-75">{t("walletBalance")}</p>
                   <p className="text-5xl font-black text-black mt-1">
                     <span className="text-3xl">$</span>{balance.toFixed(2)}
                   </p>
@@ -964,7 +966,7 @@ export function BalancePage() {
             <button onClick={() => navigate(-1)} className="w-8 h-8 flex items-center justify-center text-white rounded-full hover:bg-white/10 transition-colors">
               <ArrowLeft size={20} />
             </button>
-            <span className="text-white font-bold flex-1 text-center text-base">Balance</span>
+            <span className="text-white font-bold flex-1 text-center text-base">{t("walletBalance")}</span>
             <div className="w-8" />
           </div>
         </div>
@@ -972,7 +974,7 @@ export function BalancePage() {
         {/* Balance card - matching screenshot style */}
         <div className="bg-white px-5 py-5 flex items-center justify-between">
           <div>
-            <p className="text-base font-bold text-gray-900">Balance</p>
+            <p className="text-base font-bold text-gray-900">{t("walletBalance")}</p>
             <p className="text-4xl font-black text-black mt-1">
               <span className="text-2xl">$</span>{balance.toFixed(2)}
             </p>
