@@ -887,5 +887,5 @@ export default function LootbarSkuManagement() {
     </div>
   );
 }
-
+please ai allow i can put a region number 1 or number 2 like porudtc move and auto set region la nn gamedetail an premier if i put it also fix buy history page fetch real product sku img and real price also fix gamedetail when open its take time for reload add cache all game and check api lootbar in silent if dont have game still save game ki already here if have new auto set.
 
