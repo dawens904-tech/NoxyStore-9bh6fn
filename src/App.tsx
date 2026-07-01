@@ -53,6 +53,7 @@ import AdminCouponsPage from './pages/admin/AdminCouponsPage';
 import AdminBannersPage from './pages/admin/AdminBannersPage';
 import AdminSectionsPage from './pages/admin/AdminSectionsPage';
 import AdminItem4GamerPage from './pages/admin/AdminItem4GamerPage';
+import AdminSupportPage from './pages/admin/AdminSupportPage';
 import { supabase } from "@/lib/supabase";
 import { SupportChatButton } from "@/components/features/SupportChatButton";
 import { useAuthStore, mapSupabaseUser } from "@/stores/authStore";
@@ -255,6 +256,7 @@ function App() {
         <Route path="/secure-dashboard-92x2011/banners" element={<AdminRoute><AdminBannersPage /></AdminRoute>} />
         <Route path="/secure-dashboard-92x2011/sections" element={<AdminRoute><AdminSectionsPage /></AdminRoute>} />
         <Route path="/secure-dashboard-92x2011/item4gamer" element={<AdminRoute><AdminItem4GamerPage /></AdminRoute>} />
+        <Route path="/secure-dashboard-92x2011/support" element={<AdminRoute><AdminSupportPage /></AdminRoute>} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </div>

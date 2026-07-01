@@ -542,4 +542,4 @@ export function VipServicePage() {
     </div>
   );
 }
-fix error I'm sorry, I couldn't process your request. Please try again for customer call create admin customer and when a user confim and ai calla customer via email and send notification in the admin customer after admin enter in chat and can talk to the user and chak message a user send when customer here block edg ai calling and create customer ai edg and when user send a message admin click a buton generate answer and call the ai know message and about the store and give 5 qick answe and custmer choose to send to a user.
+

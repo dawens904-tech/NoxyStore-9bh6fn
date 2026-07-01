@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, Gamepad2, Box, PlusCircle, LogOut,
-  Joystick, Layers, ChevronLeft, ChevronRight, Menu, ShoppingBag, X, Tag, Image, LayoutList, Gamepad,
+  Joystick, Layers, ChevronLeft, ChevronRight, Menu, ShoppingBag, X, Tag, Image, LayoutList, Gamepad, HeadphonesIcon,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { supabase } from '@/lib/supabase';
@@ -21,6 +21,7 @@ const navItems = [
   { label: 'Banners', path: `${BASE}/banners`, icon: Image },
   { label: 'Sections', path: `${BASE}/sections`, icon: LayoutList },
   { label: 'Item4Gamer', path: `${BASE}/item4gamer`, icon: Gamepad },
+  { label: 'Customer Support', path: `${BASE}/support`, icon: HeadphonesIcon },
 ];
 
 interface Props {
