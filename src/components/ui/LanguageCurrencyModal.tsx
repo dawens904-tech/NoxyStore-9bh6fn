@@ -3,7 +3,9 @@ import { X } from "lucide-react";
 import { useSettingsStore } from "@/stores/settingsStore";
 import { LANGUAGES, CURRENCIES } from "@/constants/translations";
 import { useTranslation } from "@/hooks/useTranslation";
+import { ProviderTransitionScreen } from "@/components/features/ProviderTransitionScreen";
 import { toast } from "sonner";
+import type { Language } from "@/constants/translations";
 
 interface LanguageCurrencyModalProps {
   isOpen: boolean;
@@ -11,22 +13,56 @@ interface LanguageCurrencyModalProps {
 }
 
 export function LanguageCurrencyModal({ isOpen, onClose }: LanguageCurrencyModalProps) {
-  const { language, currency, setLanguage, setCurrency } = useSettingsStore();
+  const { language, currency, setLanguage, setCurrency, setProvider, setHaitiMode } = useSettingsStore();
   const { t } = useTranslation();
 
-  const [selectedLang, setSelectedLang] = useState(language);
+  const [selectedLang, setSelectedLang] = useState<Language>(language);
   const [selectedCurrency, setSelectedCurrency] = useState(currency);
+  const [transitioning, setTransitioning] = useState(false);
+  const [targetProvider, setTargetProvider] = useState<"lootbar" | "item4gamer">("lootbar");
+
+  const isHaitiSelection = (lang: Language, cur: string) =>
+    lang === "ht" || cur === "HTG";
+
+  const wasHaiti = isHaitiSelection(language, currency);
+  const willBeHaiti = isHaitiSelection(selectedLang, selectedCurrency);
 
   const handleConfirm = () => {
-    const langChanged = selectedLang !== language;
+    const needsTransition = wasHaiti !== willBeHaiti;
+    const newProvider = willBeHaiti ? "item4gamer" : "lootbar";
+
+    // Apply language & currency immediately
     setLanguage(selectedLang);
     setCurrency(selectedCurrency);
-    toast.success("Settings updated!");
-    onClose();
-    if (langChanged) {
-      setTimeout(() => window.location.reload(), 300);
+
+    if (needsTransition) {
+      setTargetProvider(newProvider);
+      setTransitioning(true);
+      onClose();
+    } else {
+      setProvider(newProvider);
+      setHaitiMode(willBeHaiti);
+      toast.success("Settings updated!");
+      onClose();
     }
   };
+
+  const handleTransitionComplete = () => {
+    setProvider(targetProvider);
+    setHaitiMode(targetProvider === "item4gamer");
+    setTransitioning(false);
+    // Reload page to apply new provider
+    setTimeout(() => window.location.reload(), 100);
+  };
+
+  if (transitioning) {
+    return (
+      <ProviderTransitionScreen
+        targetProvider={targetProvider}
+        onComplete={handleTransitionComplete}
+      />
+    );
+  }
 
   if (!isOpen) return null;
 
@@ -52,7 +88,12 @@ export function LanguageCurrencyModal({ isOpen, onClose }: LanguageCurrencyModal
           <div className="relative">
             <select
               value={selectedLang}
-              onChange={(e) => setSelectedLang(e.target.value as typeof language)}
+              onChange={(e) => {
+                const lang = e.target.value as Language;
+                setSelectedLang(lang);
+                // Auto-set HTG when Haitian Creole is selected
+                if (lang === "ht") setSelectedCurrency("HTG");
+              }}
               className="w-full appearance-none bg-gray-50 border border-gray-200 rounded-2xl px-4 py-4 text-base font-medium text-gray-900 focus:outline-none focus:ring-2 focus:ring-yellow-400 cursor-pointer"
             >
               {LANGUAGES.map((lang) => (
@@ -92,6 +133,19 @@ export function LanguageCurrencyModal({ isOpen, onClose }: LanguageCurrencyModal
           </div>
         </div>
 
+        {/* Haiti hint */}
+        {willBeHaiti && (
+          <div className="mb-4 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 flex items-start gap-2">
+            <span className="text-lg">🇭🇹</span>
+            <div>
+              <p className="text-xs font-bold text-blue-800">Haiti Mode</p>
+              <p className="text-xs text-blue-600 mt-0.5">
+                Products will switch to Item4Gamer with HTG pricing. A smooth transition will be applied.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Confirm Button */}
         <button
           onClick={handleConfirm}
@@ -103,4 +157,3 @@ export function LanguageCurrencyModal({ isOpen, onClose }: LanguageCurrencyModal
     </div>
   );
 }
-

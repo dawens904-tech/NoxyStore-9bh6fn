@@ -1091,7 +1091,7 @@ export function AccountPage() {
                       <div className="flex items-center gap-6 py-2">
                         <span className="w-36 text-sm text-gray-500 flex-shrink-0">{t("languageLabel")}</span>
                         <select value={language} onChange={e => setLanguage(e.target.value as any)} className="border border-gray-200 px-3 py-2 text-sm text-gray-800 outline-none focus:border-yellow-400 bg-white">
-                          {[{code:"en",label:"English 🇺🇸"},{code:"es",label:"Spanish 🇪🇸"},{code:"fr",label:"French 🇫🇷"},{code:"id",label:"Bahasa Indonesia 🇮🇩"}].map(l => <option key={l.code} value={l.code}>{l.label}</option>)}
+                          {[{code:"en",label:"English 🇺🇸"},{code:"es",label:"Spanish 🇪🇸"},{code:"fr",label:"French 🇫🇷"},{code:"id",label:"Bahasa Indonesia 🇮🇩"},{code:"ht",label:"Haitian Creole 🇭🇹"}].map(l => <option key={l.code} value={l.code}>{l.label}</option>)}
                         </select>
                       </div>
                     </div>
