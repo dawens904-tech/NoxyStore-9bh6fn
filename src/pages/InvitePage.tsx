@@ -404,3 +404,4 @@ export function InvitePage() {
     </div>
   );
 }
+fix this page make it square in desktop and center also make it real also the link change it to .com instead .gg and update edg for real.
