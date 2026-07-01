@@ -169,3 +169,6 @@ export default function AdminSidebar({ collapsed: controlledCollapsed, onCollaps
     </>
   );
 }
+hello ai allow admin sidebar can scroll and fix error API Error
+
+Item4Gamer: [403] {"error":"Item4Gamer API error: 403","details":"\r\n{\"code\":403,\"message\":\"Invalid API key\",\"data\":{\"status\":403}}","debug":{"endpointUsed":"get-balance","apiKeyLength":48,"apiKeyFirst4":"7cef****"}}.
