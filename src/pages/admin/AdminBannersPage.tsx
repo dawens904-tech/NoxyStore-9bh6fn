@@ -515,4 +515,5 @@ export default function AdminBannersPage() {
     </div>
   );
 }
+hello ai if admin upload a photo or past url create edg ai function bannerm for tittle and Subtitle / Badge auto generate a name click color blue anba chak and the ai must show a little modal and see ai thinking and ai must see the phooto and generate a tittle and Subtitle / Badge if user dont have.
 
