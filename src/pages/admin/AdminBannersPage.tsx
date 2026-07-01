@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Plus, Edit2, Trash2, Eye, EyeOff, Save, X, Loader2,
-  Upload, Image, Link, ChevronUp, ChevronDown, RefreshCw,
+  Upload, Image, Link, ChevronUp, ChevronDown, RefreshCw, Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -68,6 +68,7 @@ function BannerModal({
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [imageTab, setImageTab] = useState<"url" | "upload">("url");
+  const [aiGenerating, setAiGenerating] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handleUpload = async (file: File) => {
@@ -81,6 +82,37 @@ function BannerModal({
     setForm(f => ({ ...f, image_url: data.publicUrl }));
     toast.success("Image uploaded");
     setUploading(false);
+  };
+
+  const handleGenerateAI = async () => {
+    if (!form.image_url.trim()) {
+      toast.error("Please add an image URL or upload an image first");
+      return;
+    }
+    setAiGenerating(true);
+    const { data, error } = await supabase.functions.invoke("banner-ai", {
+      body: { image_url: form.image_url.trim() },
+    });
+    setAiGenerating(false);
+    if (error) {
+      let msg = error.message;
+      try {
+        const { FunctionsHttpError } = await import("@supabase/supabase-js");
+        if (error instanceof FunctionsHttpError) {
+          msg = (await error.context?.text()) || msg;
+        }
+      } catch {}
+      toast.error("AI generation failed: " + msg);
+      return;
+    }
+    if (data?.title) {
+      setForm(f => ({
+        ...f,
+        title: f.title.trim() ? f.title : data.title,
+        subtitle: f.subtitle.trim() ? f.subtitle : (data.subtitle || ""),
+      }));
+      toast.success("AI generated title & badge!");
+    }
   };
 
   const handleSave = async () => {
@@ -133,7 +165,7 @@ function BannerModal({
 
   return (
     <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg relative overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base">
             <Image size={15} /> {banner ? "Edit Banner" : "Add Banner"}
@@ -159,7 +191,20 @@ function BannerModal({
 
           {/* Title */}
           <div>
-            <Label className="text-xs font-semibold text-gray-600 mb-1 block">Title *</Label>
+            <div className="flex items-center justify-between mb-1">
+              <Label className="text-xs font-semibold text-gray-600">Title *</Label>
+              {form.image_url && (
+                <button
+                  type="button"
+                  onClick={handleGenerateAI}
+                  disabled={aiGenerating}
+                  className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-500 hover:bg-blue-600 text-white text-[11px] font-bold rounded-lg transition-colors disabled:opacity-60"
+                >
+                  {aiGenerating ? <Loader2 size={11} className="animate-spin" /> : <Sparkles size={11} />}
+                  {aiGenerating ? "AI thinking…" : "Generate with AI"}
+                </button>
+              )}
+            </div>
             <Input
               value={form.title}
               onChange={(e) => setForm(f => ({ ...f, title: e.target.value }))}
@@ -178,6 +223,19 @@ function BannerModal({
               className="text-sm rounded-xl"
             />
           </div>
+
+          {/* AI Thinking overlay */}
+          {aiGenerating && (
+            <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center rounded-2xl">
+              <div className="flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-2xl px-6 py-4">
+                <Loader2 size={22} className="text-blue-500 animate-spin" />
+                <div>
+                  <p className="text-sm font-bold text-blue-700">AI is analyzing your image…</p>
+                  <p className="text-xs text-blue-500 mt-0.5">Generating title & badge</p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Image — URL or Upload tabs */}
           <div>
@@ -515,5 +573,5 @@ export default function AdminBannersPage() {
     </div>
   );
 }
-hello ai if admin upload a photo or past url create edg ai function bannerm for tittle and Subtitle / Badge auto generate a name click color blue anba chak and the ai must show a little modal and see ai thinking and ai must see the phooto and generate a tittle and Subtitle / Badge if user dont have.
+
 
