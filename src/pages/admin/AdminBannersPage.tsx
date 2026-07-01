@@ -574,4 +574,4 @@ export default function AdminBannersPage() {
   );
 }
 
-
+fix modal edit banner in desktop better center.
