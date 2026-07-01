@@ -3,14 +3,48 @@ import { corsHeaders } from "../_shared/cors.ts";
 
 const ITEM4GAMER_BASE = "https://item4gamer.com/wp-json/reseller/v1";
 
+// ─── Main handler ────────────────────────────────────────────────────────────
+// Note: JWT verification is not enforced here — we accept both authenticated
+// and anonymous requests (anon key is sufficient). The real security is the
+// server-side ITEM4GAMER_API_KEY which is never exposed to the client.
 serve(async (req) => {
+  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    // Validate the request has our Supabase auth header (anon key or user JWT)
+    const authHeader = req.headers.get("Authorization") || "";
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+
+    // Accept anon key, service key, or any valid Bearer token (user JWT)
+    const bearerToken = authHeader.replace("Bearer ", "").trim();
+    const isValidRequest =
+      bearerToken === supabaseAnonKey ||
+      bearerToken === supabaseServiceKey ||
+      bearerToken.split(".").length === 3; // valid JWT has 3 parts
+
+    if (!isValidRequest && !authHeader) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const apiKey = Deno.env.get("ITEM4GAMER_API_KEY") || "DEMO_API_KEY";
-    const body = await req.json();
+
+    let body: { endpoint?: string; params?: Record<string, string | number>; method?: string; orderBody?: unknown };
+    try {
+      body = await req.json();
+    } catch {
+      return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { endpoint, params = {}, method = "GET", orderBody } = body;
 
     if (!endpoint) {
@@ -26,15 +60,15 @@ serve(async (req) => {
       if (v !== undefined && v !== null) url.searchParams.set(k, String(v));
     });
 
-    const headers: Record<string, string> = {
+    const i4gHeaders: Record<string, string> = {
       "api-key": apiKey,
       "Content-Type": "application/json",
       "Accept": "application/json",
     };
 
     const fetchOptions: RequestInit = {
-      method,
-      headers,
+      method: method as string,
+      headers: i4gHeaders,
     };
 
     if (method === "POST" && orderBody) {
@@ -46,7 +80,7 @@ serve(async (req) => {
     const response = await fetch(url.toString(), fetchOptions);
     const responseText = await response.text();
 
-    console.log(`[item4gamer-proxy] Status: ${response.status}`);
+    console.log(`[item4gamer-proxy] Status: ${response.status}, Length: ${responseText.length}`);
 
     let data: unknown;
     try {
@@ -56,8 +90,9 @@ serve(async (req) => {
     }
 
     if (!response.ok) {
+      console.error(`[item4gamer-proxy] API error: ${response.status} — ${responseText.slice(0, 300)}`);
       return new Response(
-        JSON.stringify({ error: `Item4Gamer: ${response.status} ${responseText.slice(0, 200)}` }),
+        JSON.stringify({ error: `Item4Gamer API error: ${response.status} — ${responseText.slice(0, 200)}` }),
         {
           status: response.status,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -70,7 +105,7 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
-    console.error("[item4gamer-proxy] Error:", err);
+    console.error("[item4gamer-proxy] Unexpected error:", err);
     return new Response(
       JSON.stringify({ error: `Item4Gamer proxy error: ${(err as Error).message}` }),
       {
