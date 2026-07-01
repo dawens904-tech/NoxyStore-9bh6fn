@@ -1361,5 +1361,5 @@ export function AccountPage() {
     </>
   );
 }
-
+fix photo upload saved to database nerver unsave also name,age,birtday make it square.
 
