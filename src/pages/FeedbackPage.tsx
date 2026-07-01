@@ -262,3 +262,4 @@ export function FeedbackPage() {
     </div>
   );
 }
+make this square and add accountsidebar like account page for desktop and fix better.
