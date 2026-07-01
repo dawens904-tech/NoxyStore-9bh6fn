@@ -181,7 +181,7 @@ function StripeWithdrawForm({
               <button
                 key={t}
                 onClick={() => setAccountType(t)}
-                className={`flex-1 py-2.5 text-sm font-semibold border-2 transition-all capitalize ${
+                className={`flex-1 py-2.5 text-sm font-semibold border transition-all capitalize ${
                   accountType === t ? "border-yellow-400 bg-yellow-50 text-gray-900" : "border-gray-200 text-gray-500"
                 }`}
               >
@@ -398,7 +398,7 @@ function PaymentMethodSelector({
         <button
           key={method.id}
           onClick={() => onSelect(method.id)}
-          className={`relative border-2 rounded-lg p-3 flex items-center justify-center gap-1 transition-all min-h-[52px] ${
+          className={`relative border-2 p-3 flex items-center justify-center gap-1 transition-all min-h-[52px] ${
             selected === method.id
               ? "border-yellow-400 bg-yellow-50"
               : "border-gray-200 hover:border-gray-300"
@@ -482,7 +482,7 @@ function TabContent({
         <div className="space-y-5">
           <div>
             <h3 className="font-bold text-gray-900 mb-3 text-base">Top-up Amount</h3>
-            <div className="border border-gray-300 rounded-lg px-4 py-3 flex items-center gap-2 mb-3">
+            <div className="border border-gray-300 px-4 py-3 flex items-center gap-2 mb-3">
               <span className="text-gray-400 font-semibold text-xl">$</span>
               <input
                 type="number"
@@ -498,7 +498,7 @@ function TabContent({
                 <button
                   key={p}
                   onClick={() => setTopupAmount(p)}
-                  className={`border rounded-lg py-2.5 text-sm font-semibold transition-all ${
+                  className={`border py-2.5 text-sm font-semibold transition-all ${
                     topupAmount === p ? "border-yellow-400 bg-yellow-50 text-yellow-700" : "border-gray-300 text-gray-600 hover:border-gray-400"
                   }`}
                 >
@@ -577,7 +577,7 @@ function TabContent({
           <button
             onClick={onShowConfirm}
             disabled={isProcessingTopup || amount <= 0}
-            className="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-bold py-4 rounded-lg transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+            className="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-bold py-4 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
           >
             {isProcessingTopup ? (
               <><Loader2 size={18} className="animate-spin" /> Processing...</>
@@ -917,16 +917,16 @@ export function BalancePage() {
 
             {/* Content */}
             <div className="flex-1">
-              <div className="bg-gradient-to-r from-yellow-400 to-amber-400 p-6 mb-6 flex items-center justify-between rounded-xl">
+              <div className="bg-white p-6 mb-6 flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-semibold text-yellow-900 opacity-75">{t("walletBalance")}</p>
+                  <p className="text-sm font-semibold text-gray-500">{t("walletBalance")}</p>
                   <p className="text-5xl font-black text-black mt-1">
                     <span className="text-3xl">$</span>{balance.toFixed(2)}
                   </p>
-                  <p className="text-xs text-yellow-800 opacity-70 mt-1">Available for purchases</p>
+                  <p className="text-xs text-gray-400 mt-1">Available for purchases</p>
                 </div>
-                <div className="w-24 h-24 opacity-70">
-                  <svg viewBox="0 0 100 100" fill="none">
+                <div className="w-20 h-20 flex-shrink-0 flex items-center justify-center bg-yellow-400">
+                  <svg viewBox="0 0 100 100" fill="none" className="w-12 h-12">
                     <rect x="10" y="20" width="80" height="60" rx="0" fill="rgba(0,0,0,0.15)" stroke="rgba(0,0,0,0.2)" strokeWidth="2"/>
                     <rect x="10" y="30" width="80" height="15" fill="rgba(0,0,0,0.1)"/>
                     <circle cx="75" cy="65" r="10" fill="rgba(255,255,255,0.4)"/>
@@ -935,7 +935,7 @@ export function BalancePage() {
                   </svg>
                 </div>
               </div>
-              <div className="bg-white overflow-hidden rounded-xl shadow-sm">
+              <div className="bg-white overflow-hidden shadow-sm">
                 <div className="flex border-b border-gray-200">
                   {TABS.map(([tab, label]) => (
                     <button
@@ -974,18 +974,18 @@ export function BalancePage() {
         {/* Balance card - matching screenshot style */}
         <div className="bg-white px-5 py-5 flex items-center justify-between">
           <div>
-            <p className="text-base font-bold text-gray-900">{t("walletBalance")}</p>
+            <p className="text-sm font-semibold text-gray-500">{t("walletBalance")}</p>
             <p className="text-4xl font-black text-black mt-1">
               <span className="text-2xl">$</span>{balance.toFixed(2)}
             </p>
           </div>
-          <div className="w-20 h-20 opacity-90 flex-shrink-0">
-            <svg viewBox="0 0 100 100" fill="none">
-              <rect x="10" y="20" width="80" height="60" rx="8" fill="rgba(0,0,0,0.08)" stroke="rgba(0,0,0,0.15)" strokeWidth="2"/>
-              <rect x="10" y="30" width="80" height="15" fill="rgba(0,0,0,0.05)"/>
-              <circle cx="75" cy="65" r="10" fill="rgba(0,0,0,0.1)"/>
-              <path d="M20 55 L40 55" stroke="rgba(0,0,0,0.3)" strokeWidth="3" strokeLinecap="round"/>
-              <path d="M20 62 L35 62" stroke="rgba(0,0,0,0.3)" strokeWidth="3" strokeLinecap="round"/>
+          <div className="w-16 h-16 flex-shrink-0 flex items-center justify-center bg-yellow-400">
+            <svg viewBox="0 0 100 100" fill="none" className="w-9 h-9">
+              <rect x="10" y="20" width="80" height="60" rx="0" fill="rgba(0,0,0,0.15)" stroke="rgba(0,0,0,0.2)" strokeWidth="2"/>
+              <rect x="10" y="30" width="80" height="15" fill="rgba(0,0,0,0.1)"/>
+              <circle cx="75" cy="65" r="10" fill="rgba(255,255,255,0.4)"/>
+              <path d="M20 55 L40 55" stroke="white" strokeWidth="3" strokeLinecap="round"/>
+              <path d="M20 62 L35 62" stroke="white" strokeWidth="3" strokeLinecap="round"/>
             </svg>
           </div>
         </div>
@@ -1006,7 +1006,7 @@ export function BalancePage() {
         </div>
 
         {/* Content */}
-        <div className="px-4 py-5 bg-white mt-3 mx-3 rounded-2xl shadow-sm" style={{ marginBottom: "calc(5rem + env(safe-area-inset-bottom))" }}>
+        <div className="px-4 py-5 bg-white mt-3 shadow-sm" style={{ marginBottom: "calc(5rem + env(safe-area-inset-bottom))" }}>
           <TabContent {...tabProps} />
         </div>
         <BottomNav />
@@ -1214,4 +1214,4 @@ function AddBankCardModal({ onClose, onSave, userEmail, userId }: {
     </div>
   );
 }
-make all page  square remove all border and fixm top kote baalance show left lan pa mete color kitel white and right lan bo icon lan only must have the yellow color a little bit.
+
