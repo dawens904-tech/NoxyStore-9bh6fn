@@ -6,7 +6,6 @@ import { DesktopHeader } from "@/components/layout/DesktopHeader";
 import { Header } from "@/components/layout/Header";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { HeroBanner } from "@/components/features/HeroBanner";
-import { CategoryIcons } from "@/components/features/CategoryIcons";
 import { GameCard, GameCardSkeleton } from "@/components/features/GameCard";
 import { FloatingChat } from "@/components/features/FloatingChat";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -579,7 +578,27 @@ export function HomePage() {
         </div>
 
         <HeroBanner />
-        <div className="mt-5 mb-2"><CategoryIcons /></div>
+
+        {/* Mobile Category Icons — same desktop style, horizontally scrollable */}
+        <div className="mt-5 mb-2 px-3">
+          <div className="flex items-center justify-center gap-5 overflow-x-auto scrollbar-hide py-1">
+            {[
+              { label: t("topUp"), icon: <Wallet size={24} strokeWidth={2.3} />, color: "bg-orange-500", filter: "Top Up" },
+              { label: t("gameCoins"), icon: <Coins size={24} strokeWidth={2.3} />, color: "bg-yellow-500", filter: "Game Coins" },
+              { label: t("giftCard"), icon: <Gift size={24} strokeWidth={2.3} />, color: "bg-pink-500", filter: "Gift Card" },
+              { label: t("gameKeys"), icon: <KeyRound size={24} strokeWidth={2.3} />, color: "bg-purple-600", filter: "Game Keys", hot: true },
+              { label: t("gameItems"), icon: <Swords size={24} strokeWidth={2.3} />, color: "bg-sky-500", filter: "Game Items" },
+            ].map((cat) => (
+              <button key={cat.label} onClick={() => navigate(`/categories?filter=${encodeURIComponent(cat.filter)}`)} className="flex flex-col items-center gap-1.5 flex-shrink-0 group">
+                <div className="relative">
+                  <div className={`w-12 h-12 rounded-2xl ${cat.color} flex items-center justify-center text-white shadow-md transition-all duration-300 group-active:scale-95`}>{cat.icon}</div>
+                  {cat.hot && <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-[8px] font-bold px-1 py-0.5 rounded-full shadow">HOT</span>}
+                </div>
+                <span className="text-[11px] font-semibold text-gray-700 text-center leading-tight">{cat.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
 
         {/* HOT SELLING TOP-UP GAMES */}
         <div className="mt-5 px-3">
@@ -833,4 +852,3 @@ export function HomePage() {
     </div>
   );
 }
-hello ai for Top Up,Game Coins,Gift Card,,Game Keys,Game Items mobile remove use the desktop instead sn fix center.
