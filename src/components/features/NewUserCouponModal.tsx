@@ -224,4 +224,4 @@ export function NewUserCouponModal({ isAuthenticated }: NewUserCouponModalProps)
     </div>
   );
 }
-
+fix this show by all user not login and expire after 14days after wait 14 days again to show and count 14 days when 13 show when 12 show and all user who click collect cupons and login give them all cupons in this modal in user account for real their can use at checkout the 6 and 10% and only for new account user not old account only for new.
