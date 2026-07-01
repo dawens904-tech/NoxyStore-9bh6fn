@@ -542,4 +542,4 @@ export function VipServicePage() {
     </div>
   );
 }
-
+fix error duplicate joined when customer join the save fix saved to databse and dont save empty message and fix the ai edg to not mention order user id only if their ask.
