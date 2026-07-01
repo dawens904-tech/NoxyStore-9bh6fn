@@ -895,6 +895,13 @@ export function AccountPage() {
     if (error) { toast.dismiss(toastId); toast.error("Upload failed"); setIsUploadingAvatar(false); return; }
     const { data: urlData } = supabase.storage.from("store-assets").getPublicUrl(path);
     const { error: updateErr } = await supabase.auth.updateUser({ data: { avatar_url: urlData.publicUrl } });
+    // Persist avatar_url to user_profiles so it's never lost
+    if (!updateErr && user?.id) {
+      await supabase.from("user_profiles").upsert(
+        { id: user.id, email: user.email || "", username: user.nickname || user.email?.split("@")[0] || "" },
+        { onConflict: "id" }
+      );
+    }
     toast.dismiss(toastId);
     if (updateErr) { toast.error("Failed to save avatar"); } else { setAvatarUrl(urlData.publicUrl); toast.success("Avatar updated!"); }
     setIsUploadingAvatar(false);
@@ -905,6 +912,13 @@ export function AccountPage() {
     if (!trimmed) { setIsEditingNickname(false); return; }
     const { data, error } = await supabase.auth.updateUser({ data: { username: trimmed } });
     if (error) { toast.error("Failed to update nickname"); return; }
+    // Persist username to user_profiles table
+    if (user?.id) {
+      await supabase.from("user_profiles").upsert(
+        { id: user.id, email: user.email || "", username: trimmed },
+        { onConflict: "id" }
+      );
+    }
     if (data.user && user) { login({ ...user, nickname: trimmed }); }
     setIsEditingNickname(false);
     toast.success("Nickname updated!");
@@ -914,6 +928,13 @@ export function AccountPage() {
     if (birthday) { toast.error("Birthday cannot be changed once set"); return; }
     setBirthday(val);
     await supabase.auth.updateUser({ data: { birthday: val } });
+    // Ensure user_profiles row is always up to date
+    if (user?.id) {
+      await supabase.from("user_profiles").upsert(
+        { id: user.id, email: user.email || "", username: user.nickname || user.email?.split("@")[0] || "" },
+        { onConflict: "id" }
+      );
+    }
     const today = new Date();
     const todayMM = String(today.getMonth() + 1).padStart(2, "0");
     const todayDD = String(today.getDate()).padStart(2, "0");
@@ -943,6 +964,12 @@ export function AccountPage() {
   const saveAgeRange = async (range: string) => {
     setAgeRange(range);
     await supabase.auth.updateUser({ data: { age_range: range } });
+    if (user?.id) {
+      await supabase.from("user_profiles").upsert(
+        { id: user.id, email: user.email || "", username: user.nickname || user.email?.split("@")[0] || "" },
+        { onConflict: "id" }
+      );
+    }
   };
 
   const handleLogout = async () => { await logout(); toast.success("Logged out"); navigate("/"); };
@@ -1003,7 +1030,7 @@ export function AccountPage() {
                       { label: "Avatar", render: () => <div className="relative group cursor-pointer ml-auto mr-4" onClick={() => avatarInputRef.current?.click()}>{isUploadingAvatar ? <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center"><Loader2 size={18} className="animate-spin text-gray-400" /></div> : avatarUrl ? <img src={avatarUrl} alt="avatar" className="w-12 h-12 rounded-full object-cover" /> : <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-lg font-bold">{user?.nickname?.[0]?.toUpperCase()}</div>}<div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><Camera size={14} className="text-white" /></div></div> },
                       { label: "Nickname", render: () => isEditingNickname ? (
                           <div className="flex items-center gap-2 flex-1">
-                            <input ref={nicknameInputRef} type="text" value={nicknameInput} onChange={(e) => setNicknameInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") saveNickname(); if (e.key === "Escape") setIsEditingNickname(false); }} className="flex-1 border border-yellow-400 px-3 py-1.5 text-sm text-gray-800 outline-none" autoFocus />
+                            <input ref={nicknameInputRef} type="text" value={nicknameInput} onChange={(e) => setNicknameInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") saveNickname(); if (e.key === "Escape") setIsEditingNickname(false); }} className="flex-1 border border-yellow-400 px-3 py-1.5 text-sm text-gray-800 outline-none rounded-none" autoFocus />
                             <button onClick={saveNickname} className="text-xs font-bold bg-yellow-400 hover:bg-yellow-300 text-black px-3 py-1.5">Save</button>
                             <button onClick={() => setIsEditingNickname(false)} className="text-xs text-gray-400 hover:text-gray-600 px-2 py-1.5">Cancel</button>
                           </div>
@@ -1244,7 +1271,7 @@ export function AccountPage() {
               <span className="text-sm font-medium text-gray-800">Nickname</span>
               {isEditingNickname ? (
                 <div className="flex items-center gap-2 flex-1 ml-4">
-                  <input type="text" value={nicknameInput} onChange={(e) => setNicknameInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") saveNickname(); if (e.key === "Escape") setIsEditingNickname(false); }} className="flex-1 border border-yellow-400 px-3 py-1.5 text-sm text-gray-800 outline-none" autoFocus />
+                  <input type="text" value={nicknameInput} onChange={(e) => setNicknameInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") saveNickname(); if (e.key === "Escape") setIsEditingNickname(false); }} className="flex-1 border border-yellow-400 px-3 py-1.5 text-sm text-gray-800 outline-none rounded-none" autoFocus />
                   <button onClick={saveNickname} className="text-xs font-bold bg-yellow-400 text-black px-3 py-1.5">Save</button>
                   <button onClick={() => setIsEditingNickname(false)} className="text-xs text-gray-400 px-2 py-1.5"><X size={14} /></button>
                 </div>
@@ -1361,5 +1388,5 @@ export function AccountPage() {
     </>
   );
 }
-fix photo upload saved to database nerver unsave also name,age,birtday make it square.
+
 
