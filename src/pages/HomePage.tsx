@@ -56,7 +56,7 @@ function DesktopHeroBanner({ banners }: { banners: typeof BANNER_IMAGES }) {
         </div>
       </div>
     );
-  } // This closing brace was missing, causing a syntax error.
+  }
 
   return (
     <div className="relative w-full h-80 overflow-hidden bg-gray-900 rounded-2xl mx-auto">
@@ -115,14 +115,14 @@ function MobileGameCard({ game }: { game: LootbarGame }) {
   };
 
   return (
-    <button 
+    <button
       onClick={() => navigate(`/game/${game.game_id}`)}
       className="flex flex-col text-left w-full"
     >
       {/* Image Container */}
       <div className="relative aspect-square rounded-xl overflow-hidden bg-gray-200 mb-2">
-        <img 
-          src={game.game_image || `https://images.unsplash.com/photo-1538481199705-c710c4e965fc?w=300&h=300&fit=crop`} 
+        <img
+          src={game.game_image || `https://images.unsplash.com/photo-1538481199705-c710c4e965fc?w=300&h=300&fit=crop`}
           alt={game.game_name}
           className="w-full h-full object-cover"
           onError={(e) => { (e.target as HTMLImageElement).src = `https://images.unsplash.com/photo-1538481199705-c710c4e965fc?w=300&h=300&fit=crop`; }}
@@ -605,15 +605,15 @@ export function HomePage() {
           </div>
 
           {hotGames.length > hotRows * COLS ? (
-            <button 
-              onClick={() => setHotRows((r) => r + LINES_PER_CLICK)} 
+            <button
+              onClick={() => setHotRows((r) => r + LINES_PER_CLICK)}
               className="w-full mt-4 py-2 text-sm font-semibold text-gray-400 flex items-center justify-center gap-1 hover:text-gray-700 transition-colors"
             >
               {t("viewMore")} <ChevronRight size={14} />
             </button>
           ) : hotRows > INITIAL_LINES ? (
-            <button 
-              onClick={() => setHotRows(INITIAL_LINES)} 
+            <button
+              onClick={() => setHotRows(INITIAL_LINES)}
               className="w-full mt-4 py-2 text-sm font-semibold text-gray-400 flex items-center justify-center gap-1 hover:text-gray-700 transition-colors"
             >
               {t("showLess")} <ChevronRight size={14} className="rotate-180" />
@@ -743,15 +743,15 @@ export function HomePage() {
               {discountGames.slice(0, discountRows * COLS).map((game) => <MobileGameCard key={game.game_id} game={game} />)}
             </div>
             {discountGames.length > discountRows * COLS ? (
-              <button 
-                onClick={() => setDiscountRows((r) => r + LINES_PER_CLICK)} 
+              <button
+                onClick={() => setDiscountRows((r) => r + LINES_PER_CLICK)}
                 className="w-full mt-4 py-2 text-sm font-semibold text-gray-400 flex items-center justify-center gap-1 hover:text-gray-700 transition-colors"
               >
                 {t("viewMore")} <ChevronRight size={14} />
               </button>
             ) : discountRows > INITIAL_LINES ? (
-              <button 
-                onClick={() => setDiscountRows(INITIAL_LINES)} 
+              <button
+                onClick={() => setDiscountRows(INITIAL_LINES)}
                 className="w-full mt-4 py-2 text-sm font-semibold text-gray-400 flex items-center justify-center gap-1 hover:text-gray-700 transition-colors"
               >
                 {t("showLess")} <ChevronRight size={14} className="rotate-180" />
@@ -776,15 +776,15 @@ export function HomePage() {
               {newGames.slice(0, newRows * COLS).map((game) => <MobileGameCard key={game.game_id} game={game} />)}
             </div>
             {newGames.length > newRows * COLS ? (
-              <button 
-                onClick={() => setNewRows((r) => r + LINES_PER_CLICK)} 
+              <button
+                onClick={() => setNewRows((r) => r + LINES_PER_CLICK)}
                 className="w-full mt-4 py-2 text-sm font-semibold text-gray-400 flex items-center justify-center gap-1 hover:text-gray-700 transition-colors"
               >
                 {t("viewMore")} <ChevronRight size={14} />
               </button>
             ) : newRows > INITIAL_LINES ? (
-              <button 
-                onClick={() => setNewRows(INITIAL_LINES)} 
+              <button
+                onClick={() => setNewRows(INITIAL_LINES)}
                 className="w-full mt-4 py-2 text-sm font-semibold text-gray-400 flex items-center justify-center gap-1 hover:text-gray-700 transition-colors"
               >
                 {t("showLess")} <ChevronRight size={14} className="rotate-180" />
@@ -809,15 +809,15 @@ export function HomePage() {
               {giftCardGames.slice(0, giftRows * COLS).map((game) => <MobileGameCard key={game.game_id} game={game} />)}
             </div>
             {giftCardGames.length > giftRows * COLS ? (
-              <button 
-                onClick={() => setGiftRows((r) => r + LINES_PER_CLICK)} 
+              <button
+                onClick={() => setGiftRows((r) => r + LINES_PER_CLICK)}
                 className="w-full mt-4 py-2 text-sm font-semibold text-gray-400 flex items-center justify-center gap-1 hover:text-gray-700 transition-colors"
               >
                 {t("viewMore")} <ChevronRight size={14} />
               </button>
             ) : giftRows > INITIAL_LINES ? (
-              <button 
-                onClick={() => setGiftRows(INITIAL_LINES)} 
+              <button
+                onClick={() => setGiftRows(INITIAL_LINES)}
                 className="w-full mt-4 py-2 text-sm font-semibold text-gray-400 flex items-center justify-center gap-1 hover:text-gray-700 transition-colors"
               >
                 {t("showLess")} <ChevronRight size={14} className="rotate-180" />
@@ -833,13 +833,3 @@ export function HomePage() {
     </div>
   );
 }
-hello ai please fix {
-  "eventMessage": "POST | 403 | http://lcfbkgryqwjlbtowlcfb.backend.onspace.ai/functions/v1/item4gamer-proxy | Forbidden",
-  "functionId": "item4gamer-proxy",
-  "id": "a5516a61-f50d-4244-8a0e-f004866e44f0",
-  "logLevel": "ERROR",
-  "method": "POST",
-  "statusCode": 403,
-  "timestamp": 1782898450
-} and use server side with the api key only.
-// The stray object literal at the end of the file has been removed.
