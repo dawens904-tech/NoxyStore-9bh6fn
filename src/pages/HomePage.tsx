@@ -810,4 +810,5 @@ export function HomePage() {
     </div>
   );
 }
+hello ai please Create an AdminSectionsPage at /secure-dashboard-92x2011/sections to manage the home_sections table: view, add, edit, reorder, and toggle active sections — with a game ID search picker to curate which games appear in each homepage section (Featured, Hot Games, New Arrivals, etc.).
 
