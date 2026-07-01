@@ -218,10 +218,10 @@ export function InvitePage() {
   };
 
   const inviteLink = useShorter
-    ? `https://noxystore.gg/s/${referral?.short_code || "..."}`
-    : `https://noxystore.gg?share_token=${referral?.code || "..."}&utm_source=copy&utm_campaign=p_invite&utm_medium=social`;
+    ? `https://noxystore.com/s/${referral?.short_code || "..."}`
+    : `https://noxystore.com?share_token=${referral?.code || "..."}&utm_source=copy&utm_campaign=p_invite&utm_medium=social`;
 
-  const shareText = `Sign up on NoxyStore.gg using my link to claim 2 coupons that can save up to $20! Buy safe game top-up, game items, and game coins here with fast delivery and great price! ${inviteLink}`;
+  const shareText = `Sign up on NoxyStore.com using my link to claim 2 coupons that can save up to $20! Buy safe game top-up, game items, and game coins here with fast delivery and great price! ${inviteLink}`;
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(shareText);
@@ -379,7 +379,7 @@ export function InvitePage() {
       <div className="hidden lg:block"><DesktopHeader /></div>
       <div className="lg:hidden"><Header showBack title="Invite for Coupons" /></div>
 
-      {/* ── Desktop: sidebar + content ── */}
+      {/* ── Desktop: sidebar + centered content ── */}
       <div className="hidden lg:block max-w-[1280px] mx-auto px-6 py-6">
         <div className="flex items-center gap-2 text-sm text-gray-500 mb-6">
           <button onClick={() => navigate("/")} className="hover:text-gray-700">Home</button>
@@ -388,8 +388,10 @@ export function InvitePage() {
         </div>
         <div className="flex gap-6 items-start">
           <AccountSidebar activePage="invite" className="sticky top-[72px] self-start" />
-          <div className="flex-1 max-w-2xl">
-            <InviteBody {...bodyProps} />
+          <div className="flex-1 flex justify-center">
+            <div className="w-full max-w-[560px]">
+              <InviteBody {...bodyProps} />
+            </div>
           </div>
         </div>
       </div>
@@ -404,4 +406,3 @@ export function InvitePage() {
     </div>
   );
 }
-fix this page make it square in desktop and center also make it real also the link change it to .com instead .gg and update edg for real.
