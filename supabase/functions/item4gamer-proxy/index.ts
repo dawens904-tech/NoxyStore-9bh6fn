@@ -4,9 +4,6 @@ import { corsHeaders } from "../_shared/cors.ts";
 const ITEM4GAMER_BASE = "https://item4gamer.com/wp-json/reseller/v1";
 
 // ─── Main handler ────────────────────────────────────────────────────────────
-// Note: JWT verification is not enforced here — we accept both authenticated
-// and anonymous requests (anon key is sufficient). The real security is the
-// server-side ITEM4GAMER_API_KEY which is never exposed to the client.
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
@@ -14,28 +11,49 @@ serve(async (req) => {
   }
 
   try {
-    // Validate the request has our Supabase auth header (anon key or user JWT)
+    // ─── Auth validation ───────────────────────────────────────────────────
     const authHeader = req.headers.get("Authorization") || "";
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 
-    // Accept anon key, service key, or any valid Bearer token (user JWT)
     const bearerToken = authHeader.replace("Bearer ", "").trim();
     const isValidRequest =
       bearerToken === supabaseAnonKey ||
       bearerToken === supabaseServiceKey ||
-      bearerToken.split(".").length === 3; // valid JWT has 3 parts
+      (bearerToken.split(".").length === 3 && bearerToken.length > 20);
 
-    if (!isValidRequest && !authHeader) {
+    if (!isValidRequest) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const apiKey = Deno.env.get("ITEM4GAMER_API_KEY") || "7cef0af463c89ae534ed67120492e4b2b230925ce9c6d55d";
+    // ─── Get API Key from env (NO fallback — must be set) ──────────────────
+    const apiKey = Deno.env.get("ITEM4GAMER_API_KEY");
+    
+    if (!apiKey || apiKey.trim().length < 10) {
+      console.error("[item4gamer-proxy] ITEM4GAMER_API_KEY is not configured");
+      return new Response(
+        JSON.stringify({ 
+          error: "Server configuration error: ITEM4GAMER_API_KEY not set",
+          hint: "Set the secret using: supabase secrets set ITEM4GAMER_API_KEY=your_key"
+        }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
 
-    let body: { endpoint?: string; params?: Record<string, string | number>; method?: string; orderBody?: unknown };
+    // ─── Parse request body ────────────────────────────────────────────────
+    let body: { 
+      endpoint?: string; 
+      params?: Record<string, string | number>; 
+      method?: string; 
+      orderBody?: unknown 
+    };
+    
     try {
       body = await req.json();
     } catch {
@@ -54,14 +72,14 @@ serve(async (req) => {
       });
     }
 
-    // Build URL with query params
+    // ─── Build request ─────────────────────────────────────────────────────
     const url = new URL(`${ITEM4GAMER_BASE}/${endpoint}`);
     Object.entries(params).forEach(([k, v]) => {
       if (v !== undefined && v !== null) url.searchParams.set(k, String(v));
     });
 
     const i4gHeaders: Record<string, string> = {
-      "api-key": apiKey,
+      "api-key": apiKey.trim(),
       "Content-Type": "application/json",
       "Accept": "application/json",
     };
@@ -76,11 +94,14 @@ serve(async (req) => {
     }
 
     console.log(`[item4gamer-proxy] ${method} ${url.toString()}`);
+    console.log(`[item4gamer-proxy] Headers:`, JSON.stringify(i4gHeaders, null, 2));
 
+    // ─── Make request to Item4Gamer ────────────────────────────────────────
     const response = await fetch(url.toString(), fetchOptions);
     const responseText = await response.text();
 
     console.log(`[item4gamer-proxy] Status: ${response.status}, Length: ${responseText.length}`);
+    console.log(`[item4gamer-proxy] Response: ${responseText.slice(0, 500)}`);
 
     let data: unknown;
     try {
@@ -92,7 +113,15 @@ serve(async (req) => {
     if (!response.ok) {
       console.error(`[item4gamer-proxy] API error: ${response.status} — ${responseText.slice(0, 300)}`);
       return new Response(
-        JSON.stringify({ error: `Item4Gamer API error: ${response.status} — ${responseText.slice(0, 200)}` }),
+        JSON.stringify({ 
+          error: `Item4Gamer API error: ${response.status}`,
+          details: responseText.slice(0, 500),
+          debug: {
+            endpointUsed: endpoint,
+            apiKeyLength: apiKey.length,
+            apiKeyFirst4: apiKey.slice(0, 4) + "****"
+          }
+        }),
         {
           status: response.status,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
