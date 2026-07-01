@@ -140,7 +140,7 @@ function StripeWithdrawForm({
             placeholder="0.00"
             min="5"
             max={balance}
-            className="flex-1 outline-none text-2xl font-bold text-gray-900 bg-transparent placeholder-gray-300"
+            className="flex-1 outline-none text-xl font-bold text-gray-900 bg-transparent placeholder-gray-300"
           />
         </div>
         {amount > balance && (
@@ -489,7 +489,7 @@ function TabContent({
                 value={topupAmount}
                 onChange={(e) => setTopupAmount(e.target.value)}
                 min="1"
-                className="flex-1 outline-none text-2xl font-bold text-gray-900 bg-transparent"
+                className="flex-1 outline-none text-xl font-bold text-gray-900 bg-transparent"
                 placeholder="0.00"
               />
             </div>
@@ -920,13 +920,13 @@ export function BalancePage() {
               <div className="bg-white p-6 mb-6 flex items-center justify-between">
                 <div>
                   <p className="text-sm font-semibold text-gray-500">{t("walletBalance")}</p>
-                  <p className="text-5xl font-black text-black mt-1">
-                    <span className="text-3xl">$</span>{balance.toFixed(2)}
+                  <p className="text-4xl font-black text-black mt-1">
+                    <span className="text-2xl">$</span>{balance.toFixed(2)}
                   </p>
                   <p className="text-xs text-gray-400 mt-1">Available for purchases</p>
                 </div>
-                <div className="w-20 h-20 flex-shrink-0 flex items-center justify-center bg-yellow-400">
-                  <svg viewBox="0 0 100 100" fill="none" className="w-12 h-12">
+                <div className="w-14 h-14 flex-shrink-0 flex items-center justify-center bg-yellow-400">
+                  <svg viewBox="0 0 100 100" fill="none" className="w-9 h-9">
                     <rect x="10" y="20" width="80" height="60" rx="0" fill="rgba(0,0,0,0.15)" stroke="rgba(0,0,0,0.2)" strokeWidth="2"/>
                     <rect x="10" y="30" width="80" height="15" fill="rgba(0,0,0,0.1)"/>
                     <circle cx="75" cy="65" r="10" fill="rgba(255,255,255,0.4)"/>
@@ -949,7 +949,7 @@ export function BalancePage() {
                     </button>
                   ))}
                 </div>
-                <div className="p-8">
+                <div className="p-5">
                   <TabContent {...tabProps} />
                 </div>
               </div>
@@ -975,12 +975,12 @@ export function BalancePage() {
         <div className="bg-white px-5 py-5 flex items-center justify-between">
           <div>
             <p className="text-sm font-semibold text-gray-500">{t("walletBalance")}</p>
-            <p className="text-4xl font-black text-black mt-1">
-              <span className="text-2xl">$</span>{balance.toFixed(2)}
+            <p className="text-3xl font-black text-black mt-1">
+              <span className="text-xl">$</span>{balance.toFixed(2)}
             </p>
           </div>
-          <div className="w-16 h-16 flex-shrink-0 flex items-center justify-center bg-yellow-400">
-            <svg viewBox="0 0 100 100" fill="none" className="w-9 h-9">
+          <div className="w-12 h-12 flex-shrink-0 flex items-center justify-center bg-yellow-400">
+            <svg viewBox="0 0 100 100" fill="none" className="w-7 h-7">
               <rect x="10" y="20" width="80" height="60" rx="0" fill="rgba(0,0,0,0.15)" stroke="rgba(0,0,0,0.2)" strokeWidth="2"/>
               <rect x="10" y="30" width="80" height="15" fill="rgba(0,0,0,0.1)"/>
               <circle cx="75" cy="65" r="10" fill="rgba(255,255,255,0.4)"/>
@@ -1214,4 +1214,4 @@ function AddBankCardModal({ onClose, onSave, userEmail, userId }: {
     </div>
   );
 }
-size yo tro gro and large retire ladann.
+
