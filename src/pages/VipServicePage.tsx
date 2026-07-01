@@ -95,17 +95,23 @@ export function VipServicePage() {
 
   const sendMessage = useCallback(async (text: string, imageUrl?: string) => {
     if ((!text.trim() && !imageUrl) || isSending) return;
+    // Don't save truly empty messages
+    if (!text.trim() && !imageUrl) return;
     setIsSending(true);
     setInput("");
     setShowActions(false);
     setShowQuickQ(false);
 
+    const content = text.trim();
+    // Skip insert if nothing to save
+    if (!content && !imageUrl) { setIsSending(false); return; }
+
     const msg = {
       session_id: sessionId,
       user_email: user?.email,
       sender: isAdmin ? "admin" : "user",
-      content: text.trim(),
-      image_url: imageUrl,
+      content,
+      image_url: imageUrl || null,
     };
 
     const { data: inserted } = await supabase.from("chat_messages").insert(msg).select().single();
@@ -195,7 +201,7 @@ export function VipServicePage() {
       sender: "ai",
       content: "Connecting you to a VIP support agent...",
     });
-    // Agent AI greets — edge function called once as agent persona
+    // Agent AI greets — edge function saves reply to DB; polling will pick it up
     const history = messages
       .filter((m) => !m.id.startsWith("welcome"))
       .map((m) => ({ role: m.sender === "user" ? "user" : "assistant", content: m.content || "[image]" }));
@@ -206,18 +212,11 @@ export function VipServicePage() {
         sessionId,
         agentMode: true,
       },
-    }).then(({ data: aiData }) => {
-      if (aiData?.reply) {
-        const agentMsg: ChatMessage = {
-          id: `agent_${Date.now()}`,
-          sender: "admin",
-          content: aiData.reply,
-          created_at: new Date().toISOString(),
-        };
-        setMessages((prev) => [...prev, agentMsg]);
-      }
+    }).then(() => {
+      // Polling (loadNewMessages) will pick up the saved AI reply automatically
     });
-    loadNewMessages();
+    // Small delay then poll to show the greeting
+    setTimeout(loadNewMessages, 1500);
     toast.success("VIP Agent connected.");
   };
 
@@ -542,4 +541,4 @@ export function VipServicePage() {
     </div>
   );
 }
-fix error duplicate joined when customer join the save fix saved to databse and dont save empty message and fix the ai edg to not mention order user id only if their ask.
+
