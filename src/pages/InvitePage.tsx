@@ -406,3 +406,4 @@ export function InvitePage() {
     </div>
   );
 }
+make all this page square and more large space in desktop pa dwe kwense.
