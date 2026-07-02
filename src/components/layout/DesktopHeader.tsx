@@ -508,3 +508,4 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
     </>
   );
 }
+fix seach mail language backgrouynd gray square and bayo little espas and for left f name noxystore more pre left.
