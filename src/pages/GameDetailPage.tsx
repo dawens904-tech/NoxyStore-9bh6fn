@@ -1496,7 +1496,7 @@ export function GameDetailPage() {
                   src={imgError ? "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=100&h=100&fit=crop" : (game?.game_image || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=100&h=100&fit=crop")}
                   alt={game?.game_name} className="w-24 h-24 rounded-2xl object-cover flex-shrink-0" onError={() => setImgError(true)} />
                 <div className="flex-1">
-                  <h1 className="text-2xl font-black text-gray-900 mb-1">{game?.game_name}</h1>
+                  <h1 className="text-xl font-bold text-gray-800 mb-1">{game?.game_name}</h1>
                   <div className="flex items-center gap-3 mb-2">
                     <span className="bg-yellow-400 text-black text-xs font-bold px-1.5 py-0.5 rounded">{(game?.rating ?? 5.0).toFixed(1)}</span>
                     <div className="flex">{Array.from({ length: 5 }).map((_, i) => <Star key={i} size={14} fill="#FFD200" stroke="none" />)}</div>
@@ -1624,8 +1624,8 @@ export function GameDetailPage() {
                           {savings > 0 && <div className="absolute top-1.5 left-1.5 bg-orange-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">-{savings.toFixed(0)}%</div>}
                         </div>
                         <div className="p-2.5">
-                          <p className="text-xs font-bold text-gray-900 leading-tight line-clamp-2 mb-1.5">{sku.sku_name}</p>
-                          <p className="text-sm font-black text-orange-500">${markedPrice.toFixed(2)}</p>
+                          <p className="text-xs font-medium text-gray-600 leading-tight line-clamp-2 mb-1.5">{sku.sku_name}</p>
+                          <p className="text-sm font-bold text-orange-500">${markedPrice.toFixed(2)}</p>
                           {savings > 0 && (
                             <div className="flex items-center gap-1 mt-0.5">
                               <span className="text-[10px] text-gray-400 line-through">${(sku.original_price || sku.price || 0).toFixed(2)}</span>
@@ -1750,7 +1750,7 @@ export function GameDetailPage() {
               src={imgError ? "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=80&h=80&fit=crop" : (game?.game_image || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=80&h=80&fit=crop")}
               alt={game?.game_name} className="w-16 h-16 rounded-xl object-cover flex-shrink-0 shadow-sm" onError={() => setImgError(true)} />
             <div>
-              <h1 className="text-lg font-bold text-gray-900 leading-tight">{game?.game_name}</h1>
+              <h1 className="text-base font-semibold text-gray-700 leading-tight">{game?.game_name}</h1>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span className="bg-yellow-400 text-black text-xs font-bold px-1.5 py-0.5 rounded">{(game?.rating ?? 5.0).toFixed(1)}</span>
                 <div className="flex">{Array.from({ length: 5 }).map((_, i) => <Star key={i} size={12} fill="#FFD200" stroke="none" />)}</div>
@@ -1875,8 +1875,8 @@ export function GameDetailPage() {
                       {savings > 0 && <div className="absolute top-1.5 left-1.5 bg-orange-500 text-white text-[9px] font-bold px-1 py-0.5 rounded">-{savings.toFixed(0)}%</div>}
                     </div>
                     <div className="p-2.5">
-                      <p className="text-xs font-bold text-gray-900 leading-tight line-clamp-2 mb-1">{sku.sku_name}</p>
-                      <p className="text-sm font-black text-orange-500">${markedPrice.toFixed(2)}</p>
+                      <p className="text-xs font-medium text-gray-600 leading-tight line-clamp-2 mb-1">{sku.sku_name}</p>
+                      <p className="text-sm font-bold text-orange-500">${markedPrice.toFixed(2)}</p>
                       {savings > 0 && (
                         <div className="flex items-center gap-1 mt-0.5">
                           <span className="text-[10px] text-gray-400 line-through">${(sku.original_price || sku.price || 0).toFixed(2)}</span>
@@ -1967,4 +1967,3 @@ export function GameDetailPage() {
     </>
   );
 }
-page size lan tro gro desann ladan and name game yo pa dwe fonse.
