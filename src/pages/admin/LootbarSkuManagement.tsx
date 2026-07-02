@@ -1015,4 +1015,3 @@ export default function LootbarSkuManagement() {
   );
 }
 
-fix error when admin change game slug auto change the lootbar game url to the slug but all function work example i put top-up/free-fire-top-up when i open free fire the url must /top-up/free-fire-top-up real saved to database add it in edit game img modal instead.
