@@ -10,7 +10,8 @@ import { GameCard, GameCardSkeleton } from "@/components/features/GameCard";
 import { FloatingChat } from "@/components/features/FloatingChat";
 import { useTranslation } from "@/hooks/useTranslation";
 import type { LootbarGame } from "@/types";
-import { loadGames, loadManualGames, loadBanners, loadSections, mergeGamesWithOverrides } from "@/lib/gameCache";
+import { loadGames, loadManualGames, loadSections, mergeGamesWithOverrides } from "@/lib/gameCache";
+import { supabase } from "@/lib/supabase";
 import { Wallet, Coins, Gift, Swords } from "lucide-react";
 import { trackEvent } from "@/lib/analytics";
 import { NewUserCouponModal } from "@/components/features/NewUserCouponModal";
@@ -232,7 +233,13 @@ export function HomePage() {
           setIsLoading(false);
         })
         .catch(() => setIsLoading(false));
-      loadBanners((b) => setDynamicBanners(b));
+      // Same direct banner fetch for Haiti mode
+      supabase
+        .from("home_banners")
+        .select("id, title, subtitle, image_url, link, sort_order")
+        .eq("is_active", true)
+        .order("sort_order")
+        .then(({ data }) => { if (data && data.length > 0) setDynamicBanners(data as any); });
       loadSections((s) => setSections(s as HomeSection[]));
       return;
     }
@@ -245,7 +252,13 @@ export function HomePage() {
     });
 
     loadManualGames((manual) => setManualGames(manual));
-    loadBanners((b) => setDynamicBanners(b));
+    // Direct Supabase fetch — same source as mobile HeroBanner
+    supabase
+      .from("home_banners")
+      .select("id, title, subtitle, image_url, link, sort_order")
+      .eq("is_active", true)
+      .order("sort_order")
+      .then(({ data }) => { if (data && data.length > 0) setDynamicBanners(data as any); });
     loadSections((s) => setSections(s as HomeSection[]));
   }, [isHaitiMode]);
 
@@ -392,7 +405,7 @@ export function HomePage() {
 
           {/* Popular Game Key — desktop */}
           {(gameKeyGames.length > 0 || !isLoading) && (
-            <div className="rounded-2xl overflow-hidden relative" style={{ background: `url(${gameKeysBg}) center/cover no-repeat` }}>
+            <div className="overflow-hidden relative -mx-6" style={{ background: `url(${gameKeysBg}) center/cover no-repeat` }}>
               <div className="absolute inset-0 bg-gradient-to-r from-blue-900/90 via-blue-800/70 to-transparent" />
               <div className="relative z-10 px-8 py-6">
                 <div className="flex items-center justify-between mb-5">
@@ -674,7 +687,7 @@ export function HomePage() {
 
         {/* POPULAR GAME KEY */}
         {(gameKeyGames.length > 0 || !isLoading) && (
-          <div className="mt-6 mx-3 rounded-2xl overflow-hidden relative" style={{ background: `url(${gameKeysBg}) center/cover no-repeat` }}>
+          <div className="mt-6 overflow-hidden relative" style={{ background: `url(${gameKeysBg}) center/cover no-repeat` }}>
             <div className="absolute inset-0 bg-blue-900/80" />
             <div className="relative z-10 px-4 py-5">
               <div className="flex items-center justify-between mb-4">
@@ -855,4 +868,4 @@ export function HomePage() {
   );
 }
 
-fix desktop fetch same banner has mobile and fix Popular Game Key background img full with poul pran all left/right and square.
+
