@@ -41,24 +41,24 @@ function GamesDropdown({ onClose }: { onClose: () => void }) {
       <div className="bg-[#1a1a1a] border border-gray-700 rounded-lg shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
         <div className="flex gap-0">
           {/* Popular Games */}
-          <div className="w-[460px] p-6">
+          <div className="w-[420px] p-5">
             <div className="flex items-center gap-2 mb-4">
               <span className="text-orange-500 text-base">🔥</span>
               <h3 className="text-white font-bold text-sm">Popular Games</h3>
             </div>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1">
               {popularGames.slice(0, 16).map(game => (
                 <button key={game.game_id} onClick={() => { navigate(`/game/${game.game_id}`); onClose(); }}
-                  className="flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-white/10 text-left transition-colors group">
+                  className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-white/10 text-left transition-colors group">
                   {game.game_image ? (
                     <img src={game.game_image}
                       alt={game.game_name}
-                      className="w-8 h-8 rounded-lg object-cover flex-shrink-0"
+                      className="w-7 h-7 rounded-lg object-cover flex-shrink-0"
                       onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
                   ) : (
-                    <div className="w-8 h-8 rounded-lg bg-gray-700 flex-shrink-0" />
+                    <div className="w-7 h-7 rounded-lg bg-gray-700 flex-shrink-0" />
                   )}
-                  <span className="text-gray-300 text-sm group-hover:text-white font-medium truncate">{game.game_name}</span>
+                  <span className="text-gray-300 text-xs group-hover:text-white font-medium truncate">{game.game_name}</span>
                 </button>
               ))}
             </div>
@@ -68,7 +68,7 @@ function GamesDropdown({ onClose }: { onClose: () => void }) {
           <div className="w-px bg-gray-700" />
 
           {/* All Games */}
-          <div className="w-56 p-6">
+          <div className="w-52 p-5">
             <button onClick={() => { navigate("/categories"); onClose(); }}
               className="flex items-center justify-between w-full mb-4 hover:opacity-80 transition-opacity">
               <div className="flex items-center gap-2">
@@ -82,7 +82,7 @@ function GamesDropdown({ onClose }: { onClose: () => void }) {
             <div className="space-y-1">
               {allGamesList.map(name => (
                 <button key={name} onClick={() => { navigate(`/categories?q=${encodeURIComponent(name)}`); onClose(); }}
-                  className="w-full text-left px-3 py-2 text-gray-400 hover:text-white text-sm transition-colors">
+                  className="w-full text-left px-2 py-1.5 text-gray-400 hover:text-white text-sm transition-colors">
                   {name}
                 </button>
               ))}
@@ -379,16 +379,16 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
           </button>
 
           {/* Nav */}
-          <nav className="flex items-center gap-2">
+          <nav className="flex items-center gap-1">
             {/* Home */}
             <button onClick={() => navigate("/")}
-              className={`px-5 py-2.5 text-sm font-semibold transition-colors ${isActive("/") && location.pathname === "/" ? "text-yellow-400" : "text-gray-300 hover:text-white"}`}>
+              className={`px-4 py-2 text-sm font-semibold transition-colors ${isActive("/") && location.pathname === "/" ? "text-yellow-400" : "text-gray-300 hover:text-white"}`}>
               {t("home")}
             </button>
 
             {/* Games with dropdown */}
             <div className="relative" onMouseEnter={handleGamesEnter} onMouseLeave={handleGamesLeave}>
-              <button className={`flex items-center gap-1 px-5 py-2.5 text-sm font-semibold transition-colors ${showGamesMenu ? "text-yellow-400" : "text-gray-300 hover:text-white"}`}>
+              <button className={`flex items-center gap-1 px-4 py-2 text-sm font-semibold transition-colors ${showGamesMenu ? "text-yellow-400" : "text-gray-300 hover:text-white"}`}>
                 {t("games")} <ChevronDown size={14} className={`transition-transform ${showGamesMenu ? "rotate-180" : ""}`} />
               </button>
               {showGamesMenu && (
@@ -400,13 +400,13 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
 
             {/* Blog */}
             <button onClick={() => navigate("/about")}
-              className="px-5 py-2.5 text-sm font-semibold text-gray-300 hover:text-white transition-colors">
+              className="px-4 py-2 text-sm font-semibold text-gray-300 hover:text-white transition-colors">
               Blog
             </button>
 
             {/* Help Center with dropdown */}
             <div className="relative" onMouseEnter={handleHelpEnter} onMouseLeave={handleHelpLeave}>
-              <button className={`flex items-center gap-1 px-5 py-2.5 text-sm font-semibold transition-colors ${showHelpMenu ? "text-yellow-400" : "text-gray-300 hover:text-white"}`}>
+              <button className={`flex items-center gap-1 px-4 py-2 text-sm font-semibold transition-colors ${showHelpMenu ? "text-yellow-400" : "text-gray-300 hover:text-white"}`}>
                 {t("helpCenter")} <ChevronDown size={14} className={`transition-transform ${showHelpMenu ? "rotate-180" : ""}`} />
               </button>
               {showHelpMenu && (
@@ -516,4 +516,3 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
     </>
   );
 }
-
