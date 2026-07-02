@@ -195,4 +195,3 @@ function DesktopFooter() {
     </footer>
   );
 }
-in the trust pilot review fetch 10 and but them in carousel from noxy trustpilot show and add 2demo.
