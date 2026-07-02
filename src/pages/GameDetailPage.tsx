@@ -1238,18 +1238,33 @@ export function GameDetailPage() {
               </div>
             )}
 
-            {/* Region selector — dropdown with flags for gift cards, tabs for others */}
+            {/* Region selector — gift cards: horizontal flag+name pills; others: plain tabs */}
             {regions.length > 1 && (
               <div className="mb-4 py-4">
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
                   {skus[0]?.attribute?.[0]?.key_text || "Region"}
                 </p>
                 {isGiftCard ? (
-                  <RegionDropdown
-                    regions={regions}
-                    selected={selectedRegion}
-                    onSelect={(v) => { setSelectedRegion(v); setSelectedSku(null); setExtraInfoValues({}); }}
-                  />
+                  <div className="flex flex-wrap gap-2">
+                    {regions.map((r) => {
+                      const isSelected = selectedRegion === r.value;
+                      return (
+                        <button
+                          key={r.value}
+                          onClick={() => { setSelectedRegion(r.value); setSelectedSku(null); setExtraInfoValues({}); }}
+                          className={`flex items-center gap-1.5 px-3 py-2 border-2 text-sm font-semibold transition-all ${
+                            isSelected
+                              ? "border-yellow-400 bg-yellow-50 text-yellow-700"
+                              : "border-gray-200 text-gray-500 hover:border-gray-300 bg-white"
+                          }`}
+                          title={r.label}
+                        >
+                          <span className="text-lg leading-none">{getFlag(r.label)}</span>
+                          {isSelected && <span className="text-xs font-bold">{r.label}</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
                 ) : (
                   <div className="flex flex-wrap gap-2">
                     {regions.map((r) => (
@@ -1471,16 +1486,35 @@ export function GameDetailPage() {
         {regions.length > 1 && (
           <div className="px-4 pt-4 pb-3 border-b border-gray-100">
             {isGiftCard ? (
-              <button
-                onClick={() => setShowRegionSheet(true)}
-                className="w-full flex items-center justify-between bg-gray-50 border border-gray-200 rounded-xl px-4 py-3"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl leading-none">{getFlag(regions.find(r => r.value === selectedRegion)?.label || selectedRegion)}</span>
-                  <span className="text-sm font-semibold text-gray-800">{regions.find(r => r.value === selectedRegion)?.label || selectedRegion}</span>
+              <div>
+                {/* Selected region pill — tap to open search sheet */}
+                <button
+                  onClick={() => setShowRegionSheet(true)}
+                  className="flex items-center gap-2 border-2 border-yellow-400 bg-yellow-50 px-3 py-2 mb-3"
+                >
+                  <span className="text-xl leading-none">{getFlag(regions.find(r => r.value === selectedRegion)?.label || selectedRegion)}</span>
+                  <span className="text-sm font-bold text-yellow-700">{regions.find(r => r.value === selectedRegion)?.label || selectedRegion}</span>
+                  <ChevronDown size={14} className="text-yellow-500 ml-1" />
+                </button>
+                {/* All regions as flag + name chips in one scrollable line */}
+                <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+                  {regions.map((r) => {
+                    const isSel = r.value === selectedRegion;
+                    return (
+                      <button
+                        key={r.value}
+                        onClick={() => { setSelectedRegion(r.value); setSelectedSku(null); setExtraInfoValues({}); }}
+                        className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 border-2 text-xs font-semibold transition-all ${
+                          isSel ? "border-yellow-400 bg-yellow-50 text-yellow-700" : "border-gray-200 bg-white text-gray-600"
+                        }`}
+                      >
+                        <span className="text-base leading-none">{getFlag(r.label)}</span>
+                        <span>{r.label}</span>
+                      </button>
+                    );
+                  })}
                 </div>
-                <ChevronDown size={16} className="text-gray-400" />
-              </button>
+              </div>
             ) : (
               <div>
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
@@ -1637,5 +1671,4 @@ export function GameDetailPage() {
     </>
   );
 }
-for iTunes Gift Card in desktop if you open each show all other region example i open iTunes Gift Card UK show sou line US,TR,UK,FR,JP for desktop you must click top show the flag only show name when not click and when change example to US auto change the patch in the same tab to the us itunes giftcard with the same line US,TR,UK,FR,JP but show flag and name lan nn us cause mwen ladann and change for all itunes and for mobile show flag and name one line when select its must suqare to and when select its open a modal with the name flag lan anle and anba gen search and display all other flag yo with name like https://www.lootbar.com/gift-card/itunes-gift-card-us.
 
