@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Mail, Eye, EyeOff, X, Loader2, ChevronRight, ArrowLeft } from "lucide-react";
+import { Mail, Eye, EyeOff, X, Loader2, ChevronRight, ArrowLeft, Fingerprint } from "lucide-react";
 import { useAuth } from "@/lib/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
 import { DesktopHeader } from "@/components/layout/DesktopHeader";
@@ -24,6 +24,26 @@ async function trackPendingReferral(userEmail: string) {
 
 type LoginView = "main" | "email" | "otp" | "setPassword" | "verifyEmail" | "forgotPassword";
 
+// ── Passkey auth helper ─────────────────────────────────────────────────────
+async function authenticateWithPasskey(credentialId: string): Promise<boolean> {
+  try {
+    const challenge = new Uint8Array(32);
+    crypto.getRandomValues(challenge);
+    const credIdBytes = Uint8Array.from(atob(credentialId), c => c.charCodeAt(0));
+    const assertion = await navigator.credentials.get({
+      publicKey: {
+        challenge,
+        allowCredentials: [{ id: credIdBytes, type: "public-key" }],
+        userVerification: "required",
+        timeout: 60000,
+      },
+    }) as PublicKeyCredential | null;
+    return assertion !== null;
+  } catch {
+    return false;
+  }
+}
+
 export function LoginPage() {
   const navigate = useNavigate();
   const { login, signInWithGoogle, signInWithDiscord, sendOtp, verifyOtp, setPassword: setAccountPassword, signInWithPassword } = useAuth();
@@ -37,8 +57,50 @@ export function LoginPage() {
   const [otp, setOtp] = useState("");
   const [password, setPassword] = useState("");
   const [resendTimer, setResendTimer] = useState(55);
+  const [passkeyLoading, setPasskeyLoading] = useState(false);
+  const [availablePasskeys, setAvailablePasskeys] = useState<Array<{id: string; name: string; credential_id: string; user_email: string}>>([]);
 
   const handleClose = () => navigate(-1);
+
+  // ── Silent passkey detection on mount ──────────────────────────────────
+  useEffect(() => {
+    const checkPasskeys = async () => {
+      // Check if there's a current user session first
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.email) return; // already logged in
+      // Try to silently find passkeys linked to any previous login attempt
+      const cachedEmail = localStorage.getItem("last_login_email");
+      if (!cachedEmail) return;
+      const { data: pks } = await supabase
+        .from("user_passkeys")
+        .select("id, name, credential_id, user_email")
+        .eq("user_email", cachedEmail);
+      if (pks && pks.length > 0) {
+        setEmail(cachedEmail);
+        setAvailablePasskeys(pks);
+      }
+    };
+    checkPasskeys();
+  }, []);
+
+  const handlePasskeyLogin = async (pk: {id: string; name: string; credential_id: string; user_email: string}) => {
+    setPasskeyLoading(true);
+    try {
+      const ok = await authenticateWithPasskey(pk.credential_id);
+      if (!ok) { toast.error("Passkey authentication failed"); setPasskeyLoading(false); return; }
+      // Sign in via OTP then skip password — use email OTP magic link flow
+      // Since WebAuthn verified identity, sign in via password-less OTP confirmation
+      const { error } = await supabase.auth.signInWithOtp({ email: pk.user_email, options: { shouldCreateUser: false } });
+      if (error) throw error;
+      toast.success("Passkey verified! Check your email for the magic link to complete sign-in.");
+      setEmail(pk.user_email);
+      setView("verifyEmail");
+      setResendTimer(55);
+    } catch (err: any) {
+      toast.error(err.message || "Passkey login failed");
+    }
+    setPasskeyLoading(false);
+  };
 
   // Countdown timer for resend
   useEffect(() => {
@@ -57,6 +119,12 @@ export function LoginPage() {
     } catch (err: any) {
       toast.error(err.message || "Google login failed");
     }
+  };
+
+  // ── Store email on successful login for passkey detection next time ─────
+  const handleSuccessfulLogin = (userEmail: string) => {
+    localStorage.setItem("last_login_email", userEmail);
+    window.location.href = "/";
   };
 
   const handleDiscordLogin = async () => {
@@ -93,7 +161,7 @@ export function LoginPage() {
         setView("setPassword");
       } else {
         toast.success("Logged in successfully!");
-        navigate("/");
+        handleSuccessfulLogin(email);
       }
     } catch (err: any) {
       toast.error(err.message || "Invalid code");
@@ -111,7 +179,7 @@ export function LoginPage() {
       // Track referral if user came via referral link
       trackPendingReferral(email).catch(() => {});
       toast.success("Account created successfully! Welcome to NoxyStore!");
-      navigate("/");
+      handleSuccessfulLogin(email);
     } catch (err: any) {
       toast.error(err.message || "Failed to set password");
     } finally {
@@ -126,7 +194,7 @@ export function LoginPage() {
     try {
       await signInWithPassword(email, password);
       toast.success("Welcome back!");
-      navigate("/");
+      handleSuccessfulLogin(email);
     } catch (err: any) {
       if (err.message?.includes("Invalid login credentials")) {
         toast.error("Wrong email or password. Try sending a verification code.");
@@ -152,6 +220,28 @@ export function LoginPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // ─── Passkey Login Button (shown if user has passkeys from previous session) ───
+  const PasskeyLoginBar = () => {
+    if (availablePasskeys.length === 0) return null;
+    const pk = availablePasskeys[0];
+    return (
+      <button
+        onClick={() => handlePasskeyLogin(pk)}
+        disabled={passkeyLoading}
+        className="w-full flex items-center gap-3 border-2 border-yellow-400 bg-yellow-50 px-4 py-3.5 rounded-xl hover:bg-yellow-100 transition-colors mb-4"
+      >
+        <div className="w-9 h-9 bg-yellow-400 rounded-xl flex items-center justify-center flex-shrink-0">
+          {passkeyLoading ? <Loader2 size={16} className="animate-spin text-black" /> : <Fingerprint size={18} className="text-black" />}
+        </div>
+        <div className="flex-1 text-left">
+          <p className="text-sm font-bold text-gray-900">Sign in with Passkey</p>
+          <p className="text-xs text-gray-500">{pk.user_email}</p>
+        </div>
+        <ChevronRight size={16} className="text-yellow-600" />
+      </button>
+    );
   };
 
   // ─── Social Login Buttons (Photo 1 style: circular icons top) ───
@@ -411,6 +501,7 @@ export function LoginPage() {
   const MainLogin = () => (
     <div className="space-y-4">
       <h2 className="text-2xl font-bold text-gray-900">Sign In/Register</h2>
+      <PasskeyLoginBar />
       <SocialLoginButtons />
       <Divider />
       <EmailInput />

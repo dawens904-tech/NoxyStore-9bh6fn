@@ -121,8 +121,13 @@ function AuthInitializer() {
         const role = roleData?.role || "user";
         const authUser = mapSupabaseUser(session.user, role);
         login(authUser);
+        localStorage.setItem("last_login_email", session.user.email || "");
         useAuthStore.getState().syncOrdersFromDB(session.user.email!);
         setLoading(false);
+        // Auto-refresh page on sign-in so all components update
+        if (window.location.pathname === "/login") {
+          window.location.href = "/";
+        }
       } else if (event === "SIGNED_OUT") {
         useAuthStore.getState().logout();
         setLoading(false);
