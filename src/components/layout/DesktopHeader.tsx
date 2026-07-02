@@ -70,7 +70,7 @@ function GamesDropdown({ onClose }: { onClose: () => void }) {
           <div className="w-52 p-5">
             <button onClick={() => { navigate("/categories"); onClose(); }}
               className="flex items-center justify-between w-full mb-4 hover:opacity-80 transition-opacity">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <div className="w-6 h-6 grid grid-cols-2 gap-0.5">
                   {[1,2,3,4].map(i => <div key={i} className="bg-gray-500 rounded-sm" />)}
                 </div>
@@ -357,7 +357,7 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
 
       {/* Sticky header — LARGER like photo 1, height 72px */}
       <header className="bg-[#0a0a0a] fixed top-0 left-0 right-0 z-50 shadow-lg" style={{ height: 72 }}>
-        <div className="max-w-[1280px] mx-auto px-6 flex items-center h-full gap-6">
+        <div className="max-w-[1280px] mx-auto px-3 flex items-center h-full gap-4">
           {/* Logo — LARGER, more to the left */}
           <button onClick={() => navigate("/")} className="flex-shrink-0 flex items-center gap-1">
             <span className="font-black text-[30px] tracking-tight leading-none">
@@ -410,9 +410,9 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
           <div className="flex-1" />
 
           {/* Right side — EACH item has its OWN gray background, NOT grouped together */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             {/* Search — OWN gray background */}
-            <div className="flex items-center bg-white/10 rounded-lg">
+            <div className="flex items-center bg-white/10 rounded-xl">
               {searchOpen ? (
                 <div className="flex items-center px-3 py-2 gap-2 w-60">
                   <Search size={18} className="text-gray-400 flex-shrink-0" />
@@ -436,7 +436,7 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
 
             {/* Language/Currency — OWN gray background */}
             <button onClick={() => setShowLangModal(true)}
-              className="flex items-center gap-1 bg-white/10 text-gray-400 hover:text-white text-sm font-medium px-3 py-2.5 rounded-lg transition-colors whitespace-nowrap">
+              className="flex items-center gap-1 bg-white/10 text-gray-400 hover:text-white text-sm font-medium px-3 py-2.5 rounded-xl transition-colors whitespace-nowrap">
               {langDisplay} / {currDisplay}
             </button>
 
@@ -444,7 +444,7 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
             {isAuthenticated && (
               <div className="relative">
                 <button onClick={() => navigate("/messages")}
-                  className="relative p-2.5 bg-white/10 rounded-lg text-gray-400 hover:text-white transition-colors">
+                  className="relative p-2.5 bg-white/10 rounded-xl text-gray-400 hover:text-white transition-colors">
                   <Mail size={22} />
                   {unreadCount > 0 && (
                     <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 rounded-full flex items-center justify-center text-white text-[10px] font-bold px-1">
@@ -470,7 +470,7 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
               >
                 <button
                   onClick={() => navigate("/account")}
-                  className="flex items-center p-1 bg-white/10 rounded-lg group"
+                  className="flex items-center p-1 bg-white/10 rounded-xl group"
                 >
                   <div className="relative w-10 h-10 flex-shrink-0">
                     {user?.avatar ? (
@@ -493,7 +493,7 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
               </div>
             ) : (
               <button onClick={() => navigate("/login")}
-                className="flex items-center gap-2 bg-white/10 hover:bg-white/15 text-gray-300 hover:text-white px-3 py-2.5 rounded-lg transition-all group">
+                className="flex items-center gap-2 bg-white/10 hover:bg-white/15 text-gray-300 hover:text-white px-3 py-2.5 rounded-xl transition-all group">
                 <div className="w-7 h-7 rounded-full flex items-center justify-center">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                 </div>
@@ -508,4 +508,4 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
     </>
   );
 }
-fix seach mail language backgrouynd gray square and bayo little espas and for left f name noxystore more pre left.
+
