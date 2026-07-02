@@ -509,3 +509,4 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
   );
 }
 
+fucking make mail search language background gray in square and remove background in avatar.
