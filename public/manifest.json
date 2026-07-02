@@ -1,0 +1,55 @@
+{
+  "name": "NoxyStore - Gaming Top-Up Marketplace",
+  "short_name": "NoxyStore",
+  "description": "Fast, safe and affordable game top-ups for your favorite games.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#0a0a0a",
+  "background_color": "#0a0a0a",
+  "lang": "en-US",
+  "dir": "ltr",
+  "categories": ["games", "shopping", "entertainment"],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/og-image.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/og-image.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "form_factor": "wide",
+      "label": "NoxyStore Homepage"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Top Up Games",
+      "short_name": "Top Up",
+      "description": "Browse and top up your favorite games",
+      "url": "/categories",
+      "icons": [{ "src": "/favicon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "My Orders",
+      "short_name": "Orders",
+      "description": "View your order history",
+      "url": "/buy-history",
+      "icons": [{ "src": "/favicon.svg", "sizes": "any" }]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
+}
