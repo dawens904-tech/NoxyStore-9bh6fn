@@ -2111,3 +2111,4 @@ export function GameDetailPage() {
     </>
   );
 }
+Remove the hardcoded REVIEW_TEMPLATES demo data from GameDetailPage and replace UserReviewsSection with only real API-fetched reviews from Lootbar (via get_game_reviews action in lootbar-proxy). Show section only when real reviews exist and if no have in the api fetch via my trustpilot.
