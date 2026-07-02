@@ -580,3 +580,9 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
     </>
   );
 }
+fix error{
+  "eventMessage": "Request completed - Tenant: lcfbkgryqwjlbtowlcfb, Method: POST, Type: INSERT, Resource: banned_users, Status: FAILED (403), Timings: JWT=0.0ms, Parse=0.1ms, Plan=0.1ms, Query=N/A, Response=N/A",
+  "id": "186345705",
+  "logLevel": "ERROR",
+  "timestamp": 1782997381
+}.
