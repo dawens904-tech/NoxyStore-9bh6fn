@@ -467,4 +467,4 @@ export function LoginPage() {
     </div>
   );
 }
-
+fix discord login {"code":400,"error_code":"validation_failed","msg":"Unsupported provider: provider is not enabled"} enable real login and real client in supabase.
