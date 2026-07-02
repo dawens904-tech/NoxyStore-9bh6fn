@@ -51,9 +51,12 @@
   }
   html {
     scroll-behavior: smooth;
-    /* iOS Safari: prevent white flash on rubber-band scroll */
     background-color: #f8f8f8;
-    -webkit-overflow-scrolling: touch;
+    /* Prevent html/body from being the scroll container on desktop */
+    height: 100%;
+  }
+  body {
+    height: 100%;
   }
   /* iOS safe area support */
   .bottom-nav {
@@ -181,7 +184,30 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Scroll progress line — starts below header, no background, just a 2px yellow line */
+/* Native scrollbar — desktop only, clean minimal style */
+@media (min-width: 1024px) {
+  #main-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: #d1d5db transparent;
+  }
+  #main-scroll::-webkit-scrollbar {
+    width: 6px;
+  }
+  #main-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  #main-scroll::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 3px;
+  }
+  #main-scroll::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+  }
+  /* Hide body/html scrollbar on desktop */
+  html, body {
+    overflow: hidden;
+  }
+}
 .scroll-progress-bar {
   position: fixed;
   /* desktop: below 64px header; mobile: below ~56px header */

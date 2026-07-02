@@ -198,13 +198,21 @@ function ScrollProgressBar() {
   const [width, setWidth] = useState(0);
   useEffect(() => {
     const onScroll = () => {
-      const el = document.documentElement;
+      // Use #main-scroll container on desktop, window on mobile
+      const el = document.getElementById("main-scroll") || document.documentElement;
       const scrolled = el.scrollTop || document.body.scrollTop;
       const total = el.scrollHeight - el.clientHeight;
       setWidth(total > 0 ? Math.round((scrolled / total) * 100) : 0);
     };
+    const container = document.getElementById("main-scroll");
+    if (container) {
+      container.addEventListener("scroll", onScroll, { passive: true });
+    }
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    return () => {
+      if (container) container.removeEventListener("scroll", onScroll);
+      window.removeEventListener("scroll", onScroll);
+    };
   }, []);
   if (width === 0) return null;
   return <div className="scroll-progress-bar" style={{ width: `${width}%` }} />;
@@ -239,7 +247,12 @@ function App() {
         <ScrollProgressBar />
         <OfflineBanner />
         <AuthInitializer />
-        <div className="min-h-screen bg-[#f5f5f5]">
+        {/* Scroll container starts below the fixed 64px desktop header */}
+        <div
+          id="main-scroll"
+          className="min-h-screen bg-[#f5f5f5] lg:h-screen lg:overflow-y-auto lg:pt-0"
+          style={{ scrollBehavior: "smooth" }}
+        >
         <Routes>
           {/* Public routes */}
           <Route path="/" element={<HomePage />} />
