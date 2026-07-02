@@ -926,5 +926,5 @@ export default function LootbarSkuManagement() {
     </div>
   );
 }
-
+hello ai please Add custom URL slug support for games: allow admins to set a custom slug (e.g., /topup/free-fire) for any game in LootbarGameManagement or GameManagement page, store it in game_overrides table as a slug column, and configure React Router to match /topup/:slug and /top-up/:slug patterns that redirect to the correct GameDetailPage and Add an admin rating input to LootbarSkuManagement page that lets admins set a custom rating (0.0–5.0) per game, saved to game_overrides table as custom_rating column, displayed on GameCard and GameDetailPage instead of the default rating.
 
