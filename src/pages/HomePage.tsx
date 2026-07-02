@@ -1006,4 +1006,5 @@ export function HomePage() {
     </div>
   );
 }
+remove fake comming soon add only real via lootbar also add it to lib/lootbar... please no demo also remove user review demo add only real.
 
