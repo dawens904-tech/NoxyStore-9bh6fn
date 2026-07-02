@@ -964,4 +964,8 @@ export function HomePage() {
   );
 }
 
+Hello AI, please fix the vertical scrollbar on the right side across the entire website. Currently, the scrollbar starts at the very top of the page. Instead, it should begin directly below the fixed header so it aligns with the main page content.
 
+Also, remove the scrollbar's separate background/container on the right panel. It should be integrated into the page itself, not displayed inside its own white or gray sidebar. The scrollbar should appear as part of the main content area, starting immediately below the header and extending to the bottom of the page.
+
+Please apply this change consistently to every page on the website (desktop view), ensuring the scrollbar has a clean, modern appearance and no extra right-side panel or background.
