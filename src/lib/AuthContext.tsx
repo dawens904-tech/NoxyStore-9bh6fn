@@ -45,6 +45,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const sendOtp = async (email: string) => {
+    // Check if email is banned before allowing signup/OTP
+    const { data: banData } = await supabase
+      .from("banned_users")
+      .select("email, reason")
+      .eq("email", email.trim().toLowerCase())
+      .maybeSingle();
+    if (banData) {
+      throw new Error("This email has been banned from NoxyStore. Reason: " + (banData.reason || "Policy violation"));
+    }
     const { error } = await supabase.auth.signInWithOtp({
       email: email.trim(),
       options: { shouldCreateUser: true },
