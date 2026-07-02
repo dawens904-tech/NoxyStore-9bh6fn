@@ -48,12 +48,17 @@ function getCardLogo(type: string) {
 
 // ── Transaction type metadata ─────────────────────────────────────────────────
 const TX_META: Record<string, { label: string; icon: React.ReactNode; colorClass: string; sign: "+" | "-" }> = {
-  deposit:   { label: "Deposit",   icon: <ArrowDownLeft size={14} />, colorClass: "text-green-600 bg-green-50",  sign: "+" },
-  topup:     { label: "Top Up",    icon: <ArrowDownLeft size={14} />, colorClass: "text-green-600 bg-green-50",  sign: "+" },
-  refund:    { label: "Refund",    icon: <RotateCcw size={14} />,     colorClass: "text-blue-600 bg-blue-50",    sign: "+" },
-  bonus:     { label: "Bonus",     icon: <TrendingUp size={14} />,    colorClass: "text-purple-600 bg-purple-50",sign: "+" },
-  purchase:  { label: "Purchase",  icon: <ShoppingBag size={14} />,   colorClass: "text-red-500 bg-red-50",      sign: "-" },
-  withdraw:  { label: "Withdraw",  icon: <ArrowUpRight size={14} />,  colorClass: "text-orange-500 bg-orange-50",sign: "-" },
+  deposit:         { label: "Deposit",       icon: <ArrowDownLeft size={14} />, colorClass: "text-green-600 bg-green-50",   sign: "+" },
+  topup:           { label: "Top Up",         icon: <ArrowDownLeft size={14} />, colorClass: "text-green-600 bg-green-50",   sign: "+" },
+  refund:          { label: "Refund",         icon: <RotateCcw size={14} />,     colorClass: "text-blue-600 bg-blue-50",    sign: "+" },
+  bonus:           { label: "Bonus",          icon: <TrendingUp size={14} />,    colorClass: "text-purple-600 bg-purple-50",sign: "+" },
+  points_earned:   { label: "Points",         icon: <TrendingUp size={14} />,    colorClass: "text-blue-600 bg-blue-50",    sign: "+" },
+  coins_earned:    { label: "Coins",          icon: <TrendingUp size={14} />,    colorClass: "text-yellow-600 bg-yellow-50",sign: "+" },
+  daily_login:     { label: "Daily Bonus",    icon: <TrendingUp size={14} />,    colorClass: "text-purple-600 bg-purple-50",sign: "+" },
+  admin_gift:      { label: "Admin Gift",     icon: <TrendingUp size={14} />,    colorClass: "text-pink-600 bg-pink-50",    sign: "+" },
+  purchase:        { label: "Purchase",       icon: <ShoppingBag size={14} />,   colorClass: "text-red-500 bg-red-50",      sign: "-" },
+  withdraw:        { label: "Withdraw",       icon: <ArrowUpRight size={14} />,  colorClass: "text-orange-500 bg-orange-50",sign: "-" },
+  points_redeemed: { label: "Points Used",    icon: <ArrowUpRight size={14} />,  colorClass: "text-orange-500 bg-orange-50",sign: "-" },
 };
 
 function getTxMeta(type: string) {
@@ -604,7 +609,7 @@ function TabContent({
         <div>
           {/* Filter */}
           <div className="flex gap-2 mb-5 flex-wrap">
-            {["All", "Deposit", "Purchase", "Refund", "Withdraw", "Bonus"].map((f) => (
+            {["All", "Deposit", "Purchase", "Refund", "Withdraw", "Bonus", "Points", "Coins"].map((f) => (
               <button
                 key={f}
                 onClick={() => setCashflowFilter(f)}
@@ -692,6 +697,8 @@ export function BalancePage() {
   const [isProcessingTopup, setIsProcessingTopup] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [points, setPoints] = useState(0);
+  const [coins, setCoins] = useState(0);
 
   // Fetch real wallet balance from wallet_transactions (credits - debits)
   useEffect(() => {
@@ -703,14 +710,26 @@ export function BalancePage() {
       .eq("status", "completed")
       .then(({ data }) => {
         if (!data) return;
+        // Money balance — only real money types count
         const bal = data.reduce((acc, tx) => {
-          const debitTypes = ["purchase", "withdraw", "points_redeemed"];
-          const creditTypes = ["deposit", "topup", "refund", "bonus", "points_earned"];
-          if (debitTypes.includes(tx.type)) return acc - Math.abs(tx.amount);
-          if (creditTypes.includes(tx.type)) return acc + Math.abs(tx.amount);
+          if (["purchase", "withdraw"].includes(tx.type)) return acc - Math.abs(tx.amount);
+          if (["deposit", "topup", "refund", "bonus"].includes(tx.type)) return acc + Math.abs(tx.amount);
           return acc;
         }, 0);
         setBalance(Math.max(0, parseFloat(bal.toFixed(2))));
+        // Points
+        const pts = data.reduce((acc, tx) => {
+          if (["points_earned", "daily_login"].includes(tx.type)) return acc + Math.abs(tx.amount);
+          if (tx.type === "points_redeemed") return acc - Math.abs(tx.amount);
+          return acc;
+        }, 0);
+        setPoints(Math.max(0, Math.floor(pts)));
+        // Coins
+        const cns = data.reduce((acc, tx) => {
+          if (tx.type === "coins_earned") return acc + Math.abs(tx.amount);
+          return acc;
+        }, 0);
+        setCoins(Math.max(0, Math.floor(cns)));
       });
   }, [user?.email]);
 
@@ -917,23 +936,51 @@ export function BalancePage() {
 
             {/* Content */}
             <div className="flex-1">
-              <div className="bg-white p-6 mb-6 flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-semibold text-gray-500">{t("walletBalance")}</p>
-                  <p className="text-4xl font-black text-black mt-1">
-                    <span className="text-2xl">$</span>{balance.toFixed(2)}
-                  </p>
-                  <p className="text-xs text-gray-400 mt-1">Available for purchases</p>
+              <div className="bg-white p-6 mb-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-gray-500">{t("walletBalance")}</p>
+                    <p className="text-4xl font-black text-black mt-1">
+                      <span className="text-2xl">$</span>{balance.toFixed(2)}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1">Available for purchases</p>
+                  </div>
+                  <div className="w-14 h-14 flex-shrink-0 flex items-center justify-center bg-yellow-400">
+                    <svg viewBox="0 0 100 100" fill="none" className="w-9 h-9">
+                      <rect x="10" y="20" width="80" height="60" rx="0" fill="rgba(0,0,0,0.15)" stroke="rgba(0,0,0,0.2)" strokeWidth="2"/>
+                      <rect x="10" y="30" width="80" height="15" fill="rgba(0,0,0,0.1)"/>
+                      <circle cx="75" cy="65" r="10" fill="rgba(255,255,255,0.4)"/>
+                      <path d="M20 55 L40 55" stroke="white" strokeWidth="3" strokeLinecap="round"/>
+                      <path d="M20 62 L35 62" stroke="white" strokeWidth="3" strokeLinecap="round"/>
+                    </svg>
+                  </div>
                 </div>
-                <div className="w-14 h-14 flex-shrink-0 flex items-center justify-center bg-yellow-400">
-                  <svg viewBox="0 0 100 100" fill="none" className="w-9 h-9">
-                    <rect x="10" y="20" width="80" height="60" rx="0" fill="rgba(0,0,0,0.15)" stroke="rgba(0,0,0,0.2)" strokeWidth="2"/>
-                    <rect x="10" y="30" width="80" height="15" fill="rgba(0,0,0,0.1)"/>
-                    <circle cx="75" cy="65" r="10" fill="rgba(255,255,255,0.4)"/>
-                    <path d="M20 55 L40 55" stroke="white" strokeWidth="3" strokeLinecap="round"/>
-                    <path d="M20 62 L35 62" stroke="white" strokeWidth="3" strokeLinecap="round"/>
-                  </svg>
-                </div>
+                {(points > 0 || coins > 0) && (
+                  <div className="flex gap-5 mt-4 pt-4 border-t border-gray-100">
+                    {points > 0 && (
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 bg-blue-100 flex items-center justify-center">
+                          <TrendingUp size={13} className="text-blue-600" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500">Points</p>
+                          <p className="text-sm font-black text-blue-700">{points.toLocaleString()}</p>
+                        </div>
+                      </div>
+                    )}
+                    {coins > 0 && (
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 bg-yellow-100 flex items-center justify-center">
+                          <TrendingUp size={13} className="text-yellow-600" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500">Coins</p>
+                          <p className="text-sm font-black text-yellow-700">{coins.toLocaleString()}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
               <div className="bg-white overflow-hidden shadow-sm">
                 <div className="flex border-b border-gray-200">
@@ -972,22 +1019,50 @@ export function BalancePage() {
         </div>
 
         {/* Balance card - matching screenshot style */}
-        <div className="bg-white px-5 py-5 flex items-center justify-between">
-          <div>
-            <p className="text-sm font-semibold text-gray-500">{t("walletBalance")}</p>
-            <p className="text-3xl font-black text-black mt-1">
-              <span className="text-xl">$</span>{balance.toFixed(2)}
-            </p>
+        <div className="bg-white px-5 py-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold text-gray-500">{t("walletBalance")}</p>
+              <p className="text-3xl font-black text-black mt-1">
+                <span className="text-xl">$</span>{balance.toFixed(2)}
+              </p>
+            </div>
+            <div className="w-12 h-12 flex-shrink-0 flex items-center justify-center bg-yellow-400">
+              <svg viewBox="0 0 100 100" fill="none" className="w-7 h-7">
+                <rect x="10" y="20" width="80" height="60" rx="0" fill="rgba(0,0,0,0.15)" stroke="rgba(0,0,0,0.2)" strokeWidth="2"/>
+                <rect x="10" y="30" width="80" height="15" fill="rgba(0,0,0,0.1)"/>
+                <circle cx="75" cy="65" r="10" fill="rgba(255,255,255,0.4)"/>
+                <path d="M20 55 L40 55" stroke="white" strokeWidth="3" strokeLinecap="round"/>
+                <path d="M20 62 L35 62" stroke="white" strokeWidth="3" strokeLinecap="round"/>
+              </svg>
+            </div>
           </div>
-          <div className="w-12 h-12 flex-shrink-0 flex items-center justify-center bg-yellow-400">
-            <svg viewBox="0 0 100 100" fill="none" className="w-7 h-7">
-              <rect x="10" y="20" width="80" height="60" rx="0" fill="rgba(0,0,0,0.15)" stroke="rgba(0,0,0,0.2)" strokeWidth="2"/>
-              <rect x="10" y="30" width="80" height="15" fill="rgba(0,0,0,0.1)"/>
-              <circle cx="75" cy="65" r="10" fill="rgba(255,255,255,0.4)"/>
-              <path d="M20 55 L40 55" stroke="white" strokeWidth="3" strokeLinecap="round"/>
-              <path d="M20 62 L35 62" stroke="white" strokeWidth="3" strokeLinecap="round"/>
-            </svg>
-          </div>
+          {(points > 0 || coins > 0) && (
+            <div className="flex gap-4 mt-3 pt-3 border-t border-gray-100">
+              {points > 0 && (
+                <div className="flex items-center gap-1.5">
+                  <div className="w-6 h-6 bg-blue-100 flex items-center justify-center">
+                    <TrendingUp size={11} className="text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-gray-500">Points</p>
+                    <p className="text-xs font-black text-blue-700">{points.toLocaleString()}</p>
+                  </div>
+                </div>
+              )}
+              {coins > 0 && (
+                <div className="flex items-center gap-1.5">
+                  <div className="w-6 h-6 bg-yellow-100 flex items-center justify-center">
+                    <TrendingUp size={11} className="text-yellow-600" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-gray-500">Coins</p>
+                    <p className="text-xs font-black text-yellow-700">{coins.toLocaleString()}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Tabs */}
