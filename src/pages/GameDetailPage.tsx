@@ -1994,4 +1994,4 @@ export function GameDetailPage() {
     </>
   );
 }
-
+hello ai for desktop mobile show real flag not just name in gamecard and Add a 'You May Also Like' section at the bottom of GameDetailPage showing 4-6 trending games from the same category, fetched from games_cache filtered by matching category and Add a game blog section below User Reviews on GameDetailPage that fetches and displays the latest blog posts related to the game from Lootbar's API, with title, date, and thumbnail.
