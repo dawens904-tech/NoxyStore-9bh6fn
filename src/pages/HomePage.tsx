@@ -867,5 +867,5 @@ export function HomePage() {
     </div>
   );
 }
-
+allow banner can click and for the rating try fetch and in sku allow admin can add own rating and fix game slug allow if admin example add a slug for the game auto set this slug url example game/20001 and admin change to /topup/freefire allow also admin can add /top-up/free-fire and forthe privacy page create a html and when a user  click show url /en/privacy.html instead of typescript also same for tems.
 
