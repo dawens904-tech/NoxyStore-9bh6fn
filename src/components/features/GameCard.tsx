@@ -4,6 +4,42 @@ import { Star, Flame } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { LootbarGame } from "@/types";
 
+// ── Gift card region flag detection ─────────────────────────────────────────
+const REGION_FLAGS: Record<string, string> = {
+  "US": "🇺🇸", "UK": "🇬🇧", "GB": "🇬🇧", "TR": "🇹🇷", "FR": "🇫🇷",
+  "JP": "🇯🇵", "DE": "🇩🇪", "BR": "🇧🇷", "MY": "🇲🇾", "SG": "🇸🇬",
+  "AU": "🇦🇺", "CA": "🇨🇦", "KR": "🇰🇷", "IT": "🇮🇹", "ES": "🇪🇸",
+  "RU": "🇷🇺", "PH": "🇵🇭", "TH": "🇹🇭", "IN": "🇮🇳", "SA": "🇸🇦",
+  "AE": "🇦🇪", "HK": "🇭🇰", "TW": "🇹🇼",
+};
+
+// Detect region flag(s) from game name for gift cards
+function getGiftCardFlags(gameName: string): string[] {
+  const name = gameName.toUpperCase();
+  // Multi-region combos
+  if (name.includes("MY&US") || name.includes("MY & US")) return ["🇲🇾", "🇺🇸"];
+  if (name.includes("MY&SG")) return ["🇲🇾", "🇸🇬"];
+  // Detect region suffix: e.g. "iTunes Gift Card US", "TikTok Gift Card (UK)"
+  for (const [code, flag] of Object.entries(REGION_FLAGS)) {
+    const patterns = [
+      new RegExp(`\\b${code}\\b`),
+      new RegExp(`\\(${code}\\)`),
+      new RegExp(`- ${code}$`),
+      new RegExp(`${code}$`),
+    ];
+    for (const pat of patterns) {
+      if (pat.test(name)) return [flag];
+    }
+  }
+  return [];
+}
+
+function isGiftCardGame(category: string | undefined, name: string): boolean {
+  const cat = (category || "").toLowerCase();
+  const n = name.toLowerCase();
+  return cat === "gift card" || n.includes("gift card") || n.includes("itunes") || n.includes("google play") || n.includes("tiktok coin") || n.includes("roblox") || n.includes("steam wallet");
+}
+
 interface GameCardProps {
   game: LootbarGame;
   size?: "sm" | "md" | "lg";
@@ -27,6 +63,7 @@ export function GameCard({ game, size = "md" }: GameCardProps) {
   const minPrice = game.min_price;
 
   const handleClick = () => navigate(`/game/${game.game_id}`);
+  const flags = isGiftCardGame(game.category, game.game_name) ? getGiftCardFlags(game.game_name) : [];
 
   if (size === "sm") {
     return (
@@ -51,6 +88,14 @@ export function GameCard({ game, size = "md" }: GameCardProps) {
           {isHot && !hasDiscount && (
             <div className="absolute top-1.5 left-1.5 flex items-center gap-0.5 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md leading-none">
               <Flame size={8} />HOT
+            </div>
+          )}
+          {/* Gift card region flags — top-left overlay */}
+          {flags.length > 0 && !hasDiscount && !isHot && (
+            <div className="absolute top-1.5 left-1.5 flex items-center gap-0.5">
+              {flags.map((f, i) => (
+                <span key={i} className="text-sm leading-none drop-shadow-sm">{f}</span>
+              ))}
             </div>
           )}
           {/* Dark gradient overlay */}
