@@ -462,14 +462,43 @@ function I4GGameDetailPage({ gameId }: { gameId: string }) {
 }
 
 export function GameDetailPage() {
-  const { gameId } = useParams<{ gameId: string }>();
+  const { gameId: gameIdParam, slug } = useParams<{ gameId?: string; slug?: string }>();
+  const [resolvedGameId, setResolvedGameId] = useState<string | null>(gameIdParam ?? null);
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { isHaitiMode } = useSettingsStore();
 
+  // Resolve slug -> gameId if accessed via /topup/:slug or /top-up/:slug
+  useEffect(() => {
+    if (slug && !gameIdParam) {
+      supabase
+        .from("game_overrides")
+        .select("game_id")
+        .eq("slug", slug)
+        .single()
+        .then(({ data }) => {
+          if (data?.game_id) setResolvedGameId(data.game_id);
+          else navigate("/404", { replace: true });
+        });
+    } else if (gameIdParam) {
+      setResolvedGameId(gameIdParam);
+    }
+  }, [slug, gameIdParam]);
+
+  const gameId = resolvedGameId;
+
   // Render Item4Gamer page for i4g_ prefixed IDs or when Haiti mode + i4g product
   if (gameId && isI4GProduct(gameId)) {
     return <I4GGameDetailPage gameId={gameId} />;
+  }
+
+  // Show loading while resolving slug
+  if (slug && !resolvedGameId) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="animate-spin text-yellow-400" size={40} />
+      </div>
+    );
   }
 
   const isManual = gameId ? isManualProduct(gameId) : false;
@@ -553,7 +582,7 @@ export function GameDetailPage() {
       // Load game info + override in parallel so custom image is always used
       Promise.all([
         supabase.from("games_cache").select("*").eq("game_id", gameId).single(),
-        supabase.from("game_overrides").select("custom_image_url, default_region_index").eq("game_id", gameId).single(),
+        supabase.from("game_overrides").select("custom_image_url, default_region_index, custom_rating").eq("game_id", gameId).single(),
       ]).then(([{ data: cached }, { data: overrideData }]) => {
         if (cached) {
           // custom_image_url from game_overrides takes priority — admin-set photo is permanent
@@ -563,7 +592,7 @@ export function GameDetailPage() {
             game_name: cached.game_name,
             game_image: resolvedImage,
             category: cached.category || "Top Up",
-            rating: cached.rating ?? 5.0,
+            rating: overrideData?.custom_rating ?? cached.rating ?? 5.0,
             sold_count: cached.sold_count || "100k+ Sold",
             is_hot: cached.is_hot ?? false,
             discount: cached.discount ?? 0,

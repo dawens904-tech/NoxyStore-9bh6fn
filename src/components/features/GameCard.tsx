@@ -20,7 +20,7 @@ function formatSoldCount(sold: string | undefined | null): string {
 export function GameCard({ game, size = "md" }: GameCardProps) {
   const navigate = useNavigate();
   const imgSrc = game.game_image && game.game_image.trim() ? game.game_image : PLACEHOLDER;
-  const rating = game.rating ?? 5.0;
+  const rating = (game as any).custom_rating ?? game.rating ?? 5.0;
   const soldText = formatSoldCount(game.sold_count);
   const hasDiscount = game.discount && game.discount > 0;
   const isHot = game.is_hot ?? false;

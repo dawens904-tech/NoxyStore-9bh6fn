@@ -10,7 +10,7 @@ import AdminSidebar from "./AdminSidebar";
 import {
   ArrowLeft, Search, Edit2, Save, X, Loader2, RefreshCw,
   EyeOff, Eye, ChevronUp, ChevronDown, Globe, Package, DollarSign, Image,
-  Database, Upload, ChevronsUp, GripVertical,
+  Database, Upload, ChevronsUp, GripVertical, Star,
 } from "lucide-react";
 import { toast } from "sonner";
 import { FunctionsHttpError } from "@supabase/supabase-js";
@@ -262,6 +262,10 @@ export default function LootbarSkuManagement() {
   const [savingRegionIndex, setSavingRegionIndex] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [customRating, setCustomRating] = useState<string>("");
+  const [savingRating, setSavingRating] = useState(false);
+  const [customSlug, setCustomSlug] = useState<string>("");
+  const [savingSlug, setSavingSlug] = useState(false);
 
   useEffect(() => {
     if (!user) { navigate("/login"); return; }
@@ -290,8 +294,14 @@ export default function LootbarSkuManagement() {
 
     supabase.from("games_cache").select("game_name, game_image").eq("game_id", gameId).single()
       .then(({ data }) => { if (data) { setGameName(data.game_name); setGameImage(data.game_image || null); } });
-    supabase.from("game_overrides").select("default_region_index").eq("game_id", gameId).single()
-      .then(({ data }) => { if (data) setDefaultRegionIndex(data.default_region_index ?? null); });
+    supabase.from("game_overrides").select("default_region_index, custom_rating, slug").eq("game_id", gameId).single()
+      .then(({ data }) => {
+        if (data) {
+          setDefaultRegionIndex(data.default_region_index ?? null);
+          setCustomRating(data.custom_rating != null ? String(data.custom_rating) : "");
+          setCustomSlug(data.slug ?? "");
+        }
+      });
 
     try {
       const [{ data: cachedSkus }, { data: overridesData }] = await Promise.all([
@@ -447,6 +457,34 @@ export default function LootbarSkuManagement() {
       String(s.sku_id) === String(saved.sku_id) ? { ...s, override: saved } : s
     ));
   }, []);
+
+  const handleSaveRating = async () => {
+    if (!gameId) return;
+    const val = customRating.trim() === "" ? null : Number(customRating);
+    if (val !== null && (val < 0 || val > 5)) { toast.error("Rating must be between 0.0 and 5.0"); return; }
+    setSavingRating(true);
+    const { error } = await supabase.from("game_overrides").upsert(
+      { game_id: gameId, custom_rating: val },
+      { onConflict: "game_id" }
+    );
+    setSavingRating(false);
+    if (error) { toast.error("Failed to save rating: " + error.message); return; }
+    toast.success(val !== null ? `Rating set to ${val.toFixed(1)} ★` : "Custom rating cleared — showing Lootbar default");
+  };
+
+  const handleSaveSlug = async () => {
+    if (!gameId) return;
+    const slug = customSlug.trim().replace(/^\/+/, "").replace(/\s+/g, "-").toLowerCase() || null;
+    setSavingSlug(true);
+    const { error } = await supabase.from("game_overrides").upsert(
+      { game_id: gameId, slug },
+      { onConflict: "game_id" }
+    );
+    setSavingSlug(false);
+    if (error) { toast.error("Failed to save slug: " + (error.message || "Slug may already be in use")); return; }
+    setCustomSlug(slug ?? "");
+    toast.success(slug ? `Slug set — game accessible at /${slug}` : "Custom slug cleared");
+  };
 
   const handleSaveRegionIndex = async (idx: number | null) => {
     if (!gameId) return;
@@ -690,6 +728,56 @@ export default function LootbarSkuManagement() {
                   <span className="text-sm text-gray-400">·</span>
                   <span className="text-sm text-gray-500">{regionSkus.length} SKUs</span>
 
+                  {/* Custom Rating */}
+                  <div className="flex items-center gap-1.5 bg-white border border-gray-200 rounded-xl px-3 py-1.5">
+                    <Star size={12} className="text-yellow-400" />
+                    <span className="text-xs font-semibold text-gray-500">Custom Rating:</span>
+                    <input
+                      type="number"
+                      min="0"
+                      max="5"
+                      step="0.1"
+                      value={customRating}
+                      onChange={(e) => setCustomRating(e.target.value)}
+                      placeholder="e.g. 4.8"
+                      className="w-16 h-6 text-xs text-center border border-gray-200 rounded-lg px-1 focus:outline-none focus:border-yellow-400"
+                    />
+                    <button
+                      onClick={handleSaveRating}
+                      disabled={savingRating}
+                      className="flex items-center gap-1 text-xs font-bold bg-yellow-400 hover:bg-yellow-300 text-black px-2 py-0.5 rounded-lg transition-colors disabled:opacity-50"
+                    >
+                      {savingRating ? <Loader2 size={10} className="animate-spin" /> : <Save size={10} />}
+                      Save
+                    </button>
+                    {customRating && (
+                      <button onClick={() => { setCustomRating(""); handleSaveRating(); }} className="text-gray-300 hover:text-gray-500">
+                        <X size={12} />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Custom Slug */}
+                  <div className="flex items-center gap-1.5 bg-white border border-gray-200 rounded-xl px-3 py-1.5">
+                    <Globe size={12} className="text-blue-500" />
+                    <span className="text-xs font-semibold text-gray-500">Slug:</span>
+                    <input
+                      type="text"
+                      value={customSlug}
+                      onChange={(e) => setCustomSlug(e.target.value)}
+                      placeholder="topup/free-fire"
+                      className="w-32 h-6 text-xs border border-gray-200 rounded-lg px-2 focus:outline-none focus:border-blue-400"
+                    />
+                    <button
+                      onClick={handleSaveSlug}
+                      disabled={savingSlug}
+                      className="flex items-center gap-1 text-xs font-bold bg-blue-500 hover:bg-blue-400 text-white px-2 py-0.5 rounded-lg transition-colors disabled:opacity-50"
+                    >
+                      {savingSlug ? <Loader2 size={10} className="animate-spin" /> : <Save size={10} />}
+                      Save
+                    </button>
+                  </div>
+
                   {/* Region number setter */}
                   <div className="flex items-center gap-1.5 bg-white border border-gray-200 rounded-xl px-3 py-1.5">
                     <span className="text-xs font-semibold text-gray-500">Default Region:</span>
@@ -926,5 +1014,5 @@ export default function LootbarSkuManagement() {
     </div>
   );
 }
-hello ai please Add custom URL slug support for games: allow admins to set a custom slug (e.g., /topup/free-fire) for any game in LootbarGameManagement or GameManagement page, store it in game_overrides table as a slug column, and configure React Router to match /topup/:slug and /top-up/:slug patterns that redirect to the correct GameDetailPage and Add an admin rating input to LootbarSkuManagement page that lets admins set a custom rating (0.0–5.0) per game, saved to game_overrides table as custom_rating column, displayed on GameCard and GameDetailPage instead of the default rating.
+
 
