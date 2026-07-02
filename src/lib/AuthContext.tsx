@@ -17,6 +17,8 @@ interface AuthContextValue {
   updateBalance: (amount: number) => void;
   /** Sign in with Google OAuth (PKCE flow) */
   signInWithGoogle: () => Promise<void>;
+  /** Sign in with Discord OAuth */
+  signInWithDiscord: () => Promise<void>;
   /** Send OTP to email */
   sendOtp: (email: string) => Promise<void>;
   /** Verify OTP — returns true on success */
@@ -38,6 +40,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       options: {
         redirectTo: window.location.origin,
         queryParams: { access_type: "offline", prompt: "consent" },
+        skipBrowserRedirect: false,
+      },
+    });
+    if (error) throw error;
+  };
+
+  const signInWithDiscord = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "discord",
+      options: {
+        redirectTo: window.location.origin,
         skipBrowserRedirect: false,
       },
     });
@@ -112,6 +125,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     logout: store.logout,
     updateBalance: store.updateBalance,
     signInWithGoogle,
+    signInWithDiscord,
     sendOtp,
     verifyOtp,
     setPassword,

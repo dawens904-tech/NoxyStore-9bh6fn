@@ -10,7 +10,7 @@ type LoginView = "main" | "email" | "otp" | "setPassword" | "verifyEmail" | "for
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const { login, signInWithGoogle, sendOtp, verifyOtp, setPassword: setAccountPassword, signInWithPassword } = useAuth();
+  const { login, signInWithGoogle, signInWithDiscord, sendOtp, verifyOtp, setPassword: setAccountPassword, signInWithPassword } = useAuth();
   const { t } = useTranslation();
 
   const [view, setView] = useState<LoginView>("main");
@@ -40,6 +40,14 @@ export function LoginPage() {
       await signInWithGoogle();
     } catch (err: any) {
       toast.error(err.message || "Google login failed");
+    }
+  };
+
+  const handleDiscordLogin = async () => {
+    try {
+      await signInWithDiscord();
+    } catch (err: any) {
+      toast.error(err.message || "Discord login failed");
     }
   };
 
@@ -158,7 +166,7 @@ export function LoginPage() {
 
       {/* Discord */}
       <button
-        onClick={() => toast.info("Discord login coming soon!")}
+        onClick={handleDiscordLogin}
         className="w-11 h-11 rounded-full bg-[#5865F2] flex items-center justify-center hover:scale-105 active:scale-95 transition-transform shadow-sm"
         title="Discord"
       >
@@ -459,4 +467,4 @@ export function LoginPage() {
     </div>
   );
 }
-hello ai please When an admin bans a user, also call the Supabase admin auth API via an edge function to immediately invalidate the banned user's active session so they are logged out instantly and Implement real Discord OAuth login on LoginPage: enable Discord provider with my own Auth settings, add signInWithDiscord to AuthContext using my own auth user not onspace and fetch in user page for provider='discord', and wire up the Discord button (currently shows 'coming soon').
+

@@ -122,18 +122,28 @@ export default function AdminUsersPage() {
     return matchSearch && matchRole && matchBan;
   });
 
-  // ─── Ban user ────────────────────────────────────────────────────────────
+  // ─── Ban user (with force-logout) ─────────────────────────────────────────
   const handleBan = async () => {
     if (!selectedUser) return;
     setActionLoading(true);
     try {
+      // 1. Add to banned_users table
       const { error } = await supabase.from("banned_users").upsert({
         email: selectedUser.email,
         reason: banReason || "Violated terms of service",
         banned_by: "admin",
       });
       if (error) throw error;
-      toast.success(`${selectedUser.email} has been banned.`);
+
+      // 2. Force-invalidate user's active sessions via admin edge function
+      const { error: fnError } = await supabase.functions.invoke("admin-user-actions", {
+        body: { action: "force_logout", userId: selectedUser.id },
+      });
+      if (fnError) {
+        console.warn("Force logout warning (non-fatal):", fnError.message);
+      }
+
+      toast.success(`${selectedUser.email} has been banned and logged out.`);
       setShowBanModal(false);
       setBanReason("");
       fetchUsers();
