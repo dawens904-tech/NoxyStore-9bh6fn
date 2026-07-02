@@ -17,8 +17,16 @@ function GamesDropdown({ onClose }: { onClose: () => void }) {
   const [popularGames, setPopularGames] = useState<any[]>([]);
 
   useEffect(() => {
-    supabase.from("games_cache").select("game_id, game_name, game_image").limit(16).then(({ data }) => {
-      if (data) setPopularGames(data);
+    supabase.from("games_cache").select("game_id, game_name, game_image").limit(16).then(async ({ data }) => {
+      if (!data) return;
+      // Batch-fetch custom images from game_overrides
+      const ids = data.map((g: any) => g.game_id);
+      const { data: overrides } = await supabase.from("game_overrides").select("game_id, custom_image_url").in("game_id", ids);
+      const overrideMap = new Map((overrides || []).map((o: any) => [o.game_id, o.custom_image_url]));
+      setPopularGames(data.map((g: any) => ({
+        ...g,
+        game_image: overrideMap.get(g.game_id) || g.game_image || "",
+      })));
     });
   }, []);
 
@@ -39,24 +47,18 @@ function GamesDropdown({ onClose }: { onClose: () => void }) {
               <h3 className="text-white font-bold text-sm">Popular Games</h3>
             </div>
             <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-              {popularGames.slice(0, 8).map(game => (
+              {popularGames.slice(0, 16).map(game => (
                 <button key={game.game_id} onClick={() => { navigate(`/game/${game.game_id}`); onClose(); }}
-                  className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-white/10 text-left transition-colors group">
-                  <img src={game.game_image || `https://images.unsplash.com/photo-1542751371-adc38448a05e?w=32&h=32&fit=crop`}
-                    alt={game.game_name}
-                    className="w-8 h-8 rounded-lg object-cover flex-shrink-0"
-                    onError={e => { (e.target as HTMLImageElement).src = `https://images.unsplash.com/photo-1542751371-adc38448a05e?w=32&h=32&fit=crop`; }} />
-                  <span className="text-gray-300 text-sm group-hover:text-white font-medium truncate">{game.game_name}</span>
-                </button>
-              ))}
-              {popularGames.slice(8, 16).map(game => (
-                <button key={game.game_id} onClick={() => { navigate(`/game/${game.game_id}`); onClose(); }}
-                  className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-white/10 text-left transition-colors group">
-                  <img src={game.game_image || `https://images.unsplash.com/photo-1542751371-adc38448a05e?w=32&h=32&fit=crop`}
-                    alt={game.game_name}
-                    className="w-8 h-8 rounded-lg object-cover flex-shrink-0"
-                    onError={e => { (e.target as HTMLImageElement).src = `https://images.unsplash.com/photo-1542751371-adc38448a05e?w=32&h=32&fit=crop`; }} />
-                  <span className="text-gray-300 text-sm group-hover:text-white font-medium truncate">{game.game_name}</span>
+                  className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-white/10 text-left transition-colors group">
+                  {game.game_image ? (
+                    <img src={game.game_image}
+                      alt={game.game_name}
+                      className="w-7 h-7 rounded-lg object-cover flex-shrink-0"
+                      onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                  ) : (
+                    <div className="w-7 h-7 rounded-lg bg-gray-700 flex-shrink-0" />
+                  )}
+                  <span className="text-gray-300 text-xs group-hover:text-white font-medium truncate">{game.game_name}</span>
                 </button>
               ))}
             </div>
@@ -514,4 +516,3 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
     </>
   );
 }
-please fetch real game img instead demo all game img and fix header an li tro mens fel large toujou sil t example 100 metel 108.
