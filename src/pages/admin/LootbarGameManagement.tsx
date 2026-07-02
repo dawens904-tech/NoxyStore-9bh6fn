@@ -762,3 +762,4 @@ export default function LootbarGameManagement() {
     </div>
   );
 }
+Create a public/manifest.json PWA manifest file for NoxyStore with the correct name, icons (using favicon.svg and og-image.png), theme_color #0a0a0a, background_color #0a0a0a, display standalone, and start_url. This enables 'Add to Home Screen' on mobile and makes the site installable as a PWA and make website ceo.
