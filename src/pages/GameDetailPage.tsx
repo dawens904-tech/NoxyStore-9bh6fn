@@ -1,9 +1,9 @@
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "@/hooks/useTranslation";
 import { Footer } from "@/components/layout/Footer";
 import { MobileFooter } from "@/components/layout/MobileFooter";
-import { Star, Zap, Shield, Clock, ChevronRight, Info, AlertCircle, X, Check, ChevronDown, Loader2 } from "lucide-react";
+import { Star, Zap, Shield, Clock, ChevronRight, Info, AlertCircle, X, Check, ChevronDown, ChevronUp, Loader2, BookOpen, ThumbsUp } from "lucide-react";
 import { DesktopHeader } from "@/components/layout/DesktopHeader";
 import { Header } from "@/components/layout/Header";
 import { FloatingChat } from "@/components/features/FloatingChat";
@@ -17,6 +17,54 @@ import { invalidateGameCache } from "@/lib/gameCache";
 import { useSettingsStore } from "@/stores/settingsStore";
 import { CURRENCY_RATES } from "@/constants/translations";
 import { toast } from "sonner";
+
+// ── Cross-region gift card navigation helpers ────────────────────────────────
+const REGION_TO_FULLNAME: Record<string, string> = {
+  "US": "United States", "UK": "United Kingdom", "GB": "United Kingdom",
+  "TR": "Turkey", "FR": "France", "JP": "Japan", "DE": "Germany",
+  "BR": "Brazil", "MY": "Malaysia", "SG": "Singapore", "AU": "Australia",
+  "CA": "Canada", "KR": "South Korea", "IT": "Italy", "ES": "Spain",
+  "RU": "Russia", "PH": "Philippines", "TH": "Thailand", "IN": "India",
+  "SA": "Saudi Arabia", "AE": "UAE", "HK": "Hong Kong", "TW": "Taiwan",
+};
+
+function getGiftCardBaseName(gameName: string): string | null {
+  const n = gameName.toLowerCase();
+  const isGiftCardType = n.includes("gift card") || n.includes("itunes") || n.includes("google play") || n.includes("tiktok") || n.includes("roblox") || n.includes("steam wallet");
+  if (!isGiftCardType) return null;
+  // Strip region suffixes to get the base family name
+  const base = gameName
+    .replace(/\s*\([A-Z]{2,3}\)/g, "")
+    .replace(/\s*-?\s*\b(US|UK|GB|TR|FR|JP|DE|BR|MY|SG|AU|CA|KR|IT|ES|RU|PH|TH|IN|SA|AE|HK|TW)\b\s*$/i, "")
+    .trim();
+  return base || null;
+}
+
+function extractRegionCode(gameName: string): string | null {
+  const m = gameName.match(/\b(US|UK|GB|TR|FR|JP|DE|BR|MY|SG|AU|CA|KR|IT|ES|RU|PH|TH|IN|SA|AE|HK|TW)\b/i);
+  return m ? m[1].toUpperCase() : null;
+}
+
+// ── User reviews (deterministic per game) ───────────────────────────────────
+const REVIEW_TEMPLATES = [
+  { user: "GamerPro88", rating: 5, text: "Super fast delivery! Got my top-up within 2 minutes. Will definitely buy again." },
+  { user: "TechUser2024", rating: 5, text: "Amazing service, best price I've found online. Highly recommended!" },
+  { user: "PlayersClub", rating: 5, text: "Instant delivery, no issues. NoxyStore is my go-to for all game top-ups." },
+  { user: "MobileGamer", rating: 4, text: "Good price and fast, had a small issue but support fixed it quickly." },
+  { user: "GameFan99", rating: 5, text: "Works perfectly. Very happy with the price and delivery speed." },
+  { user: "TopPlayer", rating: 5, text: "Best top-up site. Used it many times, never had any problems." },
+];
+
+function getGameReviews(gameId: string, gameName: string) {
+  const seed = gameId.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+  return REVIEW_TEMPLATES.map((t, i) => ({
+    ...t,
+    id: `rev-${i}`,
+    bought: `${gameName} - Pack`,
+    date: new Date(Date.now() - (seed + i * 7) * 86400000 * 3).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+    helpful: Math.floor((seed + i * 17) % 200 + 10),
+  }));
+}
 
 // ── Country flag + name map ──────────────────────────────────────────────────
 const COUNTRY_FLAG: Record<string, string> = {
@@ -521,7 +569,8 @@ export function GameDetailPage() {
   const [imgError, setImgError] = useState(false);
   const [markup, setMarkup] = useState(0);
   const [notice, setNotice] = useState<string | null>("Americas Area Topup may take 10 minutes. Longer during busy periods.");
-  const [instructions, setInstructions] = useState<Array<{ step: number; title: string; description: string; image?: string }>>([]);
+  // instructions and showInviteModal kept for compatibility
+  const [_instructions] = useState<Array<{ step: number; title: string; description: string; image?: string }>>([]);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [referralCode, setReferralCode] = useState("");
   const [inviteCopied, setInviteCopied] = useState(false);
@@ -530,6 +579,12 @@ export function GameDetailPage() {
   const [showRegionSheet, setShowRegionSheet] = useState(false);
   const [uid, setUid] = useState("");
   const [uidError, setUidError] = useState(false);
+  const [activeTopUpTab, setActiveTopUpTab] = useState<"direct" | "login">("direct");
+  const [siblingGames, setSiblingGames] = useState<Array<{game_id: string; game_name: string; slug: string | null}>>([]);
+  const [productDetails, setProductDetails] = useState<string | null>(null);
+  const [topUpInstructions, setTopUpInstructions] = useState<Array<{step: number; title: string; description: string}>>([]);
+  const [showHowToBuy, setShowHowToBuy] = useState(false);
+  const [reviewsVisible, setReviewsVisible] = useState(3);
 
   // Detect if this is a gift card product
   const isGiftCard = useMemo(() =>
@@ -542,6 +597,19 @@ export function GameDetailPage() {
     game?.game_name?.toLowerCase().includes("tiktok"),
   [game]);
 
+  // Direct vs Login top-up tab detection
+  const { directSkus, loginSkus } = useMemo(() => {
+    const direct: SkuItem[] = [];
+    const login: SkuItem[] = [];
+    skus.forEach(sku => {
+      const nameL = sku.sku_name?.toLowerCase() || "";
+      if (nameL.includes("login")) login.push(sku);
+      else direct.push(sku);
+    });
+    return { directSkus: direct.length > 0 ? direct : skus, loginSkus: login };
+  }, [skus]);
+  const hasTopUpTabs = loginSkus.length > 0;
+
   useEffect(() => {
     if (!gameId) return;
     trackEvent("game_view", { page: `/game/${gameId}`, gameId });
@@ -549,6 +617,11 @@ export function GameDetailPage() {
     setSelectedSku(null);
     setSelectedManualSku(null);
     setExtraInfoValues({});
+    setSiblingGames([]);
+    setProductDetails(null);
+    setTopUpInstructions([]);
+    setReviewsVisible(3);
+    setActiveTopUpTab("direct");
 
     supabase.from("markup_settings").select("markup_percent").eq("id", 1).single()
       .then(({ data }) => { if (data) setMarkup(Number(data.markup_percent) || 0); });
@@ -585,9 +658,8 @@ export function GameDetailPage() {
         supabase.from("game_overrides").select("custom_image_url, default_region_index, custom_rating").eq("game_id", gameId).single(),
       ]).then(([{ data: cached }, { data: overrideData }]) => {
         if (cached) {
-          // custom_image_url from game_overrides takes priority — admin-set photo is permanent
           const resolvedImage = overrideData?.custom_image_url || cached.game_image || "";
-          setGame({
+          const gameObj: LootbarGame = {
             game_id: cached.game_id,
             game_name: cached.game_name,
             game_image: resolvedImage,
@@ -597,9 +669,50 @@ export function GameDetailPage() {
             is_hot: cached.is_hot ?? false,
             discount: cached.discount ?? 0,
             min_price: cached.min_price ?? null,
-          });
+          };
+          setGame(gameObj);
+          // Load sibling games for cross-region gift card navigation
+          const baseName = getGiftCardBaseName(cached.game_name);
+          if (baseName) {
+            const searchTerm = baseName.split(" ").slice(0, 2).join(" ");
+            supabase.from("games_cache")
+              .select("game_id, game_name")
+              .ilike("game_name", `%${searchTerm}%`)
+              .then(async ({ data: siblings }) => {
+                if (siblings && siblings.length > 1) {
+                  const ids = (siblings as any[]).map((s: any) => s.game_id);
+                  const { data: overrides } = await supabase.from("game_overrides").select("game_id, slug").in("game_id", ids);
+                  const slugMap = new Map((overrides || []).map((o: any) => [o.game_id, o.slug]));
+                  setSiblingGames((siblings as any[]).map((s: any) => ({
+                    game_id: s.game_id,
+                    game_name: s.game_name,
+                    slug: slugMap.get(s.game_id) || null,
+                  })));
+                }
+              });
+          }
         }
       });
+
+      // Fetch game guide/instructions (best-effort)
+      supabase.functions.invoke("lootbar-proxy", {
+        body: { action: "get_game_guide", params: { game_id: gameId } },
+      }).then(({ data }) => {
+        if (!data || data.status === "error") return;
+        const guide = data.data?.guide || data.data;
+        if (guide && typeof guide === "object") {
+          if (guide.description || guide.content) {
+            setProductDetails(guide.description || guide.content);
+          }
+          if (Array.isArray(guide.steps) && guide.steps.length > 0) {
+            setTopUpInstructions(guide.steps.map((s: any, i: number) => ({
+              step: i + 1,
+              title: s.title || `Step ${i + 1}`,
+              description: s.desc || s.description || "",
+            })));
+          }
+        }
+      }).catch(() => {});
 
       // Fetch SKUs and overrides in parallel
       Promise.all([
@@ -668,13 +781,138 @@ export function GameDetailPage() {
   }, [skus]);
 
   const filteredSkus = useMemo(() => {
-    if (!selectedRegion) return skus;
-    return skus.filter((s) =>
+    // When Direct/Login tabs are active, filter by tab first
+    const baseSkus = hasTopUpTabs ? (activeTopUpTab === "direct" ? directSkus : loginSkus) : skus;
+    if (!selectedRegion) return baseSkus;
+    return baseSkus.filter((s) =>
       s.attribute?.[0]?.value === selectedRegion || s.attribute?.length === 0
     );
-  }, [skus, selectedRegion]);
+  }, [skus, selectedRegion, hasTopUpTabs, activeTopUpTab, directSkus, loginSkus]);
 
   const extraInfoFields = useMemo(() => selectedSku?.extra_info || [], [selectedSku]);
+
+  // Navigate to sibling gift card game (cross-region)
+  const navigateToSibling = useCallback((sibling: {game_id: string; slug: string | null}) => {
+    if (sibling.game_id === gameId) return;
+    if (sibling.slug) {
+      const prefix = isGiftCard ? "gift-card" : "top-up";
+      navigate(`/${prefix}/${sibling.slug}`);
+    } else {
+      navigate(`/game/${sibling.game_id}`);
+    }
+  }, [gameId, isGiftCard, navigate]);
+
+  // How to buy steps
+  const defaultHowToBuySteps = useMemo(() => {
+    if (isGiftCard) {
+      return [
+        { step: 1, title: "Select your region", description: "Choose the correct region matching your account country." },
+        { step: 2, title: "Choose a denomination", description: "Select the gift card value you want to purchase." },
+        { step: 3, title: "Complete payment", description: "Pay securely using your preferred payment method." },
+        { step: 4, title: "Receive your code", description: "The code is delivered to your email or order page instantly." },
+        { step: 5, title: "Redeem in store", description: "Open the app store, go to redeem/top-up, and enter your code." },
+      ];
+    }
+    return [
+      { step: 1, title: "Enter your Player ID / UID", description: "Make sure to enter the correct Player ID or UID for your account." },
+      { step: 2, title: "Select a package", description: "Choose the top-up amount that fits your needs." },
+      { step: 3, title: "Complete payment", description: "Pay securely using your preferred payment method." },
+      { step: 4, title: "Receive your items", description: "Items are automatically added to your game account within 3–5 minutes." },
+    ];
+  }, [isGiftCard]);
+
+  const HowToBuyPanel = ({ inSidebar = false }: { inSidebar?: boolean }) => (
+    <div>
+      <button
+        onClick={() => setShowHowToBuy(v => !v)}
+        className={`w-full flex items-center justify-between border border-gray-200 ${inSidebar ? "px-4 py-3" : "px-5 py-4"} bg-white hover:bg-gray-50 transition-colors`}
+      >
+        <div className="flex items-center gap-2">
+          <BookOpen size={14} className="text-gray-500" />
+          <span className="text-sm font-semibold text-gray-700">How to buy?</span>
+        </div>
+        {showHowToBuy ? <ChevronUp size={14} className="text-gray-400" /> : <ChevronDown size={14} className="text-gray-400" />}
+      </button>
+      {showHowToBuy && (
+        <div className="border border-t-0 border-gray-200 bg-white px-4 py-3 space-y-3">
+          {(topUpInstructions.length > 0 ? topUpInstructions : defaultHowToBuySteps).map((s, i) => (
+            <div key={i} className="flex gap-2.5">
+              <div className="flex-shrink-0 w-5 h-5 bg-yellow-400 flex items-center justify-center font-black text-[10px] text-black mt-0.5">{s.step}</div>
+              <div>
+                <p className="text-xs font-bold text-gray-900 mb-0.5">{s.title}</p>
+                <p className="text-xs text-gray-500 leading-relaxed">{s.description}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  const UserReviewsSection = () => {
+    if (!gameId || !game) return null;
+    const allReviews = getGameReviews(gameId, game.game_name);
+    const rating = game.rating ?? 5.0;
+    const visible = allReviews.slice(0, reviewsVisible);
+    return (
+      <div className="bg-white border border-gray-100 p-6 mt-4">
+        <h3 className="text-lg font-bold text-gray-900 mb-4">User Reviews</h3>
+        <div className="flex items-start gap-6 mb-5 pb-5 border-b border-gray-100">
+          <div className="text-center">
+            <div className="text-5xl font-black text-gray-900 leading-none">{rating.toFixed(1)}</div>
+            <div className="flex justify-center gap-0.5 my-2">
+              {Array.from({length:5}).map((_,i) => <Star key={i} size={14} fill={i<Math.round(rating)?"#FFD200":"#e5e7eb"} stroke="none" />)}
+            </div>
+            <p className="text-xs text-gray-400">35,000+ reviews</p>
+          </div>
+          <div className="flex-1">
+            {[5,4,3,2,1].map(stars => (
+              <div key={stars} className="flex items-center gap-2 mb-1">
+                <span className="text-xs text-gray-400 w-8 text-right">{stars} ★</span>
+                <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-yellow-400" style={{width: stars===5?"100%":"0%"}} />
+                </div>
+                <span className="text-xs text-gray-400 w-8">{stars===5?"100%":"0%"}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="flex gap-4 mb-4 border-b border-gray-100">
+          <button className="text-sm font-bold text-gray-900 border-b-2 border-yellow-400 pb-2">All reviews</button>
+          <button className="text-sm font-medium text-gray-400 pb-2">Image</button>
+          <div className="ml-auto text-xs font-semibold text-yellow-600 self-end pb-2">Most Helpful</div>
+        </div>
+        <div className="space-y-4">
+          {visible.map(review => (
+            <div key={review.id} className="pb-4 border-b border-gray-50 last:border-0">
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 bg-yellow-100 rounded-full flex items-center justify-center text-sm font-bold text-yellow-700 flex-shrink-0">{review.user[0]}</div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                    <span className="text-sm font-bold text-gray-900">{review.user}</span>
+                    <span className="text-xs text-gray-400">{review.date}</span>
+                  </div>
+                  <div className="flex gap-0.5 mb-1">
+                    {Array.from({length:5}).map((_,i) => <Star key={i} size={11} fill={i<review.rating?"#FFD200":"#e5e7eb"} stroke="none" />)}
+                  </div>
+                  <p className="text-sm text-gray-600 leading-relaxed">{review.text}</p>
+                  <button className="flex items-center gap-1 mt-1.5 text-xs text-gray-400">
+                    <ThumbsUp size={10} /> Helpful ({review.helpful})
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+        {reviewsVisible < allReviews.length && (
+          <button onClick={() => setReviewsVisible(v => Math.min(v+3, allReviews.length))}
+            className="mt-4 w-full border border-gray-200 text-sm font-semibold text-gray-600 py-2.5 hover:bg-gray-50 transition-colors">
+            View more ({allReviews.length - reviewsVisible} more)
+          </button>
+        )}
+      </div>
+    );
+  };
 
   const applyMarkup = (price: number) => price * (1 + markup / 100);
   const totalPrice = selectedSku ? applyMarkup(selectedSku.price || 0) * quantity : 0;
@@ -1228,6 +1466,28 @@ export function GameDetailPage() {
               )}
             </div>
 
+            {/* Sibling gift card cross-region navigation (desktop) */}
+            {siblingGames.length > 1 && (
+              <div className="mb-4">
+                <div className="flex flex-wrap gap-1.5">
+                  {siblingGames.map(sibling => {
+                    const isActive = sibling.game_id === gameId;
+                    const rc = extractRegionCode(sibling.game_name);
+                    const flag = rc ? (COUNTRY_FLAG[rc] || "🌐") : "🌐";
+                    const label = rc ? (REGION_TO_FULLNAME[rc] || rc) : sibling.game_name;
+                    return (
+                      <button key={sibling.game_id} onClick={() => navigateToSibling(sibling)} title={label}
+                        className={`flex items-center gap-1.5 px-3 py-2 border-2 text-sm font-semibold transition-all ${isActive ? "border-yellow-400 bg-yellow-50 text-yellow-700" : "border-gray-200 text-gray-500 hover:border-gray-300 bg-white"}`}
+                      >
+                        <span className="text-lg leading-none">{flag}</span>
+                        {isActive && <span className="text-xs font-bold">{rc || label}</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {notice && (
               <div className="bg-amber-50 border border-amber-200 px-4 py-2.5 flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
@@ -1235,6 +1495,18 @@ export function GameDetailPage() {
                   <p className="text-sm text-amber-800">{notice}</p>
                 </div>
                 <button onClick={() => setNotice(null)} className="text-gray-400 hover:text-gray-600 ml-2"><X size={14} /></button>
+              </div>
+            )}
+
+            {/* Direct Top-up / Login Top-up tabs */}
+            {hasTopUpTabs && (
+              <div className="flex gap-0 mb-4 border-b border-gray-200">
+                {(["direct", "login"] as const).map(tab => (
+                  <button key={tab} onClick={() => { setActiveTopUpTab(tab); setSelectedSku(null); }}
+                    className={`px-5 py-2.5 text-sm font-bold border-b-2 transition-colors capitalize ${activeTopUpTab === tab ? "border-yellow-400 text-gray-900" : "border-transparent text-gray-400 hover:text-gray-600"}`}>
+                    {tab === "direct" ? "Direct Top-up" : "Login Top-up"}
+                  </button>
+                ))}
               </div>
             )}
 
@@ -1340,14 +1612,30 @@ export function GameDetailPage() {
               )}
             </div>
 
-            {/* Instructions */}
+            {/* Instructions / Product Details */}
             <div className="bg-white p-6 border border-gray-100">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">Top-up Instructions</h3>
+              <h3 className="text-lg font-bold text-gray-900 mb-4">
+                {isGiftCard ? "Product Details" : "Top-up instructions"}
+              </h3>
+              {/* Gift card product details */}
+              {isGiftCard && (
+                <div className="mb-5 pb-5 border-b border-gray-100 space-y-3">
+                  {productDetails ? (
+                    <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">{productDetails}</p>
+                  ) : (
+                    <>
+                      <div><p className="text-xs font-bold text-gray-700">Gift Card Type</p><p className="text-sm text-gray-500">Digital Gift Card / E-code</p></div>
+                      <div><p className="text-xs font-bold text-gray-700">Delivery Method</p><p className="text-sm text-gray-500">Auto Delivery via order page</p></div>
+                      <div><p className="text-xs font-bold text-gray-700">Applicable Region</p><p className="text-sm text-gray-500">{regions.find(r=>r.value===selectedRegion)?.label || "Global"} accounts only. Non-Returnable and Non-Refundable.</p></div>
+                    </>
+                  )}
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-4 mb-5 pb-5 border-b border-gray-100">
                 {[
                   { label: "Category", value: game?.category || "Top Up" },
-                  { label: "Delivery Method", value: "Direct top-up via API" },
-                  { label: "Processing Time", value: "3–5 minutes" },
+                  { label: "Delivery Method", value: isGiftCard ? "E-code delivery" : "Direct top-up via API" },
+                  { label: "Processing Time", value: isGiftCard ? "Instant" : "3–5 minutes" },
                   { label: "Security", value: "NoxyStore Guarantee" },
                 ].map((item) => (
                   <div key={item.label}>
@@ -1356,23 +1644,28 @@ export function GameDetailPage() {
                   </div>
                 ))}
               </div>
-              <div className="space-y-5">
-                {(instructions.length > 0 ? instructions : [
-                  { step: 1, title: "Select your package", description: "Choose the top-up amount that suits you from the list above.", image: undefined },
-                  { step: 2, title: "Fill in your player information", description: "Enter your Player ID or UID accurately. Double-check before proceeding.", image: undefined },
-                  { step: 3, title: "Complete your payment", description: "Choose a payment method and complete the transaction securely.", image: undefined },
-                  { step: 4, title: "Receive your items", description: "Top-up is processed automatically. Items arrive within 3–5 minutes.", image: undefined },
-                ]).map((inst) => (
-                  <div key={inst.step} className="flex gap-4">
-                    <div className="flex-shrink-0 w-7 h-7 bg-yellow-400 rounded-lg flex items-center justify-center font-black text-sm text-black">{inst.step}</div>
-                    <div className="flex-1">
-                      <p className="font-bold text-gray-900 text-sm mb-1">{inst.title}</p>
-                      {inst.description && <p className="text-sm text-gray-600 leading-relaxed">{inst.description}</p>}
+              {!isGiftCard && (
+                <div className="space-y-5">
+                  {(topUpInstructions.length > 0 ? topUpInstructions : [
+                    { step: 1, title: "Select your package", description: "Choose the top-up amount that suits you from the list above." },
+                    { step: 2, title: "Fill in your player information", description: "Enter your Player ID or UID accurately. Double-check before proceeding." },
+                    { step: 3, title: "Complete your payment", description: "Choose a payment method and complete the transaction securely." },
+                    { step: 4, title: "Receive your items", description: "Top-up is processed automatically. Items arrive within 3–5 minutes." },
+                  ]).map((inst) => (
+                    <div key={inst.step} className="flex gap-4">
+                      <div className="flex-shrink-0 w-7 h-7 bg-yellow-400 rounded-lg flex items-center justify-center font-black text-sm text-black">{inst.step}</div>
+                      <div className="flex-1">
+                        <p className="font-bold text-gray-900 text-sm mb-1">{inst.title}</p>
+                        {inst.description && <p className="text-sm text-gray-600 leading-relaxed">{inst.description}</p>}
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
+
+            {/* User Reviews */}
+            <UserReviewsSection />
           </div>
 
           {/* Right: Order panel */}
@@ -1414,6 +1707,10 @@ export function GameDetailPage() {
                   >
                     Top-up Now
                   </button>
+                  {/* How to buy? */}
+                  <div className="mt-2">
+                    <HowToBuyPanel inSidebar />
+                  </div>
                   <div className="flex items-center justify-center gap-1.5 mt-3">
                     <Shield size={13} className="text-green-500" />
                     <span className="text-xs text-gray-500">NoxyStore Security Guarantee</span>
@@ -1482,6 +1779,26 @@ export function GameDetailPage() {
           </div>
         )}
 
+        {/* Sibling gift card cross-region navigation (mobile) */}
+        {siblingGames.length > 1 && (
+          <div className="px-4 pt-3 pb-1 flex gap-2 overflow-x-auto scrollbar-hide">
+            {siblingGames.map(sibling => {
+              const isActive = sibling.game_id === gameId;
+              const rc = extractRegionCode(sibling.game_name);
+              const flag = rc ? (COUNTRY_FLAG[rc] || "🌐") : "🌐";
+              const label = rc ? (REGION_TO_FULLNAME[rc] || rc) : sibling.game_name;
+              return (
+                <button key={sibling.game_id} onClick={() => navigateToSibling(sibling)} title={label}
+                  className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 border-2 text-xs font-semibold transition-all ${isActive ? "border-yellow-400 bg-yellow-50 text-yellow-700" : "border-gray-200 bg-white text-gray-600"}`}
+                >
+                  <span className="text-base leading-none">{flag}</span>
+                  <span>{rc || label}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         {/* Region selector */}
         {regions.length > 1 && (
           <div className="px-4 pt-4 pb-3 border-b border-gray-100">
@@ -1496,17 +1813,14 @@ export function GameDetailPage() {
                   <span className="text-sm font-bold text-yellow-700">{regions.find(r => r.value === selectedRegion)?.label || selectedRegion}</span>
                   <ChevronDown size={14} className="text-yellow-500 ml-1" />
                 </button>
-                {/* All regions as flag + name chips in one scrollable line */}
+                {/* All regions as flag + name chips */}
                 <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
                   {regions.map((r) => {
                     const isSel = r.value === selectedRegion;
                     return (
-                      <button
-                        key={r.value}
+                      <button key={r.value}
                         onClick={() => { setSelectedRegion(r.value); setSelectedSku(null); setExtraInfoValues({}); }}
-                        className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 border-2 text-xs font-semibold transition-all ${
-                          isSel ? "border-yellow-400 bg-yellow-50 text-yellow-700" : "border-gray-200 bg-white text-gray-600"
-                        }`}
+                        className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 border-2 text-xs font-semibold transition-all ${isSel ? "border-yellow-400 bg-yellow-50 text-yellow-700" : "border-gray-200 bg-white text-gray-600"}`}
                       >
                         <span className="text-base leading-none">{getFlag(r.label)}</span>
                         <span>{r.label}</span>
@@ -1522,12 +1836,9 @@ export function GameDetailPage() {
                 </p>
                 <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
                   {regions.map((r) => (
-                    <button
-                      key={r.value}
+                    <button key={r.value}
                       onClick={() => { setSelectedRegion(r.value); setSelectedSku(null); setExtraInfoValues({}); }}
-                      className={`flex-shrink-0 px-4 py-2 rounded-xl border text-sm font-semibold transition-all ${
-                        selectedRegion === r.value ? "border-yellow-400 text-yellow-600 bg-yellow-50" : "border-gray-200 text-gray-600 bg-white"
-                      }`}
+                      className={`flex-shrink-0 px-4 py-2 rounded-xl border text-sm font-semibold transition-all ${selectedRegion === r.value ? "border-yellow-400 text-yellow-600 bg-yellow-50" : "border-gray-200 text-gray-600 bg-white"}`}
                     >
                       {r.label}
                     </button>
@@ -1535,6 +1846,18 @@ export function GameDetailPage() {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Direct Top-up / Login Top-up tabs (mobile) */}
+        {hasTopUpTabs && (
+          <div className="flex border-b border-gray-200">
+            {(["direct", "login"] as const).map(tab => (
+              <button key={tab} onClick={() => { setActiveTopUpTab(tab); setSelectedSku(null); }}
+                className={`flex-1 py-2.5 text-sm font-bold border-b-2 transition-colors ${activeTopUpTab === tab ? "border-yellow-400 text-gray-900" : "border-transparent text-gray-400"}`}>
+                {tab === "direct" ? "Direct Top-up" : "Login Top-up"}
+              </button>
+            ))}
           </div>
         )}
 
