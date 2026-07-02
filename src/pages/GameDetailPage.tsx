@@ -1490,29 +1490,29 @@ export function GameDetailPage() {
       <div className="max-w-[1280px] mx-auto px-6 pb-16">
         <div className="flex gap-6 items-start">
           <div className="flex-1 min-w-0">
-            <div className="bg-white border border-gray-100 p-5 mb-4">
-              <div className="flex items-start gap-5">
+            <div className="bg-white border border-gray-100 p-4 mb-3">
+              <div className="flex items-start gap-4">
                 <img
                   src={imgError ? "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=100&h=100&fit=crop" : (game?.game_image || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=100&h=100&fit=crop")}
-                  alt={game?.game_name} className="w-24 h-24 rounded-2xl object-cover flex-shrink-0" onError={() => setImgError(true)} />
+                  alt={game?.game_name} className="w-16 h-16 rounded-xl object-cover flex-shrink-0" onError={() => setImgError(true)} />
                 <div className="flex-1">
-                  <h1 className="text-xl font-bold text-gray-800 mb-1">{game?.game_name}</h1>
-                  <div className="flex items-center gap-3 mb-2">
+                  <h1 className="text-lg font-bold text-gray-800 mb-0.5">{game?.game_name}</h1>
+                  <div className="flex items-center gap-2 mb-1.5">
                     <span className="bg-yellow-400 text-black text-xs font-bold px-1.5 py-0.5 rounded">{(game?.rating ?? 5.0).toFixed(1)}</span>
                     <div className="flex">{Array.from({ length: 5 }).map((_, i) => <Star key={i} size={14} fill="#FFD200" stroke="none" />)}</div>
                     <span className="text-sm text-gray-400">346 reviews</span>
                     <span className="text-gray-300">|</span>
                     <span className="text-sm text-gray-500">{game?.sold_count}</span>
                   </div>
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    {["7-Day After-Sales Guarantee", "Safe and Fast Top-Up", "24/7 Customer Service"].map((tag) => (
-                      <span key={tag} className="border border-gray-200 text-gray-600 text-xs px-3 py-1 rounded-full">{tag}</span>
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    {["7-Day Guarantee", "Safe Top-Up", "24/7 Support"].map((tag) => (
+                      <span key={tag} className="border border-gray-200 text-gray-500 text-[11px] px-2.5 py-0.5 rounded-full">{tag}</span>
                     ))}
                   </div>
-                  <div className="flex items-center gap-4 text-sm">
-                    <span className="flex items-center gap-1.5 text-gray-600"><Zap size={14} className="text-yellow-500" /> Fast</span>
-                    <span className="flex items-center gap-1.5 text-gray-600"><Shield size={14} className="text-green-500" /> Safe</span>
-                    <span className="flex items-center gap-1.5 text-gray-600"><Clock size={14} className="text-blue-500" /> 24/7</span>
+                  <div className="flex items-center gap-3 text-xs">
+                    <span className="flex items-center gap-1 text-gray-500"><Zap size={12} className="text-yellow-500" /> Fast</span>
+                    <span className="flex items-center gap-1 text-gray-500"><Shield size={12} className="text-green-500" /> Safe</span>
+                    <span className="flex items-center gap-1 text-gray-500"><Clock size={12} className="text-blue-500" /> 24/7</span>
                   </div>
                 </div>
               </div>
@@ -1568,8 +1568,8 @@ export function GameDetailPage() {
             )}
 
             {regions.length > 1 && (
-              <div className="mb-4 py-4">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+              <div className="mb-2 pt-1">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
                   {skus[0]?.attribute?.[0]?.key_text || "Region"}
                 </p>
                 {isGiftCard ? (
@@ -1744,13 +1744,13 @@ export function GameDetailPage() {
     <div className="lg:hidden bg-white min-h-screen">
       <Header showMenu />
       <div className="pb-52">
-        <div className="px-4 py-4 border-b border-gray-100">
-          <div className="flex items-center gap-3 mb-3">
+        <div className="px-4 py-3 border-b border-gray-100">
+          <div className="flex items-center gap-3 mb-2">
             <img
               src={imgError ? "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=80&h=80&fit=crop" : (game?.game_image || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=80&h=80&fit=crop")}
-              alt={game?.game_name} className="w-16 h-16 rounded-xl object-cover flex-shrink-0 shadow-sm" onError={() => setImgError(true)} />
+              alt={game?.game_name} className="w-14 h-14 rounded-xl object-cover flex-shrink-0 shadow-sm" onError={() => setImgError(true)} />
             <div>
-              <h1 className="text-base font-semibold text-gray-700 leading-tight">{game?.game_name}</h1>
+              <h1 className="text-sm font-semibold text-gray-700 leading-tight">{game?.game_name}</h1>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span className="bg-yellow-400 text-black text-xs font-bold px-1.5 py-0.5 rounded">{(game?.rating ?? 5.0).toFixed(1)}</span>
                 <div className="flex">{Array.from({ length: 5 }).map((_, i) => <Star key={i} size={12} fill="#FFD200" stroke="none" />)}</div>
@@ -1759,9 +1759,9 @@ export function GameDetailPage() {
               <p className="text-xs text-gray-500 mt-0.5">{game?.sold_count}</p>
             </div>
           </div>
-          <div className="flex flex-wrap gap-1.5 mb-3">
-            {["7-Day After-Sales Guarantee", "Safe and Fast Top-Up", "24/7 Customer Service"].map((tag) => (
-              <span key={tag} className="border border-gray-200 text-gray-600 text-[11px] px-2.5 py-1 rounded-full">{tag}</span>
+          <div className="flex flex-wrap gap-1 mb-2">
+            {["7-Day Guarantee", "Safe Top-Up", "24/7 Support"].map((tag) => (
+              <span key={tag} className="border border-gray-200 text-gray-500 text-[10px] px-2 py-0.5 rounded-full">{tag}</span>
             ))}
           </div>
           {isGiftCard && selectedRegion && (
@@ -1800,7 +1800,7 @@ export function GameDetailPage() {
         )}
 
         {regions.length > 1 && (
-          <div className="px-4 pt-4 pb-3 border-b border-gray-100">
+          <div className="px-4 pt-2 pb-2 border-b border-gray-100">
             {isGiftCard ? (
               <div>
                 <button onClick={() => setShowRegionSheet(true)}
@@ -1853,7 +1853,7 @@ export function GameDetailPage() {
           </div>
         )}
 
-        <div className="px-4 pt-3">
+        <div className="px-4 pt-2">
           {isLoading ? (
             <div className="grid grid-cols-2 gap-3">
               {Array.from({ length: 6 }).map((_, i) => <div key={i} className="shimmer h-36 rounded-xl" />)}
@@ -1967,4 +1967,4 @@ export function GameDetailPage() {
     </>
   );
 }
-to much distance between server and game card also in the game top header.
+
