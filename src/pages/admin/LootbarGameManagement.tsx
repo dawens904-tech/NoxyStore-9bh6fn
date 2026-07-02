@@ -11,7 +11,7 @@ import AdminSidebar from "./AdminSidebar";
 import {
   Search, Star, ShoppingCart, Edit2, RefreshCw, Eye, EyeOff,
   ArrowUpDown, Tag, Flame, Image, X, Check, ChevronDown, ChevronUp,
-  DollarSign, AlertCircle, Loader2, List
+  DollarSign, AlertCircle, Loader2, List, Upload
 } from "lucide-react";
 import { toast } from "sonner";
 import { invalidateGameCache } from "@/lib/gameCache";
@@ -66,6 +66,7 @@ export default function LootbarGameManagement() {
 
   // Override modal
   const [editGame, setEditGame] = useState<MergedGame | null>(null);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [overrideForm, setOverrideForm] = useState<{
     custom_name: string;
     custom_price: string;
@@ -211,6 +212,26 @@ export default function LootbarGameManagement() {
       slug: (game.override as any)?.slug ?? "",
       custom_rating: (game.override as any)?.custom_rating != null ? String((game.override as any).custom_rating) : "",
     });
+  };
+
+  const handlePhotoUpload = async (file: File) => {
+    if (!editGame) return;
+    setIsUploadingPhoto(true);
+    try {
+      const ext = file.name.split(".").pop() || "jpg";
+      const storagePath = `games/${editGame.game_id}_${Date.now()}.${ext}`;
+      const { error: uploadErr } = await supabase.storage
+        .from("banners")
+        .upload(storagePath, file, { contentType: file.type, upsert: true });
+      if (uploadErr) throw uploadErr;
+      const { data: urlData } = supabase.storage.from("banners").getPublicUrl(storagePath);
+      setOverrideForm(f => ({ ...f, custom_image_url: urlData.publicUrl }));
+      toast.success("Photo uploaded successfully");
+    } catch (err: any) {
+      toast.error("Upload failed: " + (err.message || "Unknown error"));
+    } finally {
+      setIsUploadingPhoto(false);
+    }
   };
 
   const handleSaveOverride = async () => {
@@ -595,16 +616,33 @@ export default function LootbarGameManagement() {
                 <p className="text-xs text-gray-400 mt-1">Overrides the game name everywhere (Home, Categories, Detail page).</p>
               </div>
 
-              {/* Custom Image URL */}
+              {/* Custom Image URL + Upload */}
               <div>
-                <Label className="flex items-center gap-1.5 mb-1.5"><Image size={13} /> Custom Image URL</Label>
+                <Label className="flex items-center gap-1.5 mb-1.5"><Image size={13} /> Custom Game Image</Label>
                 <Input
                   value={overrideForm.custom_image_url}
                   onChange={(e) => setOverrideForm(f => ({ ...f, custom_image_url: e.target.value }))}
-                  placeholder="Leave empty to use Lootbar image"
-                  className="text-sm"
+                  placeholder="Paste URL or upload a photo below"
+                  className="text-sm mb-2"
                 />
-                <p className="text-xs text-gray-400 mt-1">Overrides the Lootbar game image with your custom URL.</p>
+                {/* Upload button */}
+                <label className={`flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border-2 border-dashed cursor-pointer transition-colors ${
+                  isUploadingPhoto ? "border-yellow-300 bg-yellow-50" : "border-gray-200 hover:border-yellow-400 hover:bg-yellow-50"
+                }`}>
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="hidden"
+                    disabled={isUploadingPhoto}
+                    onChange={e => { const f = e.target.files?.[0]; if (f) handlePhotoUpload(f); e.target.value = ""; }}
+                  />
+                  {isUploadingPhoto ? (
+                    <><Loader2 size={15} className="animate-spin text-yellow-500" /><span className="text-sm text-yellow-600 font-medium">Uploading...</span></>
+                  ) : (
+                    <><Upload size={15} className="text-gray-400" /><span className="text-sm text-gray-500 font-medium">Upload photo from device</span></>
+                  )}
+                </label>
+                <p className="text-xs text-gray-400 mt-1">Upload a JPG/PNG/WebP image or paste a URL. Overrides the Lootbar image everywhere.</p>
               </div>
 
               {/* Category Override */}
@@ -724,4 +762,4 @@ export default function LootbarGameManagement() {
     </div>
   );
 }
-for edit game please allow user can upload real photo and enable policy rls for real upload photo if user dont have url.
+
