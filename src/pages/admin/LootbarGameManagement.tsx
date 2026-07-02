@@ -724,3 +724,4 @@ export default function LootbarGameManagement() {
     </div>
   );
 }
+for edit game please allow user can upload real photo and enable policy rls for real upload photo if user dont have url.
