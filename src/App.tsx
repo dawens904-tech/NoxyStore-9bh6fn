@@ -239,9 +239,13 @@ function App() {
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/messages" element={<MessagesPage />} />
           <Route path="/buy-history" element={<BuyHistoryPage />} />
-          {/* Custom slug routes — redirect to GameDetailPage via slug lookup */}
+          {/* Custom slug routes — category-prefixed, all resolve via slug lookup */}
           <Route path="/topup/:slug" element={<GameDetailPage />} />
           <Route path="/top-up/:slug" element={<GameDetailPage />} />
+          <Route path="/gift-card/:slug" element={<GameDetailPage />} />
+          <Route path="/game-coins/:slug" element={<GameDetailPage />} />
+          <Route path="/game-key/:slug" element={<GameDetailPage />} />
+          <Route path="/game-items/:slug" element={<GameDetailPage />} />
 
              {/* Secure Admin Routes — guarded by AdminRoute */}
         <Route path="/secure-dashboard-92x2011" element={<AdminRoute><AdminDashboard /></AdminRoute>} />

@@ -266,6 +266,7 @@ export default function LootbarSkuManagement() {
   const [savingRating, setSavingRating] = useState(false);
   const [customSlug, setCustomSlug] = useState<string>("");
   const [savingSlug, setSavingSlug] = useState(false);
+  const [gameCategory, setGameCategory] = useState<string>("Top Up");
 
   useEffect(() => {
     if (!user) { navigate("/login"); return; }
@@ -292,8 +293,8 @@ export default function LootbarSkuManagement() {
     if (!gameId) return;
     setIsLoading(true);
 
-    supabase.from("games_cache").select("game_name, game_image").eq("game_id", gameId).single()
-      .then(({ data }) => { if (data) { setGameName(data.game_name); setGameImage(data.game_image || null); } });
+    supabase.from("games_cache").select("game_name, game_image, category").eq("game_id", gameId).single()
+      .then(({ data }) => { if (data) { setGameName(data.game_name); setGameImage(data.game_image || null); setGameCategory(data.category || "Top Up"); } });
     supabase.from("game_overrides").select("default_region_index, custom_rating, slug").eq("game_id", gameId).single()
       .then(({ data }) => {
         if (data) {
@@ -472,18 +473,36 @@ export default function LootbarSkuManagement() {
     toast.success(val !== null ? `Rating set to ${val.toFixed(1)} ★` : "Custom rating cleared — showing Lootbar default");
   };
 
+  // Category → URL prefix mapping
+  const getCategoryPrefix = (cat: string): string => {
+    const c = cat.toLowerCase();
+    if (c.includes("gift")) return "gift-card";
+    if (c.includes("coin")) return "game-coins";
+    if (c.includes("key")) return "game-key";
+    if (c.includes("item")) return "game-items";
+    return "top-up";
+  };
+
   const handleSaveSlug = async () => {
     if (!gameId) return;
-    const slug = customSlug.trim().replace(/^\/+/, "").replace(/\s+/g, "-").toLowerCase() || null;
+    // Strip any prefix the admin may have typed — store only the game name slug
+    const raw = customSlug.trim().replace(/^\/+/, "").replace(/\s+/g, "-").toLowerCase();
+    // Remove leading category prefix if admin included it (e.g. "top-up/free-fire" → "free-fire")
+    const prefixes = ["top-up/", "topup/", "gift-card/", "game-coins/", "game-key/", "game-items/"];
+    let slug = raw;
+    for (const p of prefixes) { if (slug.startsWith(p)) { slug = slug.slice(p.length); break; } }
+    slug = slug || "";
+    const finalSlug = slug || null;
     setSavingSlug(true);
     const { error } = await supabase.from("game_overrides").upsert(
-      { game_id: gameId, slug },
+      { game_id: gameId, slug: finalSlug },
       { onConflict: "game_id" }
     );
     setSavingSlug(false);
     if (error) { toast.error("Failed to save slug: " + (error.message || "Slug may already be in use")); return; }
-    setCustomSlug(slug ?? "");
-    toast.success(slug ? `Slug set — game accessible at /${slug}` : "Custom slug cleared");
+    setCustomSlug(finalSlug ?? "");
+    const prefix = getCategoryPrefix(gameCategory);
+    toast.success(finalSlug ? `Slug set — game accessible at /${prefix}/${finalSlug}` : "Custom slug cleared");
   };
 
   const handleSaveRegionIndex = async (idx: number | null) => {
@@ -761,13 +780,18 @@ export default function LootbarSkuManagement() {
                   <div className="flex items-center gap-1.5 bg-white border border-gray-200 rounded-xl px-3 py-1.5">
                     <Globe size={12} className="text-blue-500" />
                     <span className="text-xs font-semibold text-gray-500">Slug:</span>
-                    <input
-                      type="text"
-                      value={customSlug}
-                      onChange={(e) => setCustomSlug(e.target.value)}
-                      placeholder="topup/free-fire"
-                      className="w-32 h-6 text-xs border border-gray-200 rounded-lg px-2 focus:outline-none focus:border-blue-400"
-                    />
+                    <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
+                      <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 h-6 flex items-center border-r border-gray-200 whitespace-nowrap">
+                        /{getCategoryPrefix(gameCategory)}/
+                      </span>
+                      <input
+                        type="text"
+                        value={customSlug}
+                        onChange={(e) => setCustomSlug(e.target.value)}
+                        placeholder="free-fire"
+                        className="w-24 h-6 text-xs px-2 focus:outline-none bg-white"
+                      />
+                    </div>
                     <button
                       onClick={handleSaveSlug}
                       disabled={savingSlug}
@@ -1015,4 +1039,4 @@ export default function LootbarSkuManagement() {
   );
 }
 
-hello ai fix slug game depan de categories if a products in categories show /gift-card/slug for game coin use /game-coins/slug and /game-key/slug also for game items exampel for free fire cause its in topup categories its must /top-up/free-fire-top-up and for all /top-up/slug.
+
