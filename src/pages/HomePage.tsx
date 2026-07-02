@@ -964,4 +964,4 @@ export function HomePage() {
   );
 }
 
-
+fix css for the right scroll line in all page not start up in the header must start bttom header desktop also for mobile and size li tro gro pa add background ladan only line.
