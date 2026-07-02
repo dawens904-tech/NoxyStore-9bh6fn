@@ -205,8 +205,8 @@ export function MobileFooter() {
       label: "Services",
       links: [
         { name: t('aboutUs') || 'About Us', href: '/about-us' },
-        { name: 'Terms of Service', href: '/terms' },
-        { name: 'Privacy Policy', href: '/privacy' },
+        { name: 'Terms of Service', href: '/en/terms.html' },
+        { name: 'Privacy Policy', href: '/en/privacy.html' },
         { name: t('helpCenter') || 'Help Center', href: '/support' },
       ],
       isExternal: false

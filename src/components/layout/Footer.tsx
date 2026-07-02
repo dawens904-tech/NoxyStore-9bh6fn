@@ -133,8 +133,8 @@ function DesktopFooter() {
             <h3 className="font-bold mb-4">Services</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li><Link to="/about" className="hover:text-foreground transition-colors">About Us</Link></li>
-              <li><Link to="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link></li>
-              <li><Link to="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link></li>
+              <li><a href="/en/terms.html" className="hover:text-foreground transition-colors">Terms of Service</a></li>
+              <li><a href="/en/privacy.html" className="hover:text-foreground transition-colors">Privacy Policy</a></li>
               <li><Link to="/faq" className="hover:text-foreground transition-colors">FAQ</Link></li>
             </ul>
           </div>
