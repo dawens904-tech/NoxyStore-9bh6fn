@@ -516,3 +516,4 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
     </>
   );
 }
+fix header more large li tro kwense.
