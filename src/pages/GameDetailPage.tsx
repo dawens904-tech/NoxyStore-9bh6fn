@@ -1637,5 +1637,5 @@ export function GameDetailPage() {
     </>
   );
 }
-
+for iTunes Gift Card in desktop if you open each show all other region example i open iTunes Gift Card UK show sou line US,TR,UK,FR,JP for desktop you must click top show the flag only show name when not click and when change example to US auto change the patch in the same tab to the us itunes giftcard with the same line US,TR,UK,FR,JP but show flag and name lan nn us cause mwen ladann and change for all itunes and for mobile show flag and name one line when select its must suqare to and when select its open a modal with the name flag lan anle and anba gen search and display all other flag yo with name like https://www.lootbar.com/gift-card/itunes-gift-card-us.
 
