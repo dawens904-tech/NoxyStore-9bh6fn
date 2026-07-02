@@ -757,6 +757,17 @@ Deno.serve(async (req) => {
         break;
       }
 
+      case "get_blog_posts": {
+        try {
+          const gameId = params?.game_id ? String(params.game_id) : "";
+          const blogResult = await lootbarRequest("GET", `/api/reseller/blogs?game_id=${gameId}&page_num=1&page_size=4`);
+          result = blogResult;
+        } catch {
+          result = { status: "ok", data: { items: [] } };
+        }
+        break;
+      }
+
       default:
         return errorResponse(
           `Unknown action: ${action}`,

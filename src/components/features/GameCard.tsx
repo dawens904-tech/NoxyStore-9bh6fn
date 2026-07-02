@@ -149,6 +149,14 @@ export function GameCard({ game, size = "md" }: GameCardProps) {
             <Flame size={8} />HOT
           </div>
         )}
+        {/* Gift card region flags — bottom-left overlay */}
+        {flags.length > 0 && !hasDiscount && !isHot && (
+          <div className="absolute -bottom-1 -left-1 flex items-center gap-0.5 bg-white/90 rounded-full px-1 py-0.5 shadow-sm">
+            {flags.map((f, i) => (
+              <span key={i} className="text-xs leading-none drop-shadow-sm">{f}</span>
+            ))}
+          </div>
+        )}
       </div>
       <div className="flex-1 text-left min-w-0">
         <h3 className="text-sm font-bold text-gray-900 truncate">{game.game_name}</h3>

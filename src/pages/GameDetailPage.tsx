@@ -585,6 +585,8 @@ export function GameDetailPage() {
   const [topUpInstructions, setTopUpInstructions] = useState<Array<{step: number; title: string; description: string}>>([]);
   const [showHowToBuy, setShowHowToBuy] = useState(false);
   const [reviewsVisible, setReviewsVisible] = useState(3);
+  const [relatedGames, setRelatedGames] = useState<LootbarGame[]>([]);
+  const [blogPosts, setBlogPosts] = useState<Array<{id: string; title: string; date: string; thumbnail: string | null; url: string}>>([]);
 
   // Detect if this is a gift card product
   const isGiftCard = useMemo(() =>
@@ -622,6 +624,8 @@ export function GameDetailPage() {
     setTopUpInstructions([]);
     setReviewsVisible(3);
     setActiveTopUpTab("direct");
+    setRelatedGames([]);
+    setBlogPosts([]);
 
     supabase.from("markup_settings").select("markup_percent").eq("id", 1).single()
       .then(({ data }) => { if (data) setMarkup(Number(data.markup_percent) || 0); });
@@ -694,6 +698,31 @@ export function GameDetailPage() {
         }
       });
 
+      // Fetch related games from games_cache (same category)
+      supabase.from("games_cache")
+        .select("*")
+        .limit(24)
+        .then(({ data: allGames }) => {
+          if (!allGames) return;
+          // Get current game category to filter
+          supabase.from("games_cache").select("category").eq("game_id", gameId).single().then(({ data: currentGame }) => {
+            const cat = currentGame?.category || "Top Up";
+            const filtered = (allGames as any[]).filter((g: any) => g.game_id !== gameId && g.category === cat);
+            const shuffled = filtered.sort(() => Math.random() - 0.5).slice(0, 6);
+            setRelatedGames(shuffled.map((g: any) => ({
+              game_id: g.game_id,
+              game_name: g.game_name,
+              game_image: g.game_image || "",
+              category: g.category,
+              rating: g.rating ?? 5.0,
+              sold_count: g.sold_count || "",
+              is_hot: g.is_hot ?? false,
+              discount: g.discount ?? 0,
+              min_price: g.min_price ?? null,
+            })));
+          });
+        });
+
       // Fetch game guide/instructions (best-effort)
       supabase.functions.invoke("lootbar-proxy", {
         body: { action: "get_game_guide", params: { game_id: gameId } },
@@ -711,6 +740,23 @@ export function GameDetailPage() {
               description: s.desc || s.description || "",
             })));
           }
+        }
+      }).catch(() => {});
+
+      // Fetch blog posts for this game (best-effort)
+      supabase.functions.invoke("lootbar-proxy", {
+        body: { action: "get_blog_posts", params: { game_id: gameId } },
+      }).then(({ data }) => {
+        if (!data || data.status === "error") return;
+        const posts = Array.isArray(data.data?.items) ? data.data.items : Array.isArray(data.data) ? data.data : [];
+        if (posts.length > 0) {
+          setBlogPosts(posts.slice(0, 4).map((p: any, i: number) => ({
+            id: String(p.id || p.blog_id || i),
+            title: p.title || p.blog_title || "",
+            date: p.created_at || p.publish_time || p.date || "",
+            thumbnail: p.thumbnail || p.cover || p.image || null,
+            url: p.url || p.link || "",
+          })).filter((p: any) => p.title));
         }
       }).catch(() => {});
 
@@ -848,6 +894,72 @@ export function GameDetailPage() {
       )}
     </div>
   );
+
+  const YouMayAlsoLikeSection = () => {
+    if (relatedGames.length === 0) return null;
+    return (
+      <div className="bg-white border border-gray-100 p-6 mt-4">
+        <h3 className="text-lg font-bold text-gray-900 mb-4">You May Also Like</h3>
+        <div className="grid grid-cols-3 lg:grid-cols-6 gap-3">
+          {relatedGames.map(g => {
+            const img = g.game_image || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=200&h=200&fit=crop";
+            return (
+              <button key={g.game_id} onClick={() => navigate(`/game/${g.game_id}`)}
+                className="flex flex-col text-left group">
+                <div className="relative aspect-square w-full rounded-xl overflow-hidden bg-gray-100">
+                  <img src={img} alt={g.game_name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                    onError={e => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=200&h=200&fit=crop"; }} />
+                  {(g.discount || 0) > 0 && (
+                    <div className="absolute top-1.5 left-1.5 bg-orange-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">
+                      -{g.discount}%
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs font-bold text-gray-900 mt-1.5 line-clamp-2 leading-tight">{g.game_name}</p>
+                <div className="flex items-center gap-1 mt-0.5">
+                  <Star size={9} fill="#FFD200" stroke="none" />
+                  <span className="text-[10px] font-semibold text-gray-600">{(g.rating ?? 5).toFixed(1)}</span>
+                  {g.min_price != null && g.min_price > 0 && (
+                    <span className="text-[10px] font-black text-orange-500 ml-0.5">${g.min_price.toFixed(2)}</span>
+                  )}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  const GameBlogSection = () => {
+    if (blogPosts.length === 0) return null;
+    return (
+      <div className="bg-white border border-gray-100 p-6 mt-4">
+        <h3 className="text-lg font-bold text-gray-900 mb-4">Game Blog</h3>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {blogPosts.map(post => (
+            <a key={post.id} href={post.url || undefined} target="_blank" rel="noopener noreferrer"
+              className="flex gap-3 group cursor-pointer">
+              <div className="w-24 h-16 flex-shrink-0 rounded-xl overflow-hidden bg-gray-100">
+                {post.thumbnail ? (
+                  <img src={post.thumbnail} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                    onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-yellow-100 to-orange-100 flex items-center justify-center">
+                    <BookOpen size={20} className="text-orange-400" />
+                  </div>
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-gray-900 leading-tight line-clamp-2 group-hover:text-yellow-600 transition-colors">{post.title}</p>
+                {post.date && <p className="text-xs text-gray-400 mt-1">{new Date(post.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>}
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+    );
+  };
 
   const UserReviewsSection = () => {
     if (!gameId || !game) return null;
@@ -1666,6 +1778,8 @@ export function GameDetailPage() {
 
             {/* User Reviews */}
             <UserReviewsSection />
+            <YouMayAlsoLikeSection />
+            <GameBlogSection />
           </div>
 
           {/* Right: Order panel */}
@@ -1994,4 +2108,3 @@ export function GameDetailPage() {
     </>
   );
 }
-hello ai for desktop mobile show real flag not just name in gamecard and Add a 'You May Also Like' section at the bottom of GameDetailPage showing 4-6 trending games from the same category, fetched from games_cache filtered by matching category and Add a game blog section below User Reviews on GameDetailPage that fetches and displays the latest blog posts related to the game from Lootbar's API, with title, date, and thumbnail.
