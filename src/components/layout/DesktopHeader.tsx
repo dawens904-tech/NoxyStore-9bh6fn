@@ -580,6 +580,3 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
     </>
   );
 }
-
-
-hello ai please add a 2px yellow scroll progress bar that starts below the header (64px desktop, 56px mobile), with no background, just the line itself when scrolling and for scroll orizontal desktop add it for mobile.
