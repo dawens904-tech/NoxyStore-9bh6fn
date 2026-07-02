@@ -294,9 +294,38 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [unreadCount, setUnreadCount] = useState(0);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchFocused, setSearchFocused] = useState(false);
   const gamesTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const helpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const userMenuTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Debounced autocomplete fetch
+  useEffect(() => {
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    if (!searchQuery.trim() || searchQuery.length < 2) { setSearchResults([]); return; }
+    searchTimerRef.current = setTimeout(async () => {
+      const { data } = await supabase
+        .from("games_cache")
+        .select("game_id, game_name, game_image, category")
+        .ilike("game_name", `%${searchQuery}%`)
+        .limit(6);
+      if (data) {
+        const ids = data.map((g: any) => g.game_id);
+        const { data: overrides } = await supabase
+          .from("game_overrides")
+          .select("game_id, custom_image_url, slug")
+          .in("game_id", ids);
+        const overrideMap = new Map((overrides || []).map((o: any) => [o.game_id, o]));
+        setSearchResults(data.map((g: any) => {
+          const ov = overrideMap.get(g.game_id) as any;
+          return { ...g, game_image: ov?.custom_image_url || g.game_image };
+        }));
+      }
+    }, 250);
+    return () => { if (searchTimerRef.current) clearTimeout(searchTimerRef.current); };
+  }, [searchQuery]);
 
   useEffect(() => {
     if (!isAuthenticated || !user?.email) return;
@@ -358,12 +387,18 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
       {/* Sticky header — LARGER like photo 1, height 72px */}
       <header className="bg-[#0a0a0a] fixed top-0 left-0 right-0 z-50 shadow-lg" style={{ height: 72 }}>
         <div className="max-w-[1280px] mx-auto px-3 flex items-center h-full gap-4">
-          {/* Logo — LARGER, more to the left */}
-          <button onClick={() => navigate("/")} className="flex-shrink-0 flex items-center gap-1">
-            <span className="font-black text-[30px] tracking-tight leading-none">
+          {/* Logo — with lightning bolt emblem */}
+          <button onClick={() => navigate("/")} className="flex-shrink-0 flex items-center gap-2">
+            {/* Emblem */}
+            <div className="w-8 h-8 bg-yellow-400 rounded-lg flex items-center justify-center flex-shrink-0">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M13 2L4.5 13.5H11L10 22L20.5 10H14L13 2Z" fill="#0a0a0a" stroke="#0a0a0a" strokeWidth="1" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <span className="font-black text-[28px] tracking-tight leading-none">
               <span className="text-yellow-400">NOXY</span>
               <span className="text-white">STORE</span>
-              <span className="text-yellow-400 text-base">.com</span>
+              <span className="text-yellow-400 text-sm">.com</span>
             </span>
           </button>
 
@@ -411,19 +446,25 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
 
           {/* Right side — EACH item has its OWN gray background, NOT grouped together */}
           <div className="flex items-center gap-1.5">
-            {/* Search */}
-            <div className="flex items-center bg-white/10 rounded-lg">
+            {/* Search with autocomplete */}
+            <div className="relative flex items-center bg-white/10 rounded-lg">
               {searchOpen ? (
-                <div className="flex items-center px-3 py-2 gap-2 w-60">
+                <div className="flex items-center px-3 py-2 gap-2 w-72">
                   <Search size={18} className="text-gray-400 flex-shrink-0" />
-                  <input autoFocus value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+                  <input
+                    autoFocus
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    onFocus={() => setSearchFocused(true)}
+                    onBlur={() => setTimeout(() => setSearchFocused(false), 150)}
                     onKeyDown={e => {
-                      if (e.key === "Enter") { navigate(`/categories?q=${encodeURIComponent(searchQuery)}`); setSearchOpen(false); setSearchQuery(""); }
-                      if (e.key === "Escape") { setSearchOpen(false); setSearchQuery(""); }
+                      if (e.key === "Enter") { navigate(`/categories?q=${encodeURIComponent(searchQuery)}`); setSearchOpen(false); setSearchQuery(""); setSearchResults([]); }
+                      if (e.key === "Escape") { setSearchOpen(false); setSearchQuery(""); setSearchResults([]); }
                     }}
                     placeholder={t("searchGames")}
-                    className="bg-transparent text-white placeholder-gray-400 text-sm outline-none flex-1" />
-                  <button onClick={() => { setSearchOpen(false); setSearchQuery(""); }}>
+                    className="bg-transparent text-white placeholder-gray-400 text-sm outline-none flex-1"
+                  />
+                  <button onClick={() => { setSearchOpen(false); setSearchQuery(""); setSearchResults([]); }}>
                     <X size={14} className="text-gray-400 hover:text-white" />
                   </button>
                 </div>
@@ -431,6 +472,37 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
                 <button onClick={() => setSearchOpen(true)} className="p-2.5 text-gray-400 hover:text-white transition-colors">
                   <Search size={22} />
                 </button>
+              )}
+              {/* Autocomplete Dropdown */}
+              {searchOpen && searchFocused && searchResults.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-[#1a1a1a] border border-gray-700 rounded-xl shadow-2xl z-[9999] overflow-hidden">
+                  {searchResults.map(game => (
+                    <button
+                      key={game.game_id}
+                      onMouseDown={() => { navigate(`/game/${game.game_id}`); setSearchOpen(false); setSearchQuery(""); setSearchResults([]); }}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-white/10 transition-colors text-left"
+                    >
+                      {game.game_image ? (
+                        <img src={game.game_image} alt={game.game_name} className="w-8 h-8 rounded-lg object-cover flex-shrink-0"
+                          onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                      ) : (
+                        <div className="w-8 h-8 rounded-lg bg-gray-700 flex-shrink-0" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-white text-sm font-semibold truncate">{game.game_name}</p>
+                        {game.category && <p className="text-gray-400 text-xs truncate">{game.category}</p>}
+                      </div>
+                      <Search size={12} className="text-gray-600 flex-shrink-0" />
+                    </button>
+                  ))}
+                  <button
+                    onMouseDown={() => { navigate(`/categories?q=${encodeURIComponent(searchQuery)}`); setSearchOpen(false); setSearchQuery(""); setSearchResults([]); }}
+                    className="w-full flex items-center gap-2 px-3 py-2.5 border-t border-gray-700 hover:bg-white/10 transition-colors text-left"
+                  >
+                    <Search size={14} className="text-yellow-400" />
+                    <span className="text-yellow-400 text-sm font-medium">Search all results for "{searchQuery}"</span>
+                  </button>
+                </div>
               )}
             </div>
 
@@ -509,4 +581,4 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
   );
 }
 
-Add a real-time autocomplete dropdown to the desktop search bar in DesktopHeader.tsx. When the user types, show a dropdown list of matching game names fetched from games_cache (limit 6) with game thumbnail, name, and category. Pressing Enter or clicking a result navigates to the game detail page snf Redesign the NoxyStore logo in DesktopHeader.tsx to include a small icon/emblem to the left of the text (e.g. a lightning bolt or shield SVG in yellow), keeping the NOXYSTORE.com text but adding a visual mark that makes it more brand-distinct.
+
