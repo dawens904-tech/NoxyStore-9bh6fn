@@ -4,8 +4,6 @@ import { supabase } from "@/lib/supabase";
 import { item4gamerApi } from "@/lib/item4gamer";
 import { DesktopHeader } from "@/components/layout/DesktopHeader";
 import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
-import { MobileFooter } from "@/components/layout/MobileFooter";
 import {
   CheckCircle, Clock, XCircle, RefreshCw, ChevronRight,
   Package, ArrowLeft, Copy, Check
@@ -355,7 +353,6 @@ export function OrderTrackingPage() {
         <div className="flex-1">
           {isLoading ? renderSkeleton() : notFound ? renderNotFound() : <OrderContent />}
         </div>
-        <Footer />
       </div>
 
       {/* Mobile */}
@@ -364,7 +361,6 @@ export function OrderTrackingPage() {
         <div className="flex-1 pb-20">
           {isLoading ? renderSkeleton() : notFound ? renderNotFound() : <OrderContent />}
         </div>
-        <MobileFooter />
       </div>
     </>
   );
