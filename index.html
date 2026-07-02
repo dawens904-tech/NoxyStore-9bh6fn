@@ -25,117 +25,807 @@
 
     <meta name="theme-color" content="#000000" />
 
-
-    <!-- Apple / Safari -->
+    <!-- ============================================ -->
+    <!-- APPLE / SAFARI SPECIFIC META TAGS            -->
+    <!-- ============================================ -->
     <meta name="apple-mobile-web-app-title" content="NoxyStore" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-itunes-app" content="app-id=your-app-id, app-argument=https://www.noxystore.com/" />
+    <meta name="format-detection" content="telephone=no" />
 
+    <!-- ============================================ -->
+    <!-- MICROSOFT / EDGE SPECIFIC META TAGS          -->
+    <!-- ============================================ -->
+    <meta name="msapplication-TileColor" content="#000000" />
+    <meta name="msapplication-config" content="/browserconfig.xml" />
+    <meta name="msapplication-navbutton-color" content="#000000" />
+    <meta name="msapplication-starturl" content="https://www.noxystore.com/" />
+    <meta name="application-name" content="NoxyStore" />
+    <meta name="msapplication-TileImage" content="/mstile-144x144.png" />
+    <meta name="msapplication-square70x70logo" content="/mstile-70x70.png" />
+    <meta name="msapplication-square150x150logo" content="/mstile-150x150.png" />
+    <meta name="msapplication-wide310x150logo" content="/mstile-310x150.png" />
+    <meta name="msapplication-square310x310logo" content="/mstile-310x310.png" />
 
-    <!-- Open Graph -->
+    <!-- ============================================ -->
+    <!-- CHROME / ANDROID SPECIFIC META TAGS          -->
+    <!-- ============================================ -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="google" content="notranslate" />
+    <meta name="google-site-verification" content="your-verification-code" />
+    <meta name="google-play-app" content="app-id=com.noxystore.app" />
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+
+    <!-- ============================================ -->
+    <!-- GOOGLE / SEARCH ENGINE SPECIFIC META TAGS      -->
+    <!-- ============================================ -->
+    <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+    <meta name="bingbot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+    <meta name="slurp" content="index, follow" />
+    <meta name="duckduckbot" content="index, follow" />
+    <meta name="baiduspider" content="index, follow" />
+    <meta name="yandexbot" content="index, follow" />
+    <meta name="facebookexternalhit" content="index, follow" />
+    <meta name="twitterbot" content="index, follow" />
+    <meta name="linkedinbot" content="index, follow" />
+    <meta name="pinterest" content="nopin" />
+    <meta name="pinterest-rich-pin" content="true" />
+
+    <!-- ============================================ -->
+    <!-- OPEN GRAPH (Facebook, LinkedIn, etc.)        -->
+    <!-- ============================================ -->
     <meta property="og:type" content="website" />
-
     <meta property="og:url" content="https://www.noxystore.com/" />
-
-    <meta
-      property="og:title"
-      content="NoxyStore - Instant Game Top Up Store"
-    />
-
-    <meta
-      property="og:description"
-      content="Fast, safe and affordable game top-ups for your favorite games."
-    />
-
-    <meta
-      property="og:image"
-      content="https://images.unsplash.com/photo-1542751371-adc38448a05e?w=1200&h=630&fit=crop"
-    />
-
+    <meta property="og:title" content="NoxyStore - Instant Game Top Up Store" />
+    <meta property="og:description" content="Fast, safe and affordable game top-ups for your favorite games." />
+    <meta property="og:image" content="https://images.unsplash.com/photo-1542751371-adc38448a05e?w=1200&h=630&fit=crop" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="NoxyStore Gaming Top-Up Marketplace" />
+    <meta property="og:image:type" content="image/jpeg" />
     <meta property="og:site_name" content="NoxyStore" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:locale:alternate" content="en_GB" />
+    <meta property="og:locale:alternate" content="id_ID" />
+    <meta property="og:locale:alternate" content="ar_SA" />
+    <meta property="og:locale:alternate" content="es_ES" />
+    <meta property="og:locale:alternate" content="fr_FR" />
+    <meta property="og:locale:alternate" content="de_DE" />
+    <meta property="og:locale:alternate" content="ja_JP" />
+    <meta property="og:locale:alternate" content="ko_KR" />
+    <meta property="og:locale:alternate" content="pt_BR" />
+    <meta property="og:locale:alternate" content="ru_RU" />
+    <meta property="og:locale:alternate" content="tr_TR" />
+    <meta property="og:locale:alternate" content="vi_VN" />
+    <meta property="og:locale:alternate" content="th_TH" />
+    <meta property="og:locale:alternate" content="zh_CN" />
+    <meta property="og:locale:alternate" content="zh_TW" />
 
-
-    <!-- Twitter -->
+    <!-- ============================================ -->
+    <!-- TWITTER / X SPECIFIC META TAGS               -->
+    <!-- ============================================ -->
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@NoxyStore" />
+    <meta name="twitter:site:id" content="your-twitter-site-id" />
+    <meta name="twitter:creator" content="@NoxyStore" />
+    <meta name="twitter:creator:id" content="your-twitter-creator-id" />
+    <meta name="twitter:title" content="NoxyStore - Gaming Top-Up Marketplace" />
+    <meta name="twitter:description" content="Recharge your favorite games instantly with NoxyStore." />
+    <meta name="twitter:image" content="https://images.unsplash.com/photo-1542751371-adc38448a05e?w=1200&h=630&fit=crop" />
+    <meta name="twitter:image:alt" content="NoxyStore Gaming Top-Up Marketplace" />
+    <meta name="twitter:url" content="https://www.noxystore.com/" />
+    <meta name="twitter:domain" content="noxystore.com" />
+    <meta name="twitter:label1" content="Price Range" />
+    <meta name="twitter:data1" content="$0.99 - $999.99" />
+    <meta name="twitter:label2" content="Delivery Time" />
+    <meta name="twitter:data2" content="Instant" />
 
-    <meta
-      name="twitter:title"
-      content="NoxyStore - Gaming Top-Up Marketplace"
-    />
+    <!-- ============================================ -->
+    <!-- FACEBOOK SPECIFIC META TAGS                  -->
+    <!-- ============================================ -->
+    <meta property="fb:app_id" content="your-fb-app-id" />
+    <meta property="fb:pages" content="your-fb-page-id" />
+    <meta property="fb:admins" content="your-fb-admin-id" />
+    <meta property="article:author" content="NoxyStore" />
+    <meta property="article:publisher" content="https://www.facebook.com/NoxyStore" />
+    <meta property="article:section" content="Gaming" />
+    <meta property="article:tag" content="Gaming" />
+    <meta property="article:tag" content="Top-Up" />
+    <meta property="article:tag" content="Game Currency" />
+    <meta property="article:tag" content="Diamonds" />
+    <meta property="article:tag" content="Gems" />
+    <meta property="article:tag" content="PUBG" />
+    <meta property="article:tag" content="Free Fire" />
+    <meta property="article:tag" content="Mobile Legends" />
+    <meta property="article:tag" content="Genshin Impact" />
 
-    <meta
-      name="twitter:description"
-      content="Recharge your favorite games instantly with NoxyStore."
-    />
+    <!-- ============================================ -->
+    <!-- LINKEDIN SPECIFIC META TAGS                  -->
+    <!-- ============================================ -->
+    <meta property="linkedin:title" content="NoxyStore - Gaming Top-Up Marketplace" />
+    <meta property="linkedin:description" content="Trusted gaming top-up marketplace for instant game currency." />
+    <meta property="linkedin:image" content="https://images.unsplash.com/photo-1542751371-adc38448a05e?w=1200&h=630&fit=crop" />
+    <meta property="linkedin:card" content="summary_large_image" />
 
-    <meta
-      name="twitter:image"
-      content="https://images.unsplash.com/photo-1542751371-adc38448a05e?w=1200&h=630&fit=crop"
-    />
+    <!-- ============================================ -->
+    <!-- DISCORD SPECIFIC META TAGS                   -->
+    <!-- ============================================ -->
+    <meta property="discord:site" content="NoxyStore" />
+    <meta property="discord:embed:title" content="NoxyStore - Gaming Top-Up Marketplace" />
+    <meta property="discord:embed:description" content="Fast, safe and affordable game top-ups for your favorite games." />
+    <meta property="discord:embed:image" content="https://images.unsplash.com/photo-1542751371-adc38448a05e?w=1200&h=630&fit=crop" />
+    <meta property="discord:embed:color" content="#000000" />
 
+    <!-- ============================================ -->
+    <!-- TELEGRAM SPECIFIC META TAGS                  -->
+    <!-- ============================================ -->
+    <meta name="telegram:channel" content="@NoxyStore" />
+    <meta name="telegram:site_verification" content="your-telegram-verification" />
 
-    <!-- Website Schema -->
+    <!-- ============================================ -->
+    <!-- WHATSAPP SPECIFIC META TAGS                  -->
+    <!-- ============================================ -->
+    <meta property="og:site_name" content="NoxyStore" />
+    <meta property="og:phone_number" content="+1-800-NOXYSTORE" />
+
+    <!-- ============================================ -->
+    <!-- PINTEREST SPECIFIC META TAGS                 -->
+    <!-- ============================================ -->
+    <meta name="pinterest" content="nopin" />
+    <meta name="pinterest-rich-pin" content="true" />
+    <meta name="pinterest:description" content="NoxyStore - Gaming Top-Up Marketplace" />
+
+    <!-- ============================================ -->
+    <!-- SLACK SPECIFIC META TAGS                     -->
+    <!-- ============================================ -->
+    <meta name="slack-app-id" content="your-slack-app-id" />
+
+    <!-- ============================================ -->
+    <!-- REDDIT SPECIFIC META TAGS                    -->
+    <!-- ============================================ -->
+    <meta property="reddit:title" content="NoxyStore - Gaming Top-Up Marketplace" />
+    <meta property="reddit:description" content="Fast, safe and affordable game top-ups for your favorite games." />
+
+    <!-- ============================================ -->
+    <!-- TIKTOK SPECIFIC META TAGS                    -->
+    <!-- ============================================ -->
+    <meta property="tiktok:site" content="@NoxyStore" />
+
+    <!-- ============================================ -->
+    <!-- SNAPCHAT SPECIFIC META TAGS                  -->
+    <!-- ============================================ -->
+    <meta property="snapchat:sticker" content="https://www.noxystore.com/favicon.svg" />
+
+    <!-- ============================================ -->
+    <!-- WECHAT SPECIFIC META TAGS                    -->
+    <!-- ============================================ -->
+    <meta property="wechat:card" content="summary_large_image" />
+    <meta property="wechat:title" content="NoxyStore - Gaming Top-Up Marketplace" />
+    <meta property="wechat:description" content="Trusted gaming top-up marketplace." />
+
+    <!-- ============================================ -->
+    <!-- LINE SPECIFIC META TAGS                      -->
+    <!-- ============================================ -->
+    <meta property="line:card" content="summary_large_image" />
+    <meta property="line:title" content="NoxyStore - Gaming Top-Up Marketplace" />
+    <meta property="line:description" content="Trusted gaming top-up marketplace." />
+
+    <!-- ============================================ -->
+    <!-- KAKAOTALK SPECIFIC META TAGS                 -->
+    <!-- ============================================ -->
+    <meta property="kakao:title" content="NoxyStore - Gaming Top-Up Marketplace" />
+    <meta property="kakao:description" content="Trusted gaming top-up marketplace." />
+
+    <!-- ============================================ -->
+    <!-- NAVER SPECIFIC META TAGS                     -->
+    <!-- ============================================ -->
+    <meta property="naver:title" content="NoxyStore - Gaming Top-Up Marketplace" />
+    <meta property="naver:description" content="Trusted gaming top-up marketplace." />
+
+    <!-- ============================================ -->
+    <!-- WEBSITE SCHEMA (JSON-LD)                     -->
+    <!-- ============================================ -->
     <script type="application/ld+json">
     {
-      "@context":"https://schema.org",
-      "@type":"WebSite",
-      "name":"NoxyStore",
-      "url":"https://www.noxystore.com/",
-      "description":"Gaming top-up marketplace for game currencies.",
-      "potentialAction":{
-        "@type":"SearchAction",
-        "target":"https://www.noxystore.com/search?q={search_term_string}",
-        "query-input":"required name=search_term_string"
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "NoxyStore",
+      "url": "https://www.noxystore.com/",
+      "description": "Gaming top-up marketplace for game currencies.",
+      "inLanguage": "en-US",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://www.noxystore.com/search?q={search_term_string}",
+        "query-input": "required name=search_term_string"
       }
     }
     </script>
 
-
-    <!-- Organization Schema -->
+    <!-- ============================================ -->
+    <!-- ORGANIZATION SCHEMA (JSON-LD)                -->
+    <!-- ============================================ -->
     <script type="application/ld+json">
     {
-      "@context":"https://schema.org",
-      "@type":"Organization",
-      "name":"NoxyStore",
-      "url":"https://www.noxystore.com/",
-      "logo":"https://www.noxystore.com/favicon.svg"
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "NoxyStore",
+      "url": "https://www.noxystore.com/",
+      "logo": "https://www.noxystore.com/favicon.svg",
+      "sameAs": [
+        "https://www.facebook.com/NoxyStore",
+        "https://twitter.com/NoxyStore",
+        "https://www.instagram.com/NoxyStore",
+        "https://www.youtube.com/@NoxyStore",
+        "https://www.tiktok.com/@NoxyStore",
+        "https://discord.gg/NoxyStore",
+        "https://www.linkedin.com/company/NoxyStore",
+        "https://t.me/NoxyStore",
+        "https://www.reddit.com/r/NoxyStore",
+        "https://www.pinterest.com/NoxyStore"
+      ],
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "telephone": "+1-800-NOXYSTORE",
+        "contactType": "customer service",
+        "availableLanguage": ["English", "Indonesian", "Arabic", "Spanish", "French", "German", "Japanese", "Korean", "Portuguese", "Russian", "Turkish", "Vietnamese", "Thai", "Chinese"],
+        "areaServed": "Worldwide"
+      }
     }
     </script>
 
+    <!-- ============================================ -->
+    <!-- LOCAL BUSINESS SCHEMA (JSON-LD)                -->
+    <!-- ============================================ -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Store",
+      "name": "NoxyStore",
+      "image": "https://www.noxystore.com/favicon.svg",
+      "@id": "https://www.noxystore.com/",
+      "url": "https://www.noxystore.com/",
+      "telephone": "+1-800-NOXYSTORE",
+      "priceRange": "$",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "123 Gaming Street",
+        "addressLocality": "San Francisco",
+        "addressRegion": "CA",
+        "postalCode": "94102",
+        "addressCountry": "US"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": 37.7749,
+        "longitude": -122.4194
+      },
+      "openingHoursSpecification": [
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+          "opens": "00:00",
+          "closes": "23:59"
+        }
+      ],
+      "paymentAccepted": ["Credit Card", "Debit Card", "PayPal", "Cryptocurrency", "Google Pay", "Apple Pay", "Alipay", "WeChat Pay", "GCash", "DANA", "OVO", "GoPay"],
+      "currenciesAccepted": "USD"
+    }
+    </script>
 
-    <!-- Trustpilot -->
-    <script 
-      type="text/javascript" 
-      src="//widget.trustpilot.com/bootstrap/v5/tp.widget.bootstrap.min.js" 
+    <!-- ============================================ -->
+    <!-- PRODUCT SCHEMA (JSON-LD)                       -->
+    <!-- ============================================ -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Product",
+      "name": "Game Currency Top-Up",
+      "image": "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=1200&h=630&fit=crop",
+      "description": "Instant game currency top-up for popular mobile and PC games including Genshin Impact, PUBG, Free Fire, Mobile Legends, and more.",
+      "brand": {
+        "@type": "Brand",
+        "name": "NoxyStore"
+      },
+      "offers": {
+        "@type": "AggregateOffer",
+        "lowPrice": "0.99",
+        "highPrice": "999.99",
+        "priceCurrency": "USD",
+        "availability": "https://schema.org/InStock",
+        "url": "https://www.noxystore.com/"
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.8",
+        "reviewCount": "15234"
+      }
+    }
+    </script>
+
+    <!-- ============================================ -->
+    <!-- FAQ SCHEMA (JSON-LD)                           -->
+    <!-- ============================================ -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Is NoxyStore safe for game top-ups?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, NoxyStore is a trusted gaming top-up marketplace with secure payment processing and instant delivery. We use encrypted transactions and verified game publisher APIs."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How fast is the delivery?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Most top-ups are delivered instantly within 1-5 minutes after payment confirmation. Some may take up to 15 minutes depending on the game server status."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What payment methods are accepted?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "We accept Credit Cards, Debit Cards, PayPal, Google Pay, Apple Pay, Cryptocurrency, and various local payment methods depending on your region."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Do you offer refunds?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, we offer a 100% money-back guarantee if your top-up is not delivered within 24 hours. Contact our 24/7 support team for assistance."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Which games are supported?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "We support popular games including Genshin Impact, PUBG Mobile, Free Fire, Mobile Legends, Call of Duty Mobile, Valorant, League of Legends, Fortnite, and many more."
+          }
+        }
+      ]
+    }
+    </script>
+
+    <!-- ============================================ -->
+    <!-- BREADCRUMB SCHEMA (JSON-LD)                  -->
+    <!-- ============================================ -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://www.noxystore.com/"
+        }
+      ]
+    }
+    </script>
+
+    <!-- ============================================ -->
+    <!-- SOFTWARE APPLICATION SCHEMA (JSON-LD)          -->
+    <!-- ============================================ -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "NoxyStore",
+      "applicationCategory": "ShoppingApplication",
+      "operatingSystem": "Web, iOS, Android",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.9",
+        "ratingCount": "8765"
+      }
+    }
+    </script>
+
+    <!-- ============================================ -->
+    <!-- REVIEW SCHEMA (JSON-LD)                      -->
+    <!-- ============================================ -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Review",
+      "itemReviewed": {
+        "@type": "Product",
+        "name": "NoxyStore Game Top-Up Service"
+      },
+      "reviewRating": {
+        "@type": "Rating",
+        "ratingValue": "5",
+        "bestRating": "5"
+      },
+      "author": {
+        "@type": "Person",
+        "name": "Verified Customer"
+      },
+      "reviewBody": "Amazing service! My diamonds were delivered instantly. Highly recommend NoxyStore for all game top-ups."
+    }
+    </script>
+
+    <!-- ============================================ -->
+    <!-- HOWTO SCHEMA (JSON-LD)                       -->
+    <!-- ============================================ -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "HowTo",
+      "name": "How to Top Up Your Game on NoxyStore",
+      "description": "Step-by-step guide to purchase game currency on NoxyStore.",
+      "totalTime": "PT2M",
+      "step": [
+        {
+          "@type": "HowToStep",
+          "name": "Select Your Game",
+          "text": "Choose your favorite game from our extensive catalog.",
+          "url": "https://www.noxystore.com/how-to-top-up#step1"
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Enter Player ID",
+          "text": "Enter your in-game player ID or username.",
+          "url": "https://www.noxystore.com/how-to-top-up#step2"
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Choose Amount",
+          "text": "Select the amount of currency you want to purchase.",
+          "url": "https://www.noxystore.com/how-to-top-up#step3"
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Complete Payment",
+          "text": "Pay securely using your preferred payment method.",
+          "url": "https://www.noxystore.com/how-to-top-up#step4"
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Receive Currency",
+          "text": "Your game currency will be delivered instantly.",
+          "url": "https://www.noxystore.com/how-to-top-up#step5"
+        }
+      ]
+    }
+    </script>
+
+    <!-- ============================================ -->
+    <!-- TRUSTPILOT WIDGET                            -->
+    <!-- ============================================ -->
+    <script
+      type="text/javascript"
+      src="//widget.trustpilot.com/bootstrap/v5/tp.widget.bootstrap.min.js"
       async>
     </script>
 
+    <!-- ============================================ -->
+    <!-- GOOGLE ANALYTICS (gtag.js)                   -->
+    <!-- ============================================ -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'GA_MEASUREMENT_ID');
+    </script>
 
-    <!-- Fonts -->
+    <!-- ============================================ -->
+    <!-- GOOGLE TAG MANAGER                           -->
+    <!-- ============================================ -->
+    <script>
+      (function(w,d,s,l,i){
+        w[l]=w[l]||[];
+        w[l].push({'gtm.start': new Date().getTime(), event:'gtm.js'});
+        var f=d.getElementsByTagName(s)[0], j=d.createElement(s), dl=l!='dataLayer'?'&l='+l:'';
+        j.async=true;
+        j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;
+        f.parentNode.insertBefore(j,f);
+      })(window,document,'script','dataLayer','GTM-XXXXXXX');
+    </script>
+
+    <!-- ============================================ -->
+    <!-- FACEBOOK PIXEL                               -->
+    <!-- ============================================ -->
+    <script>
+      !function(f,b,e,v,n,t,s){
+        if(f.fbq)return;
+        n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+        n.queue=[];t=b.createElement(e);t.async=!0;
+        t.src=v;s=b.getElementsByTagName(e)[0];
+        s.parentNode.insertBefore(t,s)
+      }(window, document,'script','https://connect.facebook.net/en_US/fbevents.js');
+      fbq('init', 'YOUR_PIXEL_ID');
+      fbq('track', 'PageView');
+    </script>
+    <noscript>
+      <img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=YOUR_PIXEL_ID&ev=PageView&noscript=1" />
+    </noscript>
+
+    <!-- ============================================ -->
+    <!-- HOTJAR TRACKING CODE                         -->
+    <!-- ============================================ -->
+    <script>
+      (function(h,o,t,j,a,r){
+        h.hj=h.hj||function(){(h.hj.q=h.hj.q||[]).push(arguments)};
+        h._hjSettings={hjid:YOUR_HOTJAR_ID,hjsv:6};
+        a=o.getElementsByTagName('head')[0];
+        r=o.createElement('script');r.async=1;
+        r.src=t+h._hjSettings.hjid+j+h._hjSettings.hjsv;
+        a.appendChild(r);
+      })(window,document,'https://static.hotjar.com/c/hotjar-','.js?sv=');
+    </script>
+
+    <!-- ============================================ -->
+    <!-- FONTS (Google Fonts)                         -->
+    <!-- ============================================ -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
-
-    <link
-      rel="preconnect"
-      href="https://fonts.gstatic.com"
-      crossorigin
-    />
-
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Rajdhani:wght@600;700&display=swap"
       rel="stylesheet"
     />
 
+    <!-- ============================================ -->
+    <!-- PRELOAD CRITICAL RESOURCES                   -->
+    <!-- ============================================ -->
+    <link rel="preload" href="/favicon.svg" as="image" type="image/svg+xml" />
+    <link rel="preload" href="/src/main.tsx" as="script" type="module" />
+    <link rel="preload" href="/assets/hero-bg.jpg" as="image" />
+    <link rel="preload" href="/assets/logo.png" as="image" />
 
+    <!-- ============================================ -->
+    <!-- DNS PREFETCH                                 -->
+    <!-- ============================================ -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+    <link rel="dns-prefetch" href="https://widget.trustpilot.com" />
+    <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+    <link rel="dns-prefetch" href="https://connect.facebook.net" />
+    <link rel="dns-prefetch" href="https://static.hotjar.com" />
+
+    <!-- ============================================ -->
+    <!-- PREFETCH EXTERNAL DOMAINS                    -->
+    <!-- ============================================ -->
+    <link rel="preconnect" href="https://images.unsplash.com" crossorigin />
+    <link rel="dns-prefetch" href="https://images.unsplash.com" />
+    <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin />
+    <link rel="preconnect" href="https://connect.facebook.net" crossorigin />
+
+    <!-- ============================================ -->
+    <!-- CANONICAL URL                                -->
+    <!-- ============================================ -->
     <link rel="canonical" href="https://www.noxystore.com/" />
 
-  </head>
+    <!-- ============================================ -->
+    <!-- ALTERNATE LANGUAGES (HREFLANG)               -->
+    <!-- ============================================ -->
+    <link rel="alternate" hreflang="en" href="https://www.noxystore.com/" />
+    <link rel="alternate" hreflang="en-us" href="https://www.noxystore.com/en-us/" />
+    <link rel="alternate" hreflang="en-gb" href="https://www.noxystore.com/en-gb/" />
+    <link rel="alternate" hreflang="id" href="https://www.noxystore.com/id/" />
+    <link rel="alternate" hreflang="ar" href="https://www.noxystore.com/ar/" />
+    <link rel="alternate" hreflang="es" href="https://www.noxystore.com/es/" />
+    <link rel="alternate" hreflang="fr" href="https://www.noxystore.com/fr/" />
+    <link rel="alternate" hreflang="de" href="https://www.noxystore.com/de/" />
+    <link rel="alternate" hreflang="ja" href="https://www.noxystore.com/ja/" />
+    <link rel="alternate" hreflang="ko" href="https://www.noxystore.com/ko/" />
+    <link rel="alternate" hreflang="pt" href="https://www.noxystore.com/pt/" />
+    <link rel="alternate" hreflang="ru" href="https://www.noxystore.com/ru/" />
+    <link rel="alternate" hreflang="tr" href="https://www.noxystore.com/tr/" />
+    <link rel="alternate" hreflang="vi" href="https://www.noxystore.com/vi/" />
+    <link rel="alternate" hreflang="th" href="https://www.noxystore.com/th/" />
+    <link rel="alternate" hreflang="zh" href="https://www.noxystore.com/zh/" />
+    <link rel="alternate" hreflang="x-default" href="https://www.noxystore.com/" />
 
+    <!-- ============================================ -->
+    <!-- PWA MANIFEST                                 -->
+    <!-- ============================================ -->
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- ============================================ -->
+    <!-- APPLE TOUCH ICONS                            -->
+    <!-- ============================================ -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/apple-touch-icon-152x152.png" />
+    <link rel="apple-touch-icon" sizes="120x120" href="/apple-touch-icon-120x120.png" />
+    <link rel="apple-touch-icon" sizes="76x76" href="/apple-touch-icon-76x76.png" />
+    <link rel="apple-touch-icon" sizes="60x60" href="/apple-touch-icon-60x60.png" />
+    <link rel="apple-touch-icon" sizes="57x57" href="/apple-touch-icon-57x57.png" />
+
+    <!-- ============================================ -->
+    <!-- FAVICON SIZES                                -->
+    <!-- ============================================ -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon-512x512.png" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+
+    <!-- ============================================ -->
+    <!-- SAFARI PINNED TAB ICON                       -->
+    <!-- ============================================ -->
+    <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#000000" />
+
+    <!-- ============================================ -->
+    <!-- SECURITY HEADERS (META EQUIVALENT)             -->
+    <!-- ============================================ -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://widget.trustpilot.com https://www.googletagmanager.com https://connect.facebook.net https://static.hotjar.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https:; frame-src 'self' https://widget.trustpilot.com; media-src 'self' https:; object-src 'none'; base-uri 'self'; form-action 'self';" />
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta http-equiv="X-Frame-Options" content="DENY" />
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
+    <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=(self), accelerometer=(), gyroscope=(), magnetometer=()" />
+    <meta http-equiv="Strict-Transport-Security" content="max-age=31536000; includeSubDomains; preload" />
+
+    <!-- ============================================ -->
+    <!-- GEO TAGS                                     -->
+    <!-- ============================================ -->
+    <meta name="geo.region" content="US-CA" />
+    <meta name="geo.placename" content="San Francisco" />
+    <meta name="geo.position" content="37.7749;-122.4194" />
+    <meta name="ICBM" content="37.7749, -122.4194" />
+
+    <!-- ============================================ -->
+    <!-- DUBLIN CORE METADATA                         -->
+    <!-- ============================================ -->
+    <meta name="DC.title" content="NoxyStore - Gaming Top-Up Marketplace" />
+    <meta name="DC.creator" content="NoxyStore" />
+    <meta name="DC.description" content="Trusted gaming top-up marketplace for instant game currency." />
+    <meta name="DC.publisher" content="NoxyStore" />
+    <meta name="DC.date" content="2026-07-01" />
+    <meta name="DC.type" content="Text" />
+    <meta name="DC.format" content="text/html" />
+    <meta name="DC.language" content="en-US" />
+    <meta name="DC.coverage" content="Worldwide" />
+    <meta name="DC.rights" content="Copyright NoxyStore. All rights reserved." />
+
+    <!-- ============================================ -->
+    <!-- NEWS / ARTICLE KEYWORDS                      -->
+    <!-- ============================================ -->
+    <meta name="news_keywords" content="game top up, gaming currency, diamonds, gems, PUBG UC, Free Fire diamonds, Mobile Legends diamonds, Genshin Impact primogems, game credits, in-app purchase, game recharge" />
+
+    <!-- ============================================ -->
+    <!-- RATING / CONTENT CLASSIFICATION              -->
+    <!-- ============================================ -->
+    <meta name="rating" content="general" />
+    <meta name="target" content="all" />
+    <meta name="audience" content="all" />
+    <meta name="coverage" content="Worldwide" />
+    <meta name="distribution" content="global" />
+    <meta name="revisit-after" content="1 days" />
+    <meta name="expires" content="never" />
+    <meta name="resource-type" content="document" />
+
+    <!-- ============================================ -->
+    <!-- COPYRIGHT & LEGAL                            -->
+    <!-- ============================================ -->
+    <meta name="copyright" content="NoxyStore. All rights reserved." />
+    <meta name="rights" content="Copyright 2026 NoxyStore. All rights reserved." />
+    <meta name="license" content="https://www.noxystore.com/terms" />
+
+    <!-- ============================================ -->
+    <!-- VERIFICATION TAGS (Search Engines)           -->
+    <!-- ============================================ -->
+    <meta name="google-site-verification" content="your-google-verification-code" />
+    <meta name="yandex-verification" content="your-yandex-verification-code" />
+    <meta name="msvalidate.01" content="your-bing-verification-code" />
+    <meta name="p:domain_verify" content="your-pinterest-verification-code" />
+    <meta name="facebook-domain-verification" content="your-fb-domain-verification-code" />
+    <meta name="norton-safeweb-site-verification" content="your-norton-verification-code" />
+    <meta name="majestic-site-verification" content="your-majestic-verification-code" />
+    <meta name="wot-verification" content="your-wot-verification-code" />
+
+    <!-- ============================================ -->
+    <!-- MOBILE OPTIMIZATION                          -->
+    <!-- ============================================ -->
+    <meta name="HandheldFriendly" content="true" />
+    <meta name="MobileOptimized" content="width" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="format-detection" content="email=no" />
+    <meta name="format-detection" content="address=no" />
+    <meta name="format-detection" content="date=no" />
+
+    <!-- ============================================ -->
+    <!-- PWA DISPLAY MODE                             -->
+    <!-- ============================================ -->
+    <meta name="display" content="standalone" />
+    <meta name="display-mode" content="standalone" />
+
+    <!-- ============================================ -->
+    <!-- PREVENT TRANSLATION                          -->
+    <!-- ============================================ -->
+    <meta name="google" content="notranslate" />
+
+    <!-- ============================================ -->
+    <!-- GENERATOR                                    -->
+    <!-- ============================================ -->
+    <meta name="generator" content="NoxyStore Platform v2.0" />
+
+    <!-- ============================================ -->
+    <!-- SHORTLINK                                    -->
+    <!-- ============================================ -->
+    <link rel="shortlink" href="https://noxystore.com/" />
+
+    <!-- ============================================ -->
+    <!-- ARCHIVE / HISTORICAL                         -->
+    <!-- ============================================ -->
+    <link rel="archives" href="https://www.noxystore.com/archives/" />
+
+    <!-- ============================================ -->
+    <!-- SITEMAP                                      -->
+    <!-- ============================================ -->
+    <link rel="sitemap" type="application/xml" title="Sitemap" href="https://www.noxystore.com/sitemap.xml" />
+
+    <!-- ============================================ -->
+    <!-- RSS FEED                                     -->
+    <!-- ============================================ -->
+    <link rel="alternate" type="application/rss+xml" title="NoxyStore RSS Feed" href="https://www.noxystore.com/rss.xml" />
+
+    <!-- ============================================ -->
+    <!-- ATOM FEED                                    -->
+    <!-- ============================================ -->
+    <link rel="alternate" type="application/atom+xml" title="NoxyStore Atom Feed" href="https://www.noxystore.com/atom.xml" />
+
+    <!-- ============================================ -->
+    <!-- JSON FEED                                    -->
+    <!-- ============================================ -->
+    <link rel="alternate" type="application/feed+json" title="NoxyStore JSON Feed" href="https://www.noxystore.com/feed.json" />
+
+    <!-- ============================================ -->
+    <!-- AUTHOR / PUBLISHER LINKS                     -->
+    <!-- ============================================ -->
+    <link rel="author" href="https://www.noxystore.com/about" />
+    <link rel="publisher" href="https://www.noxystore.com/" />
+
+    <!-- ============================================ -->
+    <!-- SEARCH (OpenSearch)                          -->
+    <!-- ============================================ -->
+    <link rel="search" type="application/opensearchdescription+xml" title="NoxyStore" href="https://www.noxystore.com/opensearch.xml" />
+
+    <!-- ============================================ -->
+    <!-- HELP / CONTACT LINKS                         -->
+    <!-- ============================================ -->
+    <link rel="help" href="https://www.noxystore.com/help" />
+    <link rel="contact" href="https://www.noxystore.com/contact" />
+
+    <!-- ============================================ -->
+    <!-- LICENSE LINK                                 -->
+    <!-- ============================================ -->
+    <link rel="license" href="https://www.noxystore.com/terms" />
+
+    <!-- ============================================ -->
+    <!-- EXTERNAL STYLES                              -->
+    <!-- ============================================ -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Rajdhani:wght@600;700&display=swap" />
+
+  <base target="_blank">
+</head>
 
   <body>
+    <!-- Google Tag Manager (noscript) -->
+    <noscript>
+      <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-XXXXXXX" height="0" width="0" style="display:none;visibility:hidden"></iframe>
+    </noscript>
 
     <div id="root"></div>
-
     <script type="module" src="/src/main.tsx"></script>
-
   </body>
-
 </html>
