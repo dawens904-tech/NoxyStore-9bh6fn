@@ -580,4 +580,3 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
     </>
   );
 }
-add real count mail instead fake 13 number and please gray background yo make them square remove border in message page add real db fetch system message login etc.

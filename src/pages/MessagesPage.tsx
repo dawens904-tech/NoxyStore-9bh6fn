@@ -260,7 +260,7 @@ export function MessagesPage() {
             <div
               key={msg.id}
               onClick={() => navigate(`/orders/${msg.id}`)}
-              className={`p-4 rounded-lg cursor-pointer transition-colors ${!msg.read ? "bg-gray-50" : "bg-white border border-gray-100"} hover:shadow-sm`}
+              className={`p-4 rounded-lg cursor-pointer transition-colors ${!msg.read ? "bg-gray-50" : "bg-white"} hover:shadow-sm`}
             >
               <div className="flex items-start gap-3">
                 <TradeIcon type={msg.icon} />
@@ -283,7 +283,7 @@ export function MessagesPage() {
   const NewsContent = () => (
     <div className="space-y-3">
       {STATIC_NEWS.map((item) => (
-        <div key={item.id} className={`p-4 rounded-lg ${!item.read ? "bg-gray-50" : "bg-white border border-gray-100"}`}>
+        <div key={item.id} className={`p-4 rounded-lg ${!item.read ? "bg-gray-50" : "bg-white"}`}>
           <div className="flex items-start gap-3">
             <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
               <Newspaper size={18} className="text-blue-600" />
@@ -306,7 +306,7 @@ export function MessagesPage() {
   const SystemContent = () => (
     <div className="space-y-3">
       {systemMessages.map((msg) => (
-        <div key={msg.id} className={`p-4 rounded-lg ${!msg.read ? "bg-gray-50" : "bg-white border border-gray-100"}`}>
+        <div key={msg.id} className={`p-4 rounded-lg ${!msg.read ? "bg-gray-50" : "bg-white"}`}>
           <div className="flex items-start gap-3">
             <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
               msg.type === "success" ? "bg-green-100" : msg.type === "warning" ? "bg-orange-100" : "bg-blue-100"
