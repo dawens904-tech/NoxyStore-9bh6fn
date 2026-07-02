@@ -1015,3 +1015,4 @@ export default function LootbarSkuManagement() {
   );
 }
 
+hello ai fix slug game depan de categories if a products in categories show /gift-card/slug for game coin use /game-coins/slug and /game-key/slug also for game items exampel for free fire cause its in topup categories its must /top-up/free-fire-top-up and for all /top-up/slug.
