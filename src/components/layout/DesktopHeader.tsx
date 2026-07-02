@@ -19,7 +19,6 @@ function GamesDropdown({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     supabase.from("games_cache").select("game_id, game_name, game_image").limit(16).then(async ({ data }) => {
       if (!data) return;
-      // Batch-fetch custom images from game_overrides
       const ids = data.map((g: any) => g.game_id);
       const { data: overrides } = await supabase.from("game_overrides").select("game_id, custom_image_url").in("game_id", ids);
       const overrideMap = new Map((overrides || []).map((o: any) => [o.game_id, o.custom_image_url]));
@@ -123,7 +122,6 @@ function UserDropdown({ user, onClose, onLogout }: { user: any; onClose: () => v
   const [balance, setBalance] = useState<number>(user?.balance ?? 0);
   const [points, setPoints] = useState<number>(user?.points ?? 0);
 
-  // Fetch real balance and points on mount
   useEffect(() => {
     if (!user?.email) return;
     supabase
@@ -163,7 +161,6 @@ function UserDropdown({ user, onClose, onLogout }: { user: any; onClose: () => v
 
   return (
     <div className="absolute right-0 top-full mt-2 w-72 bg-white shadow-2xl border border-gray-100 z-50 overflow-hidden">
-      {/* User info header */}
       <div className="px-4 py-4 border-b border-gray-100">
         <div className="flex items-center gap-3">
           {user?.avatar ? (
@@ -196,7 +193,6 @@ function UserDropdown({ user, onClose, onLogout }: { user: any; onClose: () => v
         </div>
       </div>
 
-      {/* Nav items */}
       <div>
         {items.map(item => (
           <button key={item.label} onClick={() => { navigate(item.path); onClose(); }}
@@ -221,7 +217,7 @@ function UserDropdown({ user, onClose, onLogout }: { user: any; onClose: () => v
   );
 }
 
-// Notifications Page Panel (photo 8)
+// Notifications Page Panel
 function NotificationsPanel({ onClose }: { onClose: () => void }) {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<"trade" | "news" | "system">("trade");
@@ -232,7 +228,6 @@ function NotificationsPanel({ onClose }: { onClose: () => void }) {
       <div className="absolute right-0 bg-white border border-gray-100 shadow-2xl overflow-hidden"
         style={{ top: 56, right: 0, width: 680, maxHeight: "calc(100vh - 56px)" }}
         onClick={e => e.stopPropagation()}>
-        {/* Push notification banner */}
         {!dismissed && (
           <div className="flex items-center justify-between px-4 py-3 bg-yellow-50 border-b border-yellow-100">
             <span className="text-sm text-gray-700">Turn on push notifications to receive the order progress and seller messages</span>
@@ -244,7 +239,6 @@ function NotificationsPanel({ onClose }: { onClose: () => void }) {
         )}
 
         <div className="flex" style={{ minHeight: 400 }}>
-          {/* Left sidebar */}
           <div className="w-52 border-r border-gray-100 py-3">
             <button onClick={() => {}} className="w-full flex items-center gap-3 px-4 py-3 bg-yellow-50 border-l-4 border-l-yellow-400 text-left">
               <div className="w-9 h-9 rounded-full bg-yellow-400 flex items-center justify-center text-black font-bold text-base flex-shrink-0">N</div>
@@ -256,9 +250,7 @@ function NotificationsPanel({ onClose }: { onClose: () => void }) {
             </button>
           </div>
 
-          {/* Right content */}
           <div className="flex-1 flex flex-col">
-            {/* Sub tabs */}
             <div className="flex border-b border-gray-100 px-4">
               {[
                 { key: "trade" as const, label: "Trade Messages" },
@@ -273,7 +265,6 @@ function NotificationsPanel({ onClose }: { onClose: () => void }) {
               ))}
             </div>
 
-            {/* Empty state */}
             <div className="flex-1 flex flex-col items-center justify-center py-16">
               <div className="w-20 h-20 mb-4 opacity-30">
                 <svg viewBox="0 0 80 80" className="w-full h-full">
@@ -307,7 +298,6 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
   const helpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const userMenuTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Poll unread messages every 30 seconds
   useEffect(() => {
     if (!isAuthenticated || !user?.email) return;
     const fetchUnread = async () => {
@@ -353,7 +343,6 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
     navigate("/");
   };
 
-  // close menus when navigating away
   useEffect(() => {
     setShowGamesMenu(false);
     setShowHelpMenu(false);
@@ -366,30 +355,30 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
     <>
       <LanguageCurrencyModal isOpen={showLangModal} onClose={() => setShowLangModal(false)} />
 
-      {/* Sticky header */}
-      <header className="bg-[#0a0a0a] fixed top-0 left-0 right-0 z-50 shadow-lg" style={{ height: 56 }}>
-        <div className="max-w-[1280px] mx-auto px-6 flex items-center h-full gap-8">
-          {/* Logo */}
+      {/* Sticky header — INCREASED HEIGHT to 72px (from 56px) */}
+      <header className="bg-[#0a0a0a] fixed top-0 left-0 right-0 z-50 shadow-lg" style={{ height: 72 }}>
+        <div className="max-w-[1280px] mx-auto px-8 flex items-center h-full gap-10">
+          {/* Logo — LARGER */}
           <button onClick={() => navigate("/")} className="flex-shrink-0 flex items-center gap-1">
-            <span className="font-black text-2xl tracking-tight leading-none">
+            <span className="font-black text-[28px] tracking-tight leading-none">
               <span className="text-yellow-400">NOXY</span>
               <span className="text-white">STORE</span>
-              <span className="text-yellow-400 text-sm">.com</span>
+              <span className="text-yellow-400 text-base">.com</span>
             </span>
           </button>
 
-          {/* Nav */}
-          <nav className="flex items-center gap-1">
+          {/* Nav — LARGER TEXT, MORE PADDING, MORE GAP */}
+          <nav className="flex items-center gap-2">
             {/* Home */}
             <button onClick={() => navigate("/")}
-              className={`px-4 py-2 text-sm font-semibold transition-colors ${isActive("/") && location.pathname === "/" ? "text-yellow-400" : "text-gray-300 hover:text-white"}`}>
+              className={`px-5 py-2.5 text-[15px] font-semibold transition-colors ${isActive("/") && location.pathname === "/" ? "text-yellow-400" : "text-gray-300 hover:text-white"}`}>
               {t("home")}
             </button>
 
             {/* Games with dropdown */}
             <div className="relative" onMouseEnter={handleGamesEnter} onMouseLeave={handleGamesLeave}>
-              <button className={`flex items-center gap-1 px-4 py-2 text-sm font-semibold transition-colors ${showGamesMenu ? "text-yellow-400" : "text-gray-300 hover:text-white"}`}>
-                {t("games")} <ChevronDown size={14} className={`transition-transform ${showGamesMenu ? "rotate-180" : ""}`} />
+              <button className={`flex items-center gap-1.5 px-5 py-2.5 text-[15px] font-semibold transition-colors ${showGamesMenu ? "text-yellow-400" : "text-gray-300 hover:text-white"}`}>
+                {t("games")} <ChevronDown size={16} className={`transition-transform ${showGamesMenu ? "rotate-180" : ""}`} />
               </button>
               {showGamesMenu && (
                 <div onMouseEnter={handleGamesEnter} onMouseLeave={handleGamesLeave}>
@@ -400,14 +389,14 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
 
             {/* Blog */}
             <button onClick={() => navigate("/about")}
-              className="px-4 py-2 text-sm font-semibold text-gray-300 hover:text-white transition-colors">
+              className="px-5 py-2.5 text-[15px] font-semibold text-gray-300 hover:text-white transition-colors">
               Blog
             </button>
 
             {/* Help Center with dropdown */}
             <div className="relative" onMouseEnter={handleHelpEnter} onMouseLeave={handleHelpLeave}>
-              <button className={`flex items-center gap-1 px-4 py-2 text-sm font-semibold transition-colors ${showHelpMenu ? "text-yellow-400" : "text-gray-300 hover:text-white"}`}>
-                {t("helpCenter")} <ChevronDown size={14} className={`transition-transform ${showHelpMenu ? "rotate-180" : ""}`} />
+              <button className={`flex items-center gap-1.5 px-5 py-2.5 text-[15px] font-semibold transition-colors ${showHelpMenu ? "text-yellow-400" : "text-gray-300 hover:text-white"}`}>
+                {t("helpCenter")} <ChevronDown size={16} className={`transition-transform ${showHelpMenu ? "rotate-180" : ""}`} />
               </button>
               {showHelpMenu && (
                 <div onMouseEnter={handleHelpEnter} onMouseLeave={handleHelpLeave}>
@@ -420,11 +409,11 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
           {/* Spacer */}
           <div className="flex-1" />
 
-          {/* Search */}
+          {/* Search — LARGER ICON, WIDER INPUT */}
           <div className="flex items-center">
             {searchOpen ? (
-              <div className="flex items-center bg-white/10 rounded px-3 py-1.5 gap-2 w-52">
-                <Search size={15} className="text-gray-400 flex-shrink-0" />
+              <div className="flex items-center bg-white/10 rounded-lg px-4 py-2 gap-2.5 w-64">
+                <Search size={18} className="text-gray-400 flex-shrink-0" />
                 <input autoFocus value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
                   onKeyDown={e => {
                     if (e.key === "Enter") { navigate(`/categories?q=${encodeURIComponent(searchQuery)}`); setSearchOpen(false); setSearchQuery(""); }
@@ -433,39 +422,39 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
                   placeholder={t("searchGames")}
                   className="bg-transparent text-white placeholder-gray-400 text-sm outline-none flex-1" />
                 <button onClick={() => { setSearchOpen(false); setSearchQuery(""); }}>
-                  <X size={13} className="text-gray-400 hover:text-white" />
+                  <X size={16} className="text-gray-400 hover:text-white" />
                 </button>
               </div>
             ) : (
-              <button onClick={() => setSearchOpen(true)} className="p-2 text-gray-400 hover:text-white transition-colors">
-                <Search size={20} />
+              <button onClick={() => setSearchOpen(true)} className="p-2.5 text-gray-400 hover:text-white transition-colors">
+                <Search size={22} />
               </button>
             )}
           </div>
 
-          {/* Language/Currency */}
+          {/* Language/Currency — LARGER TEXT, MORE PADDING */}
           <button onClick={() => setShowLangModal(true)}
-            className="flex items-center gap-1 bg-[#0a0a0a] hover:bg-[#111] text-gray-400 hover:text-gray-200 text-xs font-medium py-1 transition-colors whitespace-nowrap">
+            className="flex items-center gap-1.5 bg-[#0a0a0a] hover:bg-[#111] text-gray-400 hover:text-gray-200 text-sm font-medium px-3 py-2 rounded-lg transition-colors whitespace-nowrap">
             {langDisplay} / {currDisplay}
           </button>
 
-          {/* Mail/Notifications icon → navigate to /messages */}
+          {/* Mail/Notifications icon — LARGER */}
           {isAuthenticated && (
             <div className="relative">
               <button onClick={() => navigate("/messages")}
-                className="relative p-2 text-gray-400 hover:text-white transition-colors">
-                <Mail size={20} />
+                className="relative p-2.5 text-gray-400 hover:text-white transition-colors">
+                <Mail size={22} />
                 {unreadCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 bg-red-500 rounded-full flex items-center justify-center text-white text-[9px] font-bold px-0.5">
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-red-500 rounded-full flex items-center justify-center text-white text-[10px] font-bold px-1">
                     {unreadCount > 99 ? "99+" : unreadCount}
                   </span>
                 )}
-                {unreadCount === 0 && <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />}
+                {unreadCount === 0 && <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full" />}
               </button>
             </div>
           )}
 
-          {/* Auth */}
+          {/* Auth — LARGER AVATAR, MORE PADDING */}
           {isAuthenticated ? (
             <div
               className="relative"
@@ -479,17 +468,17 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
             >
               <button
                 onClick={() => navigate("/account")}
-                className="flex items-center gap-2 group"
+                className="flex items-center gap-2.5 group"
               >
-                <div className="relative w-9 h-9 flex-shrink-0">
+                <div className="relative w-11 h-11 flex-shrink-0">
                   {user?.avatar ? (
-                    <img src={user.avatar} alt={user.nickname ?? "avatar"} className="w-9 h-9 rounded-full object-cover" />
+                    <img src={user.avatar} alt={user.nickname ?? "avatar"} className="w-11 h-11 rounded-full object-cover" />
                   ) : (
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center text-white font-bold text-sm">
+                    <div className="w-11 h-11 rounded-full bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center text-white font-bold text-base">
                       {user?.nickname?.[0]?.toUpperCase() ?? "U"}
                     </div>
                   )}
-                  <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#0a0a0a]" />
+                  <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-red-500 rounded-full border-2 border-[#0a0a0a]" />
                 </div>
               </button>
               {showUserMenu && (
@@ -502,17 +491,17 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
             </div>
           ) : (
             <button onClick={() => navigate("/login")}
-              className="flex items-center gap-2 border border-gray-600 hover:border-yellow-400 bg-transparent hover:bg-yellow-400/10 text-gray-300 hover:text-white px-3 py-1.5 rounded transition-all group">
-              <div className="w-6 h-6 rounded-full flex items-center justify-center">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              className="flex items-center gap-2.5 border border-gray-600 hover:border-yellow-400 bg-transparent hover:bg-yellow-400/10 text-gray-300 hover:text-white px-4 py-2 rounded-lg transition-all group">
+              <div className="w-7 h-7 rounded-full flex items-center justify-center">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
               </div>
-              <span className="text-sm font-semibold whitespace-nowrap">{t("loginSignup")}</span>
+              <span className="text-[15px] font-semibold whitespace-nowrap">{t("loginSignup")}</span>
             </button>
           )}
         </div>
       </header>
-      {/* Spacer to offset fixed header height */}
-      <div style={{ height: 56 }} />
+      {/* Spacer — MATCHES NEW HEADER HEIGHT */}
+      <div style={{ height: 72 }} />
     </>
   );
 }
