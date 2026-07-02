@@ -1967,3 +1967,4 @@ export function GameDetailPage() {
     </>
   );
 }
+to much distance between server and game card also in the game top header.
