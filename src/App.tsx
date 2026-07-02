@@ -133,6 +133,19 @@ function AuthInitializer() {
 
     trackEvent("page_view", { page: window.location.pathname });
 
+    // ─── Auto-track referral signup from URL (?ref=CODE or /s/CODE) ─────
+    const urlParams = new URLSearchParams(window.location.search);
+    const refCode = urlParams.get("ref");
+    // Also handle /s/CODE path
+    const sPath = window.location.pathname.match(/^\/s\/([^/]+)/);
+    const referralFromPath = sPath ? sPath[1] : null;
+    const referralCode = refCode || referralFromPath;
+    if (referralCode) {
+      // Store in localStorage so LoginPage can use it after auth
+      localStorage.setItem("pending_referral_code", referralCode);
+      console.log("[Referral] Stored pending referral code:", referralCode);
+    }
+
     // ─── Daily login bonus: +2 points if not already claimed today ────────
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session?.user?.email) return;

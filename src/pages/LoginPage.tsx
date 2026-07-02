@@ -5,6 +5,22 @@ import { useAuth } from "@/lib/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
 import { DesktopHeader } from "@/components/layout/DesktopHeader";
 import { toast } from "sonner";
+import { supabase } from "@/lib/supabase";
+
+// ── Track pending referral after signup ─────────────────────────────────────
+async function trackPendingReferral(userEmail: string) {
+  const pendingCode = localStorage.getItem("pending_referral_code");
+  if (!pendingCode || !userEmail) return;
+  try {
+    await supabase.functions.invoke("track-referral", {
+      body: { referral_code: pendingCode, invited_email: userEmail },
+    });
+    localStorage.removeItem("pending_referral_code");
+    console.log("[Referral] Tracked referral for:", userEmail, "via code:", pendingCode);
+  } catch (err) {
+    console.warn("[Referral] Failed to track referral:", err);
+  }
+}
 
 type LoginView = "main" | "email" | "otp" | "setPassword" | "verifyEmail" | "forgotPassword";
 
@@ -92,6 +108,8 @@ export function LoginPage() {
     setIsLoading(true);
     try {
       await setAccountPassword(password, email.split("@")[0]);
+      // Track referral if user came via referral link
+      trackPendingReferral(email).catch(() => {});
       toast.success("Account created successfully! Welcome to NoxyStore!");
       navigate("/");
     } catch (err: any) {

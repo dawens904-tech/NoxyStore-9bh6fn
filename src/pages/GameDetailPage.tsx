@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "@/hooks/useTranslation";
 import { Footer } from "@/components/layout/Footer";
 import { MobileFooter } from "@/components/layout/MobileFooter";
-import { Star, Zap, Shield, Clock, ChevronRight, Info, AlertCircle, X, Check, ChevronDown, ChevronUp, Loader2, BookOpen, ThumbsUp } from "lucide-react";
+import { Star, Zap, Shield, Clock, ChevronRight, Info, AlertCircle, X, Check, ChevronDown, ChevronUp, Loader2, BookOpen, ThumbsUp, Camera, Send, ImageIcon } from "lucide-react";
 import { DesktopHeader } from "@/components/layout/DesktopHeader";
 import { Header } from "@/components/layout/Header";
 import { FloatingChat } from "@/components/features/FloatingChat";
@@ -32,7 +32,6 @@ function getGiftCardBaseName(gameName: string): string | null {
   const n = gameName.toLowerCase();
   const isGiftCardType = n.includes("gift card") || n.includes("itunes") || n.includes("google play") || n.includes("tiktok") || n.includes("roblox") || n.includes("steam wallet");
   if (!isGiftCardType) return null;
-  // Strip region suffixes to get the base family name
   const base = gameName
     .replace(/\s*\([A-Z]{2,3}\)/g, "")
     .replace(/\s*-?\s*\b(US|UK|GB|TR|FR|JP|DE|BR|MY|SG|AU|CA|KR|IT|ES|RU|PH|TH|IN|SA|AE|HK|TW)\b\s*$/i, "")
@@ -105,11 +104,9 @@ function getFlag(region: string): string {
   return COUNTRY_FLAG[region] || "🌐";
 }
 
-// ── Region Dropdown (mobile bottom-sheet / desktop dropdown) ─────────────────
+// ── Region Dropdown ─────────────────────────────────────────────────────────
 function RegionDropdown({
-  regions,
-  selected,
-  onSelect,
+  regions, selected, onSelect,
 }: {
   regions: { value: string; label: string }[];
   selected: string;
@@ -130,34 +127,26 @@ function RegionDropdown({
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <button
-        onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-xl px-4 py-3 hover:border-gray-300 transition-colors"
-      >
+      <button onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-xl px-4 py-3 hover:border-gray-300 transition-colors">
         <div className="flex items-center gap-3">
           <span className="text-2xl leading-none">{getFlag(selectedLabel)}</span>
           <span className="text-sm font-semibold text-gray-800">{selectedLabel}</span>
         </div>
         <ChevronDown size={16} className={`text-gray-400 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
-
       {open && (
         <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-50 max-h-60 overflow-y-auto">
           {regions.map((r) => {
             const isSelected = r.value === selected;
             return (
-              <button
-                key={r.value}
-                onClick={() => { onSelect(r.value); setOpen(false); }}
-                className={`w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors ${isSelected ? "bg-yellow-50" : ""}`}
-              >
+              <button key={r.value} onClick={() => { onSelect(r.value); setOpen(false); }}
+                className={`w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors ${isSelected ? "bg-yellow-50" : ""}`}>
                 <div className="flex items-center gap-3">
                   <span className="text-xl leading-none">{getFlag(r.label)}</span>
                   <span className={`text-sm font-medium ${isSelected ? "text-yellow-700 font-semibold" : "text-gray-800"}`}>{r.label}</span>
                 </div>
-                {isSelected && (
-                  <Check size={16} className="text-yellow-500 flex-shrink-0" />
-                )}
+                {isSelected && <Check size={16} className="text-yellow-500 flex-shrink-0" />}
               </button>
             );
           })}
@@ -169,10 +158,7 @@ function RegionDropdown({
 
 // ── Mobile Region Bottom Sheet ────────────────────────────────────────────────
 function RegionSheet({
-  regions,
-  selected,
-  onSelect,
-  onClose,
+  regions, selected, onSelect, onClose,
 }: {
   regions: { value: string; label: string }[];
   selected: string;
@@ -193,25 +179,17 @@ function RegionSheet({
           <div className="w-8" />
         </div>
         <div className="px-4 py-2 border-b border-gray-100">
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search region…"
-            className="w-full bg-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none text-gray-800"
-            autoFocus
-          />
+          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search region…" autoFocus
+            className="w-full bg-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none text-gray-800" />
         </div>
         <div className="overflow-y-auto" style={{ maxHeight: "calc(75vh - 130px)" }}>
           <div className="divide-y divide-gray-100">
             {filtered.map((r) => {
               const isSel = r.value === selected;
               return (
-                <button
-                  key={r.value}
-                  onClick={() => { onSelect(r.value); onClose(); }}
-                  className={`w-full flex items-center justify-between px-5 py-4 text-left transition-colors ${isSel ? "bg-yellow-50" : "hover:bg-gray-50"}`}
-                >
+                <button key={r.value} onClick={() => { onSelect(r.value); onClose(); }}
+                  className={`w-full flex items-center justify-between px-5 py-4 text-left transition-colors ${isSel ? "bg-yellow-50" : "hover:bg-gray-50"}`}>
                   <div className="flex items-center gap-3">
                     <span className="text-2xl leading-none">{getFlag(r.label)}</span>
                     <span className={`text-base font-medium ${isSel ? "text-yellow-700" : "text-gray-800"}`}>{r.label}</span>
@@ -290,9 +268,7 @@ function I4GGameDetailPage({ gameId }: { gameId: string }) {
 
   useEffect(() => {
     setIsLoading(true);
-    item4gamerApi.getProduct(productId)
-      .then(setProduct)
-      .finally(() => setIsLoading(false));
+    item4gamerApi.getProduct(productId).then(setProduct).finally(() => setIsLoading(false));
   }, [productId]);
 
   const handleBuyNow = async () => {
@@ -300,11 +276,7 @@ function I4GGameDetailPage({ gameId }: { gameId: string }) {
     setIsOrdering(true);
     const refId = `i4g_${selectedVariation.variation_id}_${Date.now()}`;
     try {
-      await item4gamerApi.createOrder({
-        variation_id: selectedVariation.variation_id,
-        quantity,
-        data: fieldValues,
-      });
+      await item4gamerApi.createOrder({ variation_id: selectedVariation.variation_id, quantity, data: fieldValues });
       navigate(`/orders/${encodeURIComponent(refId)}`);
     } catch (err: any) {
       toast.error(err.message || "Order failed");
@@ -313,11 +285,7 @@ function I4GGameDetailPage({ gameId }: { gameId: string }) {
   };
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="animate-spin text-yellow-400" size={40} />
-      </div>
-    );
+    return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin text-yellow-400" size={40} /></div>;
   }
 
   if (!product) {
@@ -333,39 +301,29 @@ function I4GGameDetailPage({ gameId }: { gameId: string }) {
     <div className="min-h-screen bg-[#f5f5f5]">
       <div className="hidden lg:block"><DesktopHeader /></div>
       <div className="lg:hidden"><Header showMenu /></div>
-
       <div className="max-w-[1280px] mx-auto px-4 lg:px-6 py-4 lg:py-6">
-        {/* 🇭🇹 Haiti badge */}
         <div className="flex items-center gap-2 mb-4">
           <span className="bg-red-600 text-white text-xs font-bold px-2.5 py-1 rounded-full">🇭🇹 Item4Gamer</span>
           <span className="text-sm text-gray-500">{product.category_name}</span>
         </div>
-
         <div className="flex flex-col lg:flex-row gap-6">
-          {/* Left */}
           <div className="flex-1">
-            {/* Header */}
             <div className="bg-white p-5 rounded-2xl border border-gray-100 mb-4">
               <div className="flex items-start gap-4">
-                <img
-                  src={product.thumbnail}
-                  alt={product.product_name}
+                <img src={product.thumbnail} alt={product.product_name}
                   className="w-20 h-20 rounded-2xl object-cover flex-shrink-0"
-                  onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=80&h=80&fit=crop"; }}
-                />
+                  onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=80&h=80&fit=crop"; }} />
                 <div className="flex-1">
                   <h1 className="text-xl font-black text-gray-900 mb-1">{product.product_name}</h1>
                   <p className="text-sm text-gray-500">{product.short_description}</p>
                   <div className="flex flex-wrap gap-2 mt-2">
-                    {["Fast Delivery", "Safe Top-Up", "24/7 Support"].map(t => (
-                      <span key={t} className="text-xs border border-gray-200 text-gray-600 px-2.5 py-1 rounded-full">{t}</span>
+                    {["Fast Delivery", "Safe Top-Up", "24/7 Support"].map(tag => (
+                      <span key={tag} className="text-xs border border-gray-200 text-gray-600 px-2.5 py-1 rounded-full">{tag}</span>
                     ))}
                   </div>
                 </div>
               </div>
             </div>
-
-            {/* Variations */}
             <div className="bg-white p-5 rounded-2xl border border-gray-100 mb-4">
               <p className="text-sm font-bold text-gray-700 mb-3">Select Package</p>
               {product.variations && product.variations.length > 0 ? (
@@ -373,13 +331,8 @@ function I4GGameDetailPage({ gameId }: { gameId: string }) {
                   {product.variations.map((v) => {
                     const isSelected = selectedVariation?.variation_id === v.variation_id;
                     return (
-                      <button
-                        key={v.variation_id}
-                        onClick={() => setSelectedVariation(v)}
-                        className={`relative flex flex-col p-3 border-2 rounded-xl text-left transition-all ${
-                          isSelected ? "border-yellow-400 bg-yellow-50 shadow-md" : "border-gray-200 hover:border-gray-300 bg-white"
-                        }`}
-                      >
+                      <button key={v.variation_id} onClick={() => setSelectedVariation(v)}
+                        className={`relative flex flex-col p-3 border-2 rounded-xl text-left transition-all ${isSelected ? "border-yellow-400 bg-yellow-50 shadow-md" : "border-gray-200 hover:border-gray-300 bg-white"}`}>
                         {isSelected && (
                           <div className="absolute top-2 right-2 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center">
                             <Check size={10} className="text-black" />
@@ -387,22 +340,14 @@ function I4GGameDetailPage({ gameId }: { gameId: string }) {
                         )}
                         <p className="text-xs font-bold text-gray-900 leading-tight mb-1.5 pr-5">{v.variation_name}</p>
                         <p className="text-sm font-black text-orange-500">{formatPrice(v.price)}</p>
-                        {v.original_price > v.price && (
-                          <p className="text-[10px] text-gray-400 line-through">{formatPrice(v.original_price)}</p>
-                        )}
-                        {v.stock === "out_of_stock" && (
-                          <span className="text-[10px] text-red-500 font-semibold mt-1">Out of stock</span>
-                        )}
+                        {v.original_price > v.price && <p className="text-[10px] text-gray-400 line-through">{formatPrice(v.original_price)}</p>}
+                        {v.stock === "out_of_stock" && <span className="text-[10px] text-red-500 font-semibold mt-1">Out of stock</span>}
                       </button>
                     );
                   })}
                 </div>
-              ) : (
-                <p className="text-sm text-gray-400 text-center py-6">No packages available</p>
-              )}
+              ) : <p className="text-sm text-gray-400 text-center py-6">No packages available</p>}
             </div>
-
-            {/* Required fields */}
             {product.required_fields && product.required_fields.length > 0 && (
               <div className="bg-white p-5 rounded-2xl border border-gray-100 mb-4">
                 <p className="text-sm font-bold text-gray-700 mb-3">Player Information</p>
@@ -410,26 +355,20 @@ function I4GGameDetailPage({ gameId }: { gameId: string }) {
                   {product.required_fields.map((field) => (
                     <div key={field.field}>
                       <label className="block text-xs font-semibold text-gray-600 mb-1">{field.label}</label>
-                      <input
-                        type={field.type === "number" ? "number" : "text"}
+                      <input type={field.type === "number" ? "number" : "text"}
                         value={fieldValues[field.field] || ""}
                         onChange={(e) => setFieldValues(prev => ({ ...prev, [field.field]: e.target.value }))}
                         placeholder={`Enter ${field.label}`}
-                        className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-yellow-400"
-                      />
+                        className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-yellow-400" />
                     </div>
                   ))}
                 </div>
               </div>
             )}
           </div>
-
-          {/* Right: order panel */}
           <div className="w-full lg:w-72 flex-shrink-0">
             <div className="lg:sticky lg:top-20 bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
-              <div className="px-5 py-4 border-b border-gray-100">
-                <h3 className="font-bold text-gray-900">Order Summary</h3>
-              </div>
+              <div className="px-5 py-4 border-b border-gray-100"><h3 className="font-bold text-gray-900">Order Summary</h3></div>
               <div className="px-5 py-4 border-b border-gray-100">
                 {selectedVariation ? (
                   <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3">
@@ -437,9 +376,7 @@ function I4GGameDetailPage({ gameId }: { gameId: string }) {
                     <p className="text-base font-black text-orange-500">{formatPrice(selectedVariation.price * quantity)}</p>
                   </div>
                 ) : (
-                  <div className="bg-gray-50 rounded-xl p-3 text-center text-sm text-gray-400 border border-dashed border-gray-200">
-                    ← Select a package
-                  </div>
+                  <div className="bg-gray-50 rounded-xl p-3 text-center text-sm text-gray-400 border border-dashed border-gray-200">← Select a package</div>
                 )}
               </div>
               <div className="px-5 py-4 border-b border-gray-100">
@@ -455,22 +392,11 @@ function I4GGameDetailPage({ gameId }: { gameId: string }) {
               <div className="px-5 py-4">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-sm text-gray-500">Total</span>
-                  <span className="text-xl font-black text-orange-500">
-                    {selectedVariation ? formatPrice(selectedVariation.price * quantity) : "—"}
-                  </span>
+                  <span className="text-xl font-black text-orange-500">{selectedVariation ? formatPrice(selectedVariation.price * quantity) : "—"}</span>
                 </div>
-                <button
-                  onClick={handleBuyNow}
-                  disabled={!selectedVariation || isOrdering}
-                  className={`w-full py-3.5 font-bold text-base rounded-xl transition-all ${
-                    selectedVariation && !isOrdering
-                      ? "bg-yellow-400 hover:bg-yellow-300 text-black"
-                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                  }`}
-                >
-                  {isOrdering ? (
-                    <span className="flex items-center justify-center gap-2"><Loader2 size={16} className="animate-spin" /> Processing...</span>
-                  ) : t("topupNow")}
+                <button onClick={handleBuyNow} disabled={!selectedVariation || isOrdering}
+                  className={`w-full py-3.5 font-bold text-base rounded-xl transition-all ${selectedVariation && !isOrdering ? "bg-yellow-400 hover:bg-yellow-300 text-black" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>
+                  {isOrdering ? <span className="flex items-center justify-center gap-2"><Loader2 size={16} className="animate-spin" /> Processing...</span> : t("topupNow")}
                 </button>
                 <div className="flex items-center justify-center gap-1.5 mt-3">
                   <Shield size={13} className="text-green-500" />
@@ -481,7 +407,6 @@ function I4GGameDetailPage({ gameId }: { gameId: string }) {
           </div>
         </div>
       </div>
-
       <Footer />
       <FloatingChat />
     </div>
@@ -495,14 +420,9 @@ export function GameDetailPage() {
   const navigate = useNavigate();
   const { isHaitiMode } = useSettingsStore();
 
-  // Resolve slug -> gameId if accessed via /topup/:slug or /top-up/:slug
   useEffect(() => {
     if (slug && !gameIdParam) {
-      supabase
-        .from("game_overrides")
-        .select("game_id")
-        .eq("slug", slug)
-        .single()
+      supabase.from("game_overrides").select("game_id").eq("slug", slug).single()
         .then(({ data }) => {
           if (data?.game_id) setResolvedGameId(data.game_id);
           else navigate("/404", { replace: true });
@@ -514,18 +434,10 @@ export function GameDetailPage() {
 
   const gameId = resolvedGameId;
 
-  // Render Item4Gamer page for i4g_ prefixed IDs or when Haiti mode + i4g product
-  if (gameId && isI4GProduct(gameId)) {
-    return <I4GGameDetailPage gameId={gameId} />;
-  }
+  if (gameId && isI4GProduct(gameId)) return <I4GGameDetailPage gameId={gameId} />;
 
-  // Show loading while resolving slug
   if (slug && !resolvedGameId) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="animate-spin text-yellow-400" size={40} />
-      </div>
-    );
+    return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin text-yellow-400" size={40} /></div>;
   }
 
   const isManual = gameId ? isManualProduct(gameId) : false;
@@ -548,7 +460,6 @@ export function GameDetailPage() {
   const [imgError, setImgError] = useState(false);
   const [markup, setMarkup] = useState(0);
   const [notice, setNotice] = useState<string | null>("Americas Area Topup may take 10 minutes. Longer during busy periods.");
-  // instructions and showInviteModal kept for compatibility
   const [_instructions] = useState<Array<{ step: number; title: string; description: string; image?: string }>>([]);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [referralCode, setReferralCode] = useState("");
@@ -565,11 +476,35 @@ export function GameDetailPage() {
   const [showHowToBuy, setShowHowToBuy] = useState(false);
   const [reviewsVisible, setReviewsVisible] = useState(3);
   const [relatedGames, setRelatedGames] = useState<LootbarGame[]>([]);
+  const [relatedGamesWithImages, setRelatedGamesWithImages] = useState<LootbarGame[]>([]);
   const [blogPosts, setBlogPosts] = useState<Array<{id: string; title: string; date: string; thumbnail: string | null; url: string}>>([]);
   const [userReviews, setUserReviews] = useState<Array<{id: string; user: string; rating: number; text: string; date: string; helpful: number; bought?: string; image?: string | null}>>([]);
   const [reviewsLoading, setReviewsLoading] = useState(false);
 
-  // Detect if this is a gift card product
+  // ── Review submission state ──────────────────────────────────────────────
+  const [reviewTab, setReviewTab] = useState<"all" | "images">("all");
+  const [showAddReview, setShowAddReview] = useState(false);
+  const [newRating, setNewRating] = useState(5);
+  const [newReviewText, setNewReviewText] = useState("");
+  const [reviewImageFile, setReviewImageFile] = useState<File | null>(null);
+  const [reviewImagePreview, setReviewImagePreview] = useState<string | null>(null);
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const reviewImageRef = useRef<HTMLInputElement>(null);
+
+  // Batch-load custom images for related games
+  useEffect(() => {
+    if (relatedGames.length === 0) { setRelatedGamesWithImages([]); return; }
+    const ids = relatedGames.map(g => g.game_id);
+    supabase.from("game_overrides").select("game_id, custom_image_url").in("game_id", ids)
+      .then(({ data: overrides }) => {
+        const overrideMap = new Map((overrides || []).map((o: any) => [o.game_id, o.custom_image_url]));
+        setRelatedGamesWithImages(relatedGames.map(g => ({
+          ...g,
+          game_image: (overrideMap.get(g.game_id) as string | null) || g.game_image || "",
+        })));
+      });
+  }, [relatedGames]);
+
   const isGiftCard = useMemo(() =>
     game?.category?.toLowerCase().includes("gift") ||
     game?.game_name?.toLowerCase().includes("gift") ||
@@ -580,7 +515,6 @@ export function GameDetailPage() {
     game?.game_name?.toLowerCase().includes("tiktok"),
   [game]);
 
-  // Direct vs Login top-up tab detection
   const { directSkus, loginSkus } = useMemo(() => {
     const direct: SkuItem[] = [];
     const login: SkuItem[] = [];
@@ -592,6 +526,66 @@ export function GameDetailPage() {
     return { directSkus: direct.length > 0 ? direct : skus, loginSkus: login };
   }, [skus]);
   const hasTopUpTabs = loginSkus.length > 0;
+
+  const handleReviewImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setReviewImageFile(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => setReviewImagePreview(ev.target?.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const handleSubmitReview = async () => {
+    if (!newReviewText.trim()) { toast.error("Please write your review"); return; }
+    setIsSubmittingReview(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { toast.error("Please login to leave a review"); setIsSubmittingReview(false); return; }
+      let imageUrl: string | null = null;
+      if (reviewImageFile) {
+        const ext = reviewImageFile.name.split(".").pop();
+        const path = `reviews/${gameId}/${Date.now()}.${ext}`;
+        const { data: uploadData, error: uploadErr } = await supabase.storage.from("review-images").upload(path, reviewImageFile, { upsert: false });
+        if (!uploadErr && uploadData) {
+          const { data: { publicUrl } } = supabase.storage.from("review-images").getPublicUrl(uploadData.path);
+          imageUrl = publicUrl;
+        }
+      }
+      const { data: profile } = await supabase.from("user_profiles").select("username").eq("id", user.id).single();
+      const username = profile?.username || user.email?.split("@")[0] || "User";
+      const { error: insertErr } = await supabase.from("game_reviews").insert({
+        game_id: gameId,
+        user_id: user.id,
+        user_email: user.email,
+        username,
+        rating: newRating,
+        content: newReviewText.trim(),
+        image_url: imageUrl,
+      });
+      if (insertErr) throw insertErr;
+      const newRev = {
+        id: `local_${Date.now()}`,
+        user: username,
+        rating: newRating,
+        text: newReviewText.trim(),
+        date: new Date().toISOString(),
+        helpful: 0,
+        bought: "",
+        image: imageUrl,
+      };
+      setUserReviews(prev => [newRev, ...prev]);
+      setNewReviewText("");
+      setNewRating(5);
+      setReviewImageFile(null);
+      setReviewImagePreview(null);
+      setShowAddReview(false);
+      toast.success("Review submitted successfully!");
+    } catch {
+      toast.error("Failed to submit review");
+    }
+    setIsSubmittingReview(false);
+  };
 
   useEffect(() => {
     if (!gameId) return;
@@ -606,8 +600,11 @@ export function GameDetailPage() {
     setReviewsVisible(3);
     setActiveTopUpTab("direct");
     setRelatedGames([]);
+    setRelatedGamesWithImages([]);
     setBlogPosts([]);
     setUserReviews([]);
+    setShowAddReview(false);
+    setReviewTab("all");
 
     supabase.from("markup_settings").select("markup_percent").eq("id", 1).single()
       .then(({ data }) => { if (data) setMarkup(Number(data.markup_percent) || 0); });
@@ -619,7 +616,6 @@ export function GameDetailPage() {
     });
 
     if (isManual) {
-      // ── Load manual product from Supabase ──
       Promise.all([
         supabase.from("manual_products").select("*").eq("id", gameId).single(),
         supabase.from("manual_product_regions").select("*").eq("product_id", gameId).order("sort_order"),
@@ -635,35 +631,31 @@ export function GameDetailPage() {
         setIsLoading(false);
       });
     } else {
-      // ── Load Lootbar product ──
-      // Note: game_guide not supported in current proxy version — skip
+      let overrideData: any = null;
 
-      // Load game info + override in parallel so custom image is always used
       Promise.all([
         supabase.from("games_cache").select("*").eq("game_id", gameId).single(),
         supabase.from("game_overrides").select("custom_image_url, default_region_index, custom_rating").eq("game_id", gameId).single(),
-      ]).then(([{ data: cached }, { data: overrideData }]) => {
+      ]).then(([{ data: cached }, { data: ov }]) => {
+        overrideData = ov;
         if (cached) {
-          const resolvedImage = overrideData?.custom_image_url || cached.game_image || "";
+          const resolvedImage = ov?.custom_image_url || cached.game_image || "";
           const gameObj: LootbarGame = {
             game_id: cached.game_id,
             game_name: cached.game_name,
             game_image: resolvedImage,
             category: cached.category || "Top Up",
-            rating: overrideData?.custom_rating ?? cached.rating ?? 5.0,
+            rating: ov?.custom_rating ?? cached.rating ?? 5.0,
             sold_count: cached.sold_count || "100k+ Sold",
             is_hot: cached.is_hot ?? false,
             discount: cached.discount ?? 0,
             min_price: cached.min_price ?? null,
           };
           setGame(gameObj);
-          // Load sibling games for cross-region gift card navigation
           const baseName = getGiftCardBaseName(cached.game_name);
           if (baseName) {
             const searchTerm = baseName.split(" ").slice(0, 2).join(" ");
-            supabase.from("games_cache")
-              .select("game_id, game_name")
-              .ilike("game_name", `%${searchTerm}%`)
+            supabase.from("games_cache").select("game_id, game_name").ilike("game_name", `%${searchTerm}%`)
               .then(async ({ data: siblings }) => {
                 if (siblings && siblings.length > 1) {
                   const ids = (siblings as any[]).map((s: any) => s.game_id);
@@ -678,143 +670,125 @@ export function GameDetailPage() {
               });
           }
         }
+
+        // Fetch SKUs now that we have overrideData
+        Promise.all([
+          lootbarApi.getSkus(gameId),
+          supabase.from("sku_overrides").select("*").eq("game_id", gameId),
+        ]).then(([data, { data: skuOverrides }]) => {
+          const overrideMap = new Map<string, any>();
+          (skuOverrides || []).forEach((o: any) => overrideMap.set(o.sku_id, o));
+          const merged: SkuItem[] = data
+            .filter(s => !overrideMap.get(String(s.sku_id))?.is_hidden)
+            .map(s => {
+              const ov2 = overrideMap.get(String(s.sku_id));
+              return {
+                ...s,
+                sku_name: ov2?.custom_name ?? s.sku_name,
+                price: ov2?.custom_price ?? s.price,
+                image: ov2?.custom_image_url ?? s.image,
+                _sort_order: ov2?.sort_order ?? 9999,
+              } as SkuItem & { _sort_order: number };
+            });
+          const sorted = merged.sort((a, b) => {
+            const ao = (a as any)._sort_order ?? 9999;
+            const bo = (b as any)._sort_order ?? 9999;
+            if (ao !== bo) return ao - bo;
+            return (a.price || 0) - (b.price || 0);
+          });
+          setSkus(sorted);
+          if (sorted.length > 0) {
+            const defaultIdx = overrideData?.default_region_index ?? null;
+            let preferredRegion = sorted[0]?.attribute?.[0]?.value || "global";
+            if (defaultIdx !== null) {
+              const seen = new Set<string>();
+              const orderedRegions: string[] = [];
+              sorted.forEach(s => {
+                const rv = s.attribute?.[0]?.value;
+                if (rv && !seen.has(rv)) { seen.add(rv); orderedRegions.push(rv); }
+              });
+              if (orderedRegions[defaultIdx]) preferredRegion = orderedRegions[defaultIdx];
+            }
+            setSelectedRegion(preferredRegion);
+          }
+          setIsLoading(false);
+        }).catch(() => setIsLoading(false));
       });
 
-      // Fetch related games from games_cache (same category)
-      supabase.from("games_cache")
-        .select("*")
-        .limit(24)
-        .then(({ data: allGames }) => {
-          if (!allGames) return;
-          // Get current game category to filter
-          supabase.from("games_cache").select("category").eq("game_id", gameId).single().then(({ data: currentGame }) => {
-            const cat = currentGame?.category || "Top Up";
-            const filtered = (allGames as any[]).filter((g: any) => g.game_id !== gameId && g.category === cat);
-            const shuffled = filtered.sort(() => Math.random() - 0.5).slice(0, 6);
-            setRelatedGames(shuffled.map((g: any) => ({
-              game_id: g.game_id,
-              game_name: g.game_name,
-              game_image: g.game_image || "",
-              category: g.category,
-              rating: g.rating ?? 5.0,
-              sold_count: g.sold_count || "",
-              is_hot: g.is_hot ?? false,
-              discount: g.discount ?? 0,
-              min_price: g.min_price ?? null,
-            })));
-          });
+      // Fetch related games
+      supabase.from("games_cache").select("*").limit(24).then(({ data: allGames }) => {
+        if (!allGames) return;
+        supabase.from("games_cache").select("category").eq("game_id", gameId).single().then(({ data: currentGame }) => {
+          const cat = currentGame?.category || "Top Up";
+          const filtered = (allGames as any[]).filter((g: any) => g.game_id !== gameId && g.category === cat);
+          const shuffled = filtered.sort(() => Math.random() - 0.5).slice(0, 6);
+          setRelatedGames(shuffled.map((g: any) => ({
+            game_id: g.game_id, game_name: g.game_name, game_image: g.game_image || "",
+            category: g.category, rating: g.rating ?? 5.0, sold_count: g.sold_count || "",
+            is_hot: g.is_hot ?? false, discount: g.discount ?? 0, min_price: g.min_price ?? null,
+          })));
         });
+      });
 
-      // Fetch game guide/instructions (best-effort)
-      supabase.functions.invoke("lootbar-proxy", {
-        body: { action: "get_game_guide", params: { game_id: gameId } },
-      }).then(({ data }) => {
-        if (!data || data.status === "error") return;
-        const guide = data.data?.guide || data.data;
-        if (guide && typeof guide === "object") {
-          if (guide.description || guide.content) {
-            setProductDetails(guide.description || guide.content);
+      // Fetch game guide/instructions
+      supabase.functions.invoke("lootbar-proxy", { body: { action: "get_game_guide", params: { game_id: gameId } } })
+        .then(({ data }) => {
+          if (!data || data.status === "error") return;
+          const guide = data.data?.guide || data.data;
+          if (guide && typeof guide === "object") {
+            if (guide.description || guide.content) setProductDetails(guide.description || guide.content);
+            if (Array.isArray(guide.steps) && guide.steps.length > 0) {
+              setTopUpInstructions(guide.steps.map((s: any, i: number) => ({
+                step: i + 1, title: s.title || `Step ${i + 1}`, description: s.desc || s.description || "",
+              })));
+            }
           }
-          if (Array.isArray(guide.steps) && guide.steps.length > 0) {
-            setTopUpInstructions(guide.steps.map((s: any, i: number) => ({
-              step: i + 1,
-              title: s.title || `Step ${i + 1}`,
-              description: s.desc || s.description || "",
-            })));
-          }
-        }
-      }).catch(() => {});
+        }).catch(() => {});
 
-      // Fetch real reviews from Lootbar API (best-effort)
+      // Fetch reviews: local DB first, then Lootbar API
       setReviewsLoading(true);
-      supabase.functions.invoke("lootbar-proxy", {
-        body: { action: "get_game_reviews", params: { game_id: gameId } },
-      }).then(({ data }) => {
+      Promise.all([
+        supabase.from("game_reviews").select("*").eq("game_id", gameId).order("created_at", { ascending: false }).limit(50),
+        supabase.functions.invoke("lootbar-proxy", { body: { action: "get_game_reviews", params: { game_id: gameId } } }).catch(() => ({ data: null })),
+      ]).then(([{ data: dbReviews }, { data: apiData }]) => {
         setReviewsLoading(false);
-        if (!data || data.status === "error") return;
-        const reviews = Array.isArray(data.data?.items) ? data.data.items
-          : Array.isArray(data.data?.list) ? data.data.list
-          : Array.isArray(data.data) ? data.data : [];
-        if (reviews.length > 0) {
-          setUserReviews(reviews.map((r: any, i: number) => ({
-            id: String(r.id || r.review_id || i),
-            user: r.nickname || r.username || r.user_name || `User${String(r.user_id || i).slice(-4)}`,
-            rating: Number(r.score || r.rating || 5),
-            text: r.content || r.review || r.comment || "",
-            date: r.created_at || r.publish_time || r.date || "",
-            helpful: Number(r.like_num || r.helpful || 0),
-            bought: r.sku_name || r.product_name || "",
-            image: r.image || r.img || null,
-          })).filter((r: any) => r.text));
+        const localReviews = (dbReviews || []).map((r: any) => ({
+          id: r.id, user: r.username, rating: r.rating, text: r.content,
+          date: r.created_at, helpful: r.helpful_count || 0, bought: "", image: r.image_url || null,
+        }));
+        const apiReviews: any[] = [];
+        if (apiData && apiData.status !== "error") {
+          const raw = Array.isArray(apiData.data?.items) ? apiData.data.items
+            : Array.isArray(apiData.data?.list) ? apiData.data.list
+            : Array.isArray(apiData.data) ? apiData.data : [];
+          raw.forEach((r: any, i: number) => {
+            const text = r.content || r.review || r.comment || "";
+            if (text) apiReviews.push({
+              id: `api_${r.id || r.review_id || i}`,
+              user: r.nickname || r.username || r.user_name || `User${String(r.user_id || i).slice(-4)}`,
+              rating: Number(r.score || r.rating || 5), text,
+              date: r.created_at || r.publish_time || r.date || "",
+              helpful: Number(r.like_num || r.helpful || 0),
+              bought: r.sku_name || r.product_name || "", image: r.image || r.img || null,
+            });
+          });
         }
+        setUserReviews([...localReviews, ...apiReviews]);
       }).catch(() => { setReviewsLoading(false); });
 
-      // Fetch blog posts for this game (best-effort)
-      supabase.functions.invoke("lootbar-proxy", {
-        body: { action: "get_blog_posts", params: { game_id: gameId } },
-      }).then(({ data }) => {
-        if (!data || data.status === "error") return;
-        const posts = Array.isArray(data.data?.items) ? data.data.items : Array.isArray(data.data) ? data.data : [];
-        if (posts.length > 0) {
-          setBlogPosts(posts.slice(0, 4).map((p: any, i: number) => ({
-            id: String(p.id || p.blog_id || i),
-            title: p.title || p.blog_title || "",
-            date: p.created_at || p.publish_time || p.date || "",
-            thumbnail: p.thumbnail || p.cover || p.image || null,
-            url: p.url || p.link || "",
-          })).filter((p: any) => p.title));
-        }
-      }).catch(() => {});
-
-      // Fetch SKUs and overrides in parallel
-      Promise.all([
-        lootbarApi.getSkus(gameId),
-        supabase.from("sku_overrides").select("*").eq("game_id", gameId),
-      ]).then(([data, { data: overrides }]) => {
-        const overrideMap = new Map<string, { custom_name: string | null; custom_price: number | null; custom_image_url: string | null; is_hidden: boolean; sort_order: number }>(); 
-        (overrides || []).forEach((o: { sku_id: string; custom_name: string | null; custom_price: number | null; custom_image_url: string | null; is_hidden: boolean; sort_order: number }) => overrideMap.set(o.sku_id, o));
-
-        // Apply overrides and filter hidden
-        const merged: SkuItem[] = data
-          .filter(s => !overrideMap.get(String(s.sku_id))?.is_hidden)
-          .map(s => {
-            const ov = overrideMap.get(String(s.sku_id));
-            return {
-              ...s,
-              sku_name: ov?.custom_name ?? s.sku_name,
-              price: ov?.custom_price ?? s.price,
-              image: ov?.custom_image_url ?? s.image,
-              _sort_order: ov?.sort_order ?? 9999,
-            } as SkuItem & { _sort_order: number };
-          });
-
-        // Sort: first by override sort_order, then by price
-        const sorted = merged.sort((a, b) => {
-          const ao = (a as SkuItem & { _sort_order?: number })._sort_order ?? 9999;
-          const bo = (b as SkuItem & { _sort_order?: number })._sort_order ?? 9999;
-          if (ao !== bo) return ao - bo;
-          return (a.price || 0) - (b.price || 0);
-        });
-
-        setSkus(sorted);
-        if (sorted.length > 0) {
-          // Use admin-set default region index if available
-          const defaultIdx = (overrideData as any)?.default_region_index ?? null;
-          let preferredRegion = sorted[0]?.attribute?.[0]?.value || "global";
-          if (defaultIdx !== null) {
-            // Extract unique regions in order
-            const seen = new Set<string>();
-            const orderedRegions: string[] = [];
-            sorted.forEach(s => {
-              const rv = s.attribute?.[0]?.value;
-              if (rv && !seen.has(rv)) { seen.add(rv); orderedRegions.push(rv); }
-            });
-            if (orderedRegions[defaultIdx]) preferredRegion = orderedRegions[defaultIdx];
+      // Fetch blog posts
+      supabase.functions.invoke("lootbar-proxy", { body: { action: "get_blog_posts", params: { game_id: gameId } } })
+        .then(({ data }) => {
+          if (!data || data.status === "error") return;
+          const posts = Array.isArray(data.data?.items) ? data.data.items : Array.isArray(data.data) ? data.data : [];
+          if (posts.length > 0) {
+            setBlogPosts(posts.slice(0, 4).map((p: any, i: number) => ({
+              id: String(p.id || p.blog_id || i), title: p.title || p.blog_title || "",
+              date: p.created_at || p.publish_time || p.date || "",
+              thumbnail: p.thumbnail || p.cover || p.image || null, url: p.url || p.link || "",
+            })).filter((p: any) => p.title));
           }
-          setSelectedRegion(preferredRegion);
-        }
-        setIsLoading(false);
-      }).catch(() => setIsLoading(false));
+        }).catch(() => {});
     }
   }, [gameId]);
 
@@ -826,24 +800,17 @@ export function GameDetailPage() {
       if (seen.has(region)) return false;
       seen.add(region);
       return true;
-    }).map((s) => ({
-      value: s.attribute[0].value,
-      label: s.attribute[0].value_text || s.attribute[0].value,
-    }));
+    }).map((s) => ({ value: s.attribute[0].value, label: s.attribute[0].value_text || s.attribute[0].value }));
   }, [skus]);
 
   const filteredSkus = useMemo(() => {
-    // When Direct/Login tabs are active, filter by tab first
     const baseSkus = hasTopUpTabs ? (activeTopUpTab === "direct" ? directSkus : loginSkus) : skus;
     if (!selectedRegion) return baseSkus;
-    return baseSkus.filter((s) =>
-      s.attribute?.[0]?.value === selectedRegion || s.attribute?.length === 0
-    );
+    return baseSkus.filter((s) => s.attribute?.[0]?.value === selectedRegion || s.attribute?.length === 0);
   }, [skus, selectedRegion, hasTopUpTabs, activeTopUpTab, directSkus, loginSkus]);
 
   const extraInfoFields = useMemo(() => selectedSku?.extra_info || [], [selectedSku]);
 
-  // Navigate to sibling gift card game (cross-region)
   const navigateToSibling = useCallback((sibling: {game_id: string; slug: string | null}) => {
     if (sibling.game_id === gameId) return;
     if (sibling.slug) {
@@ -854,7 +821,6 @@ export function GameDetailPage() {
     }
   }, [gameId, isGiftCard, navigate]);
 
-  // How to buy steps
   const defaultHowToBuySteps = useMemo(() => {
     if (isGiftCard) {
       return [
@@ -875,10 +841,8 @@ export function GameDetailPage() {
 
   const HowToBuyPanel = ({ inSidebar = false }: { inSidebar?: boolean }) => (
     <div>
-      <button
-        onClick={() => setShowHowToBuy(v => !v)}
-        className={`w-full flex items-center justify-between border border-gray-200 ${inSidebar ? "px-4 py-3" : "px-5 py-4"} bg-white hover:bg-gray-50 transition-colors`}
-      >
+      <button onClick={() => setShowHowToBuy(v => !v)}
+        className={`w-full flex items-center justify-between border border-gray-200 ${inSidebar ? "px-4 py-3" : "px-5 py-4"} bg-white hover:bg-gray-50 transition-colors`}>
         <div className="flex items-center gap-2">
           <BookOpen size={14} className="text-gray-500" />
           <span className="text-sm font-semibold text-gray-700">How to buy?</span>
@@ -902,23 +866,22 @@ export function GameDetailPage() {
   );
 
   const YouMayAlsoLikeSection = () => {
-    if (relatedGames.length === 0) return null;
+    const displayGames = relatedGamesWithImages.length > 0 ? relatedGamesWithImages : relatedGames;
+    if (displayGames.length === 0) return null;
+    const FALLBACK = "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=200&h=200&fit=crop";
     return (
       <div className="bg-white border border-gray-100 p-6 mt-4">
         <h3 className="text-lg font-bold text-gray-900 mb-4">You May Also Like</h3>
         <div className="grid grid-cols-3 lg:grid-cols-6 gap-3">
-          {relatedGames.map(g => {
-            const img = g.game_image || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=200&h=200&fit=crop";
+          {displayGames.map(g => {
+            const img = g.game_image || FALLBACK;
             return (
-              <button key={g.game_id} onClick={() => navigate(`/game/${g.game_id}`)}
-                className="flex flex-col text-left group">
+              <button key={g.game_id} onClick={() => navigate(`/game/${g.game_id}`)} className="flex flex-col text-left group">
                 <div className="relative aspect-square w-full rounded-xl overflow-hidden bg-gray-100">
                   <img src={img} alt={g.game_name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                    onError={e => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=200&h=200&fit=crop"; }} />
+                    onError={e => { (e.target as HTMLImageElement).src = FALLBACK; }} />
                   {(g.discount || 0) > 0 && (
-                    <div className="absolute top-1.5 left-1.5 bg-orange-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">
-                      -{g.discount}%
-                    </div>
+                    <div className="absolute top-1.5 left-1.5 bg-orange-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">-{g.discount}%</div>
                   )}
                 </div>
                 <p className="text-xs font-bold text-gray-900 mt-1.5 line-clamp-2 leading-tight">{g.game_name}</p>
@@ -944,8 +907,7 @@ export function GameDetailPage() {
         <h3 className="text-lg font-bold text-gray-900 mb-4">Game Blog</h3>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {blogPosts.map(post => (
-            <a key={post.id} href={post.url || undefined} target="_blank" rel="noopener noreferrer"
-              className="flex gap-3 group cursor-pointer">
+            <a key={post.id} href={post.url || undefined} target="_blank" rel="noopener noreferrer" className="flex gap-3 group cursor-pointer">
               <div className="w-24 h-16 flex-shrink-0 rounded-xl overflow-hidden bg-gray-100">
                 {post.thumbnail ? (
                   <img src={post.thumbnail} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
@@ -967,8 +929,49 @@ export function GameDetailPage() {
     );
   };
 
+  const AddReviewForm = () => (
+    <div className="bg-gray-50 rounded-2xl p-4 mb-4 border border-gray-200">
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-sm font-bold text-gray-900">Write a Review</p>
+        <button onClick={() => setShowAddReview(false)}><X size={16} className="text-gray-400" /></button>
+      </div>
+      <div className="flex items-center gap-1 mb-3">
+        {[1,2,3,4,5].map(s => (
+          <button key={s} onClick={() => setNewRating(s)}>
+            <Star size={24} fill={s <= newRating ? "#FFD200" : "#e5e7eb"} stroke="none" />
+          </button>
+        ))}
+      </div>
+      <textarea value={newReviewText} onChange={e => setNewReviewText(e.target.value)}
+        placeholder="Share your experience..." rows={3}
+        className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-yellow-400 resize-none mb-3" />
+      <div className="flex items-center gap-3 mb-3">
+        <input ref={reviewImageRef} type="file" accept="image/*" className="hidden" onChange={handleReviewImageSelect} />
+        <button onClick={() => reviewImageRef.current?.click()}
+          className="flex items-center gap-1.5 border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-600 hover:bg-gray-100">
+          <Camera size={14} /> Add Photo
+        </button>
+        {reviewImagePreview && (
+          <div className="relative w-16 h-16">
+            <img src={reviewImagePreview} alt="Preview" className="w-full h-full object-cover rounded-xl" />
+            <button onClick={() => { setReviewImageFile(null); setReviewImagePreview(null); }}
+              className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-gray-900 text-white rounded-full flex items-center justify-center">
+              <X size={10} />
+            </button>
+          </div>
+        )}
+      </div>
+      <button onClick={handleSubmitReview} disabled={isSubmittingReview || !newReviewText.trim()}
+        className={`flex items-center gap-1.5 px-5 py-2.5 rounded-xl font-bold text-sm transition-all ${
+          newReviewText.trim() && !isSubmittingReview ? "bg-yellow-400 text-black hover:bg-yellow-300" : "bg-gray-200 text-gray-400 cursor-not-allowed"
+        }`}>
+        {isSubmittingReview ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+        Submit Review
+      </button>
+    </div>
+  );
+
   const UserReviewsSection = () => {
-    // Only show when real reviews exist
     if (reviewsLoading) {
       return (
         <div className="bg-white border border-gray-100 p-6 mt-4">
@@ -988,76 +991,111 @@ export function GameDetailPage() {
         </div>
       );
     }
-    if (userReviews.length === 0) return null;
-    const rating = game?.rating ?? 5.0;
-    const visible = userReviews.slice(0, reviewsVisible);
-    // Compute star distribution from real reviews
+
     const totalReviews = userReviews.length;
     const starCounts = [5,4,3,2,1].map(s => userReviews.filter(r => Math.round(r.rating) === s).length);
-    const avgRating = userReviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews;
+    const avgRating = totalReviews > 0 ? userReviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews : (game?.rating ?? 5.0);
+    const imageReviews = userReviews.filter(r => r.image);
+    const displayReviews = reviewTab === "images" ? imageReviews : userReviews;
+    const visible = displayReviews.slice(0, reviewsVisible);
+
     return (
       <div className="bg-white border border-gray-100 p-6 mt-4">
-        <h3 className="text-lg font-bold text-gray-900 mb-4">User Reviews</h3>
-        <div className="flex items-start gap-6 mb-5 pb-5 border-b border-gray-100">
-          <div className="text-center">
-            <div className="text-5xl font-black text-gray-900 leading-none">{avgRating.toFixed(1)}</div>
-            <div className="flex justify-center gap-0.5 my-2">
-              {Array.from({length:5}).map((_,i) => <Star key={i} size={14} fill={i<Math.round(avgRating)?"#FFD200":"#e5e7eb"} stroke="none" />)}
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-bold text-gray-900">User Reviews</h3>
+          {!showAddReview && (
+            <button onClick={() => setShowAddReview(true)}
+              className="flex items-center gap-1.5 text-sm font-semibold text-yellow-600 border border-yellow-300 bg-yellow-50 px-3 py-1.5 rounded-xl hover:bg-yellow-100 transition-colors">
+              + Add Review
+            </button>
+          )}
+        </div>
+
+        {showAddReview && <AddReviewForm />}
+
+        {totalReviews > 0 && (
+          <div className="flex items-start gap-6 mb-5 pb-5 border-b border-gray-100">
+            <div className="text-center">
+              <div className="text-5xl font-black text-gray-900 leading-none">{avgRating.toFixed(1)}</div>
+              <div className="flex justify-center gap-0.5 my-2">
+                {Array.from({length:5}).map((_,i) => <Star key={i} size={14} fill={i<Math.round(avgRating)?"#FFD200":"#e5e7eb"} stroke="none" />)}
+              </div>
+              <p className="text-xs text-gray-400">{totalReviews.toLocaleString()} reviews</p>
             </div>
-            <p className="text-xs text-gray-400">{totalReviews.toLocaleString()} reviews</p>
+            <div className="flex-1">
+              {[5,4,3,2,1].map((stars, idx) => {
+                const pct = totalReviews > 0 ? Math.round((starCounts[idx] / totalReviews) * 100) : 0;
+                return (
+                  <div key={stars} className="flex items-center gap-2 mb-1">
+                    <span className="text-xs text-gray-400 w-8 text-right">{stars} ★</span>
+                    <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-yellow-400" style={{width: `${pct}%`}} />
+                    </div>
+                    <span className="text-xs text-gray-400 w-8">{pct}%</span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-          <div className="flex-1">
-            {[5,4,3,2,1].map((stars, idx) => {
-              const pct = totalReviews > 0 ? Math.round((starCounts[idx] / totalReviews) * 100) : 0;
-              return (
-                <div key={stars} className="flex items-center gap-2 mb-1">
-                  <span className="text-xs text-gray-400 w-8 text-right">{stars} ★</span>
-                  <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-yellow-400" style={{width: `${pct}%`}} />
-                  </div>
-                  <span className="text-xs text-gray-400 w-8">{pct}%</span>
-                </div>
-              );
-            })}
+        )}
+
+        {totalReviews > 0 && (
+          <div className="flex gap-4 mb-4 border-b border-gray-100">
+            <button onClick={() => { setReviewTab("all"); setReviewsVisible(3); }}
+              className={`text-sm font-bold pb-2 border-b-2 transition-colors ${reviewTab === "all" ? "border-yellow-400 text-gray-900" : "border-transparent text-gray-400 hover:text-gray-600"}`}>
+              All reviews ({totalReviews})
+            </button>
+            {imageReviews.length > 0 && (
+              <button onClick={() => { setReviewTab("images"); setReviewsVisible(3); }}
+                className={`flex items-center gap-1 text-sm font-bold pb-2 border-b-2 transition-colors ${reviewTab === "images" ? "border-yellow-400 text-gray-900" : "border-transparent text-gray-400 hover:text-gray-600"}`}>
+                <ImageIcon size={13} /> Images ({imageReviews.length})
+              </button>
+            )}
           </div>
-        </div>
-        <div className="flex gap-4 mb-4 border-b border-gray-100">
-          <button className="text-sm font-bold text-gray-900 border-b-2 border-yellow-400 pb-2">All reviews</button>
-          <div className="ml-auto text-xs font-semibold text-yellow-600 self-end pb-2">Most Helpful</div>
-        </div>
-        <div className="space-y-4">
-          {visible.map(review => (
-            <div key={review.id} className="pb-4 border-b border-gray-50 last:border-0">
-              <div className="flex items-start gap-3">
-                <div className="w-9 h-9 bg-yellow-100 rounded-full flex items-center justify-center text-sm font-bold text-yellow-700 flex-shrink-0">{(review.user || "U")[0].toUpperCase()}</div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <span className="text-sm font-bold text-gray-900">{review.user}</span>
-                    {review.bought && <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{review.bought}</span>}
-                    {review.date && <span className="text-xs text-gray-400">{(() => { try { return new Date(review.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }); } catch { return review.date; } })()}</span>}
+        )}
+
+        {totalReviews === 0 && !showAddReview ? (
+          <div className="text-center py-8">
+            <div className="text-4xl mb-2">⭐</div>
+            <p className="text-sm font-semibold text-gray-600 mb-1">No reviews yet</p>
+            <p className="text-xs text-gray-400">Be the first to share your experience!</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {visible.map(review => (
+              <div key={review.id} className="pb-4 border-b border-gray-50 last:border-0">
+                <div className="flex items-start gap-3">
+                  <div className="w-9 h-9 bg-yellow-100 rounded-full flex items-center justify-center text-sm font-bold text-yellow-700 flex-shrink-0">{(review.user || "U")[0].toUpperCase()}</div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                      <span className="text-sm font-bold text-gray-900">{review.user}</span>
+                      {review.bought && <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{review.bought}</span>}
+                      {review.date && <span className="text-xs text-gray-400">{(() => { try { return new Date(review.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }); } catch { return review.date; } })()}</span>}
+                    </div>
+                    <div className="flex gap-0.5 mb-1.5">
+                      {Array.from({length:5}).map((_,i) => <Star key={i} size={11} fill={i<Math.round(review.rating)?"#FFD200":"#e5e7eb"} stroke="none" />)}
+                    </div>
+                    <p className="text-sm text-gray-600 leading-relaxed">{review.text}</p>
+                    {review.image && (
+                      <img src={review.image} alt="Review" className="mt-2 w-20 h-16 rounded-lg object-cover border border-gray-100"
+                        onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                    )}
+                    {review.helpful > 0 && (
+                      <button className="flex items-center gap-1 mt-1.5 text-xs text-gray-400">
+                        <ThumbsUp size={10} /> Helpful ({review.helpful})
+                      </button>
+                    )}
                   </div>
-                  <div className="flex gap-0.5 mb-1.5">
-                    {Array.from({length:5}).map((_,i) => <Star key={i} size={11} fill={i<Math.round(review.rating)?"#FFD200":"#e5e7eb"} stroke="none" />)}
-                  </div>
-                  <p className="text-sm text-gray-600 leading-relaxed">{review.text}</p>
-                  {review.image && (
-                    <img src={review.image} alt="Review" className="mt-2 w-20 h-16 rounded-lg object-cover border border-gray-100"
-                      onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                  )}
-                  {review.helpful > 0 && (
-                    <button className="flex items-center gap-1 mt-1.5 text-xs text-gray-400">
-                      <ThumbsUp size={10} /> Helpful ({review.helpful})
-                    </button>
-                  )}
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-        {reviewsVisible < userReviews.length && (
-          <button onClick={() => setReviewsVisible(v => Math.min(v + 3, userReviews.length))}
+            ))}
+          </div>
+        )}
+
+        {reviewsVisible < displayReviews.length && (
+          <button onClick={() => setReviewsVisible(v => Math.min(v + 3, displayReviews.length))}
             className="mt-4 w-full border border-gray-200 text-sm font-semibold text-gray-600 py-2.5 hover:bg-gray-50 transition-colors">
-            View more ({userReviews.length - reviewsVisible} more)
+            View more ({displayReviews.length - reviewsVisible} more)
           </button>
         )}
       </div>
@@ -1067,11 +1105,8 @@ export function GameDetailPage() {
   const applyMarkup = (price: number) => price * (1 + markup / 100);
   const totalPrice = selectedSku ? applyMarkup(selectedSku.price || 0) * quantity : 0;
   const totalSavings = selectedSku ? (selectedSku.discount_amount || 0) * quantity : 0;
-
-  // Determine if this product needs player verification (has extra_info fields)
   const needsVerification = extraInfoFields.length > 0;
 
-  // Desktop: always go directly to checkout with inline extra info (never to VerifyPlayerPage)
   const handleDesktopTopUp = () => {
     if (!selectedSku) { toast.error("Please select a package first"); return; }
     for (const field of extraInfoFields) {
@@ -1084,19 +1119,16 @@ export function GameDetailPage() {
     navigate("/checkout", { state: { sku: finalSku, game, quantity, extraInfo: extraInfoValues } });
   };
 
-  // Mobile: go to VerifyPlayerPage when extra info is needed, else straight to checkout
   const handleTopUpNow = () => {
     if (!selectedSku) { toast.error("Please select a package first"); return; }
     const finalSku = { ...selectedSku, price: applyMarkup(selectedSku.price || 0) };
     if (needsVerification) {
-      // Pass game, sku, quantity to VerifyPlayerPage — extra info collected there
       navigate("/verify-player", { state: { sku: finalSku, game, quantity } });
     } else {
       navigate("/checkout", { state: { sku: finalSku, game, quantity, extraInfo: extraInfoValues } });
     }
   };
 
-  // Mobile: select SKU only — user must tap Continue/Top-up Now to proceed
   const handleMobileSkuSelect = (sku: SkuItem) => {
     setSelectedSku(sku);
     setExtraInfoValues({});
@@ -1115,70 +1147,49 @@ export function GameDetailPage() {
             {field.title}
           </label>
           {field.type === "select" && field.options && field.options.length > 0 ? (
-            <select
-              value={extraInfoValues[field.name] || ""}
-              onChange={(e) => setFieldValue(field.name, e.target.value)}
-              className="w-full border border-gray-300 focus:border-yellow-400 px-3 py-2.5 text-sm text-gray-900 outline-none bg-white rounded-xl"
-            >
+            <select value={extraInfoValues[field.name] || ""} onChange={(e) => setFieldValue(field.name, e.target.value)}
+              className="w-full border border-gray-300 focus:border-yellow-400 px-3 py-2.5 text-sm text-gray-900 outline-none bg-white rounded-xl">
               <option value="">Please select {field.title}</option>
               {field.options.map((opt) => (
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
               ))}
             </select>
           ) : (
-            <input
-              type="text"
-              value={extraInfoValues[field.name] || ""}
-              onChange={(e) => setFieldValue(field.name, e.target.value)}
+            <input type="text" value={extraInfoValues[field.name] || ""} onChange={(e) => setFieldValue(field.name, e.target.value)}
               placeholder={field.placeholder || `Please enter your ${field.title}`}
-              className="w-full border border-gray-300 focus:border-yellow-400 px-3 py-2.5 text-sm text-gray-900 outline-none transition-colors rounded-xl"
-            />
+              className="w-full border border-gray-300 focus:border-yellow-400 px-3 py-2.5 text-sm text-gray-900 outline-none transition-colors rounded-xl" />
           )}
         </div>
       ))}
     </>
   );
 
-  // ── Manual product computed values ────────────────────────────────────────────
+  // ── Manual product computed values ──────────────────────────────────────────
   const filteredManualSkus = useMemo(() => {
     if (!manualProduct?.requires_server) return manualSkus;
     if (!selectedManualRegion) return manualSkus;
     return manualSkus.filter(s => s.region_id === selectedManualRegion.id);
   }, [manualSkus, selectedManualRegion, manualProduct]);
 
-  const manualTotalPrice = selectedManualSku
-    ? applyMarkup(Number(selectedManualSku.original_price)) * quantity
-    : 0;
+  const manualTotalPrice = selectedManualSku ? applyMarkup(Number(selectedManualSku.original_price)) * quantity : 0;
 
   const handleManualTopUp = (isMobile = false) => {
     if (!selectedManualSku) { toast.error("Select a package first"); return; }
-      if (!uid.trim()) {
-    setUidError(true);
-    return;
-  }
-  setUidError(false);
+    if (!uid.trim()) { setUidError(true); return; }
+    setUidError(false);
     const productName = manualProduct?.product_name || "";
     const regionName = selectedManualRegion?.region_name || "";
     const skuData = {
-      sku_id: selectedManualSku.id,
-      sku_name: selectedManualSku.sku_name,
+      sku_id: selectedManualSku.id, sku_name: selectedManualSku.sku_name,
       price: applyMarkup(Number(selectedManualSku.original_price)),
       original_price: Number(selectedManualSku.original_price),
       discount_amount: selectedManualSku.sale_price ? Number(selectedManualSku.original_price) - Number(selectedManualSku.sale_price) : 0,
-      image: selectedManualSku.photo_url || manualProduct?.photo_url || "",
-      attribute: [],
-      extra_info: [],
+      image: selectedManualSku.photo_url || manualProduct?.photo_url || "", attribute: [], extra_info: [],
     };
     const gameData = {
-      game_id: gameId!,
-      game_name: productName + (regionName ? ` (${regionName})` : ""),
-      game_image: manualProduct?.photo_url || "",
-      category: manualProduct?.game_category || "Top Up",
-      rating: 5.0,
-      sold_count: "",
-      is_hot: false,
-      discount: 0,
-      min_price: null,
+      game_id: gameId!, game_name: productName + (regionName ? ` (${regionName})` : ""),
+      game_image: manualProduct?.photo_url || "", category: manualProduct?.game_category || "Top Up",
+      rating: 5.0, sold_count: "", is_hot: false, discount: 0, min_price: null,
     };
     if (manualProduct?.requires_player_id && isMobile) {
       navigate("/verify-player", { state: { sku: skuData, game: gameData, quantity, isManual: true } });
@@ -1187,7 +1198,7 @@ export function GameDetailPage() {
     }
   };
 
-  // ── Manual product layout (────────────────────────────────────────────
+  // ── Manual product layout ───────────────────────────────────────────────────
   if (isManual && (manualProduct || !isLoading)) {
     const prod = manualProduct;
     const cover = prod?.photo_url || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=200&h=200&fit=crop";
@@ -1205,9 +1216,7 @@ export function GameDetailPage() {
         </div>
         <div className="max-w-[1280px] mx-auto px-6 pb-16">
           <div className="flex gap-6 items-start">
-            {/* Left */}
             <div className="flex-1 min-w-0">
-              {/* Game header */}
               <div className="bg-white p-6 mb-4 border border-gray-100 rounded-xl">
                 <div className="flex items-start gap-5">
                   <img src={cover} alt={displayName} className="w-24 h-24 rounded-2xl object-cover flex-shrink-0" />
@@ -1222,15 +1231,12 @@ export function GameDetailPage() {
                   </div>
                 </div>
               </div>
-
-              {/* Region tabs */}
               {prod?.requires_server && manualRegions.length > 0 && (
                 <div className="bg-white px-5 py-4 mb-4 border border-gray-100 rounded-xl">
                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Select Region</p>
                   <div className="flex flex-wrap gap-2">
                     {manualRegions.map(r => (
-                      <button key={r.id}
-                        onClick={() => { setSelectedManualRegion(r); setSelectedManualSku(null); }}
+                      <button key={r.id} onClick={() => { setSelectedManualRegion(r); setSelectedManualSku(null); }}
                         className={`px-4 py-2 rounded-xl border text-sm font-semibold transition-all ${selectedManualRegion?.id === r.id ? "border-yellow-400 bg-yellow-50 text-yellow-700" : "border-gray-200 text-gray-600 hover:border-gray-300 bg-white"}`}>
                         {r.region_name}
                       </button>
@@ -1238,20 +1244,14 @@ export function GameDetailPage() {
                   </div>
                 </div>
               )}
-
-              {/* SKU grid - each with own photo */}
               <div className="bg-white p-5 mb-4 border border-gray-100 rounded-xl">
                 <p className="text-sm font-bold text-gray-700 mb-4">
                   {prod?.requires_server && selectedManualRegion ? selectedManualRegion.region_name + " — " : ""}Packages
                 </p>
                 {isLoading ? (
-                  <div className="grid grid-cols-3 xl:grid-cols-4 gap-3">
-                    {Array.from({ length: 6 }).map((_, i) => <div key={i} className="shimmer h-36 rounded-xl" />)}
-                  </div>
+                  <div className="grid grid-cols-3 xl:grid-cols-4 gap-3">{Array.from({ length: 6 }).map((_, i) => <div key={i} className="shimmer h-36 rounded-xl" />)}</div>
                 ) : filteredManualSkus.length === 0 ? (
-                  <p className="text-sm text-gray-400 text-center py-8">
-                    {prod?.requires_server && !selectedManualRegion ? "Select a region above" : "No packages available"}
-                  </p>
+                  <p className="text-sm text-gray-400 text-center py-8">{prod?.requires_server && !selectedManualRegion ? "Select a region above" : "No packages available"}</p>
                 ) : (
                   <div className="grid grid-cols-3 xl:grid-cols-5 gap-3">
                     {filteredManualSkus.map(sku => {
@@ -1259,27 +1259,17 @@ export function GameDetailPage() {
                       const isSelected = selectedManualSku?.id === sku.id;
                       const skuImg = sku.photo_url || cover;
                       return (
-                        <button key={sku.id}
-                          onClick={() => setSelectedManualSku(sku)}
+                        <button key={sku.id} onClick={() => setSelectedManualSku(sku)}
                           className={`relative flex flex-col bg-white border-2 overflow-hidden transition-all hover:shadow-md text-left rounded-xl ${isSelected ? "border-yellow-400 shadow-md" : "border-gray-200 hover:border-gray-300"}`}>
                           <div className="aspect-[4/3] bg-gray-100 relative overflow-hidden">
-                            <img src={skuImg} alt={sku.sku_name} className="w-full h-full object-cover"
-                              onError={e => { (e.target as HTMLImageElement).src = cover; }} />
-                            {isSelected && (
-                              <div className="absolute top-1.5 right-1.5 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center shadow-sm">
-                                <Check size={11} className="text-black" />
-                              </div>
-                            )}
-                            {sku.sale_price && (
-                              <div className="absolute top-1.5 left-1.5 bg-orange-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">SALE</div>
-                            )}
+                            <img src={skuImg} alt={sku.sku_name} className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).src = cover; }} />
+                            {isSelected && <div className="absolute top-1.5 right-1.5 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center shadow-sm"><Check size={11} className="text-black" /></div>}
+                            {sku.sale_price && <div className="absolute top-1.5 left-1.5 bg-orange-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">SALE</div>}
                           </div>
                           <div className="p-2.5">
                             <p className="text-xs font-bold text-gray-900 leading-tight line-clamp-2 mb-1.5">{sku.sku_name}</p>
                             <p className="text-sm font-black text-orange-500">${price.toFixed(2)}</p>
-                            {sku.sale_price && (
-                              <span className="text-[10px] text-gray-400 line-through">${Number(sku.sale_price).toFixed(2)}</span>
-                            )}
+                            {sku.sale_price && <span className="text-[10px] text-gray-400 line-through">${Number(sku.sale_price).toFixed(2)}</span>}
                           </div>
                         </button>
                       );
@@ -1287,8 +1277,6 @@ export function GameDetailPage() {
                   </div>
                 )}
               </div>
-
-              {/* Description */}
               {(prod?.full_description || prod?.short_description) && (
                 <div className="bg-white p-6 border border-gray-100 rounded-xl">
                   <h3 className="text-lg font-bold text-gray-900 mb-3">About this product</h3>
@@ -1296,114 +1284,67 @@ export function GameDetailPage() {
                 </div>
               )}
             </div>
-
-            {/* Right: Order panel */}
-
-            
-<div className="w-72 flex-shrink-0">
-  <div style={{ position: "sticky", top: "70px" } as React.CSSProperties}>
-    <div className="border border-gray-200 shadow-sm bg-white rounded-xl overflow-hidden">
-      {/* Order Information Header */}
-      <div className="px-5 py-4 border-b border-gray-100">
-        <h3 className="font-bold text-gray-900 text-base">Order Information</h3>
-        <div className="mt-3">
-          <label className="text-sm text-gray-700 mb-1 block">
-            <span className="text-red-500">*</span>UID
-          </label>
-          <input
-            type="text"
-            value={uid}
-            onChange={(e) => setUid(e.target.value)}
-            placeholder="Please fill in the game UID"
-            className={`w-full px-3 py-2.5 text-sm bg-gray-50 border rounded-lg outline-none transition-all ${
-              uidError
-                ? "border-red-400 focus:border-red-500"
-                : "border-gray-200 focus:border-blue-400 focus:bg-white"
-            }`}
-          />
-          {uid && !uidError && (
-            <div className="mt-2 flex items-start gap-2 bg-green-50 border border-green-100 rounded-lg p-2.5">
-              <div className="w-4 h-4 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                  <path d="M2 5L4 7L8 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
+            <div className="w-72 flex-shrink-0">
+              <div style={{ position: "sticky", top: "70px" } as React.CSSProperties}>
+                <div className="border border-gray-200 shadow-sm bg-white rounded-xl overflow-hidden">
+                  <div className="px-5 py-4 border-b border-gray-100">
+                    <h3 className="font-bold text-gray-900 text-base">Order Information</h3>
+                    <div className="mt-3">
+                      <label className="text-sm text-gray-700 mb-1 block"><span className="text-red-500">*</span>UID</label>
+                      <input type="text" value={uid} onChange={(e) => setUid(e.target.value)}
+                        placeholder="Please fill in the game UID"
+                        className={`w-full px-3 py-2.5 text-sm bg-gray-50 border rounded-lg outline-none transition-all ${uidError ? "border-red-400 focus:border-red-500" : "border-gray-200 focus:border-blue-400 focus:bg-white"}`} />
+                      {uid && !uidError && (
+                        <div className="mt-2 flex items-start gap-2 bg-green-50 border border-green-100 rounded-lg p-2.5">
+                          <div className="w-4 h-4 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5L4 7L8 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                          </div>
+                          <p className="text-xs text-green-700 leading-relaxed">The has successful top-ups before, feel free to continue your purchase</p>
+                        </div>
+                      )}
+                      {uidError && <p className="mt-1.5 text-xs text-red-500">UID is required</p>}
+                    </div>
+                  </div>
+                  <div className="px-5 py-4 border-b border-gray-100">
+                    {selectedManualSku ? (
+                      <div className="flex items-center gap-3 bg-yellow-50 border border-yellow-200 rounded-xl p-3">
+                        <img src={selectedManualSku.photo_url || cover} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" alt="" />
+                        <div>
+                          <p className="text-xs font-bold text-gray-900">{selectedManualSku.sku_name}</p>
+                          <p className="text-sm font-black text-orange-500">${applyMarkup(Number(selectedManualSku.original_price)).toFixed(2)}</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-gray-50 p-3 text-center text-sm text-gray-400 border border-dashed border-gray-200 rounded-xl">← Select a package</div>
+                    )}
+                  </div>
+                  <div className="px-5 py-4 border-b border-gray-100">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-semibold text-gray-700">Quantity</span>
+                      <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden">
+                        <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-50 border-r border-gray-300">−</button>
+                        <span className="text-sm font-bold w-10 text-center">{quantity}</span>
+                        <button onClick={() => setQuantity(quantity + 1)} className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-50 border-l border-gray-300">+</button>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="px-5 py-4">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm text-gray-500">Price</span>
+                      <span className="text-xl font-black text-orange-500">{selectedManualSku ? `$${manualTotalPrice.toFixed(2)}` : "—"}</span>
+                    </div>
+                    <button onClick={() => handleManualTopUp(false)} disabled={!selectedManualSku || !uid}
+                      className={`w-full py-3.5 font-bold text-base transition-all mt-3 rounded-xl ${selectedManualSku && uid ? "bg-yellow-400 hover:bg-yellow-300 text-black" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>
+                      Top-up Now
+                    </button>
+                    <div className="flex items-center justify-center gap-1.5 mt-3">
+                      <Shield size={13} className="text-green-500" />
+                      <span className="text-xs text-gray-500">NoxyStore Security Guarantee</span>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <p className="text-xs text-green-700 leading-relaxed">
-                The has successful top-ups before, feel free to continue your purchase
-              </p>
             </div>
-          )}
-          {uidError && (
-            <p className="mt-1.5 text-xs text-red-500">UID is required</p>
-          )}
-        </div>
-      </div>
-      {/* Selected Package Info */}
-      <div className="px-5 py-4 border-b border-gray-100">
-        {selectedManualSku ? (
-          <div className="flex items-center gap-3 bg-yellow-50 border border-yellow-200 rounded-xl p-3">
-            <img
-              src={selectedManualSku.photo_url || cover}
-              className="w-10 h-10 rounded-lg object-cover flex-shrink-0"
-              alt=""
-            />
-            <div>
-              <p className="text-xs font-bold text-gray-900">{selectedManualSku.sku_name}</p>
-              <p className="text-sm font-black text-orange-500">
-                ${applyMarkup(Number(selectedManualSku.original_price)).toFixed(2)}
-              </p>
-            </div>
-          </div>
-        ) : (
-          <div className="bg-gray-50 p-3 text-center text-sm text-gray-400 border border-dashed border-gray-200 rounded-xl">
-            ← Select a package
-          </div>
-        )}
-      </div>
-      {/* Quantity */}
-      <div className="px-5 py-4 border-b border-gray-100">
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-semibold text-gray-700">Quantity</span>
-          <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden">
-            <button
-              onClick={() => setQuantity(Math.max(1, quantity - 1))}
-              className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-50 border-r border-gray-300"
-            >−</button>
-            <span className="text-sm font-bold w-10 text-center">{quantity}</span>
-            <button
-              onClick={() => setQuantity(quantity + 1)}
-              className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-50 border-l border-gray-300"
-            >+</button>
-          </div>
-        </div>
-      </div>
-      {/* Price & CTA */}
-      <div className="px-5 py-4">
-        <div className="flex items-center justify-between mb-1">
-          <span className="text-sm text-gray-500">Price</span>
-          <span className="text-xl font-black text-orange-500">
-            {selectedManualSku ? `$${manualTotalPrice.toFixed(2)}` : "—"}
-          </span>
-        </div>
-        <button
-          onClick={() => handleManualTopUp(false)}
-          disabled={!selectedManualSku || !uid}
-          className={`w-full py-3.5 font-bold text-base transition-all mt-3 rounded-xl ${
-            selectedManualSku && uid
-              ? "bg-yellow-400 hover:bg-yellow-300 text-black"
-              : "bg-gray-200 text-gray-400 cursor-not-allowed"
-          }`}
-        >
-          Top-up Now
-        </button>
-        <div className="flex items-center justify-center gap-1.5 mt-3">
-          <Shield size={13} className="text-green-500" />
-          <span className="text-xs text-gray-500">NoxyStore Security Guarantee</span>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
           </div>
         </div>
         <Footer />
@@ -1415,7 +1356,6 @@ export function GameDetailPage() {
       <div className="lg:hidden bg-white min-h-screen">
         <Header showMenu />
         <div className="pb-52">
-          {/* Game header */}
           <div className="px-4 py-4 border-b border-gray-100">
             <div className="flex items-center gap-3">
               <img src={cover} alt={displayName} className="w-16 h-16 rounded-xl object-cover flex-shrink-0 shadow-sm" />
@@ -1426,15 +1366,12 @@ export function GameDetailPage() {
               </div>
             </div>
           </div>
-
-          {/* Region tabs */}
           {prod?.requires_server && manualRegions.length > 0 && (
             <div className="px-4 pt-4 pb-3 border-b border-gray-100">
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Select Region</p>
               <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
                 {manualRegions.map(r => (
-                  <button key={r.id}
-                    onClick={() => { setSelectedManualRegion(r); setSelectedManualSku(null); }}
+                  <button key={r.id} onClick={() => { setSelectedManualRegion(r); setSelectedManualSku(null); }}
                     className={`flex-shrink-0 px-4 py-2 rounded-xl border text-sm font-semibold transition-all ${selectedManualRegion?.id === r.id ? "border-yellow-400 text-yellow-600 bg-yellow-50" : "border-gray-200 text-gray-600 bg-white"}`}>
                     {r.region_name}
                   </button>
@@ -1442,15 +1379,11 @@ export function GameDetailPage() {
               </div>
             </div>
           )}
-
-          {/* SKU grid */}
           <div className="px-4 pt-4">
             {isLoading ? (
               <div className="grid grid-cols-2 gap-3">{Array.from({length: 4}).map((_,i)=><div key={i} className="shimmer h-36 rounded-xl" />)}</div>
             ) : filteredManualSkus.length === 0 ? (
-              <p className="text-sm text-gray-400 text-center py-10">
-                {prod?.requires_server && !selectedManualRegion ? "Select a region above" : "No packages available"}
-              </p>
+              <p className="text-sm text-gray-400 text-center py-10">{prod?.requires_server && !selectedManualRegion ? "Select a region above" : "No packages available"}</p>
             ) : (
               <div className="grid grid-cols-2 gap-3">
                 {filteredManualSkus.map(sku => {
@@ -1458,20 +1391,12 @@ export function GameDetailPage() {
                   const isSelected = selectedManualSku?.id === sku.id;
                   const skuImg = sku.photo_url || cover;
                   return (
-                    <button key={sku.id}
-                      onClick={() => setSelectedManualSku(sku)}
+                    <button key={sku.id} onClick={() => setSelectedManualSku(sku)}
                       className={`relative flex flex-col bg-white rounded-xl border-2 overflow-hidden text-left transition-all ${isSelected ? "border-yellow-400 shadow-md" : "border-gray-200"}`}>
                       <div className="aspect-[4/3] bg-gray-100 relative overflow-hidden">
-                        <img src={skuImg} alt={sku.sku_name} className="w-full h-full object-cover"
-                          onError={e => { (e.target as HTMLImageElement).src = cover; }} />
-                        {isSelected && (
-                          <div className="absolute top-1.5 right-1.5 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center">
-                            <Check size={10} className="text-black" />
-                          </div>
-                        )}
-                        {sku.sale_price && (
-                          <div className="absolute top-1.5 left-1.5 bg-orange-500 text-white text-[9px] font-bold px-1 py-0.5 rounded">SALE</div>
-                        )}
+                        <img src={skuImg} alt={sku.sku_name} className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).src = cover; }} />
+                        {isSelected && <div className="absolute top-1.5 right-1.5 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center"><Check size={10} className="text-black" /></div>}
+                        {sku.sale_price && <div className="absolute top-1.5 left-1.5 bg-orange-500 text-white text-[9px] font-bold px-1 py-0.5 rounded">SALE</div>}
                       </div>
                       <div className="p-2.5">
                         <p className="text-xs font-bold text-gray-900 leading-tight line-clamp-2 mb-1">{sku.sku_name}</p>
@@ -1485,8 +1410,6 @@ export function GameDetailPage() {
             )}
           </div>
         </div>
-
-        {/* Bottom CTA */}
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 pt-3 pb-safe z-50" style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}>
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-gray-600">Qty</span>
@@ -1518,7 +1441,6 @@ export function GameDetailPage() {
     );
   }
 
-
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#f5f5f5]">
@@ -1544,7 +1466,6 @@ export function GameDetailPage() {
   const DesktopLayout = () => (
     <div className="hidden lg:block min-h-screen bg-[#f5f5f5]">
       <DesktopHeader />
-
       <div className="max-w-[1280px] mx-auto px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm text-gray-500">
           <button onClick={() => navigate("/")} className="hover:text-gray-700">Home</button>
@@ -1553,11 +1474,8 @@ export function GameDetailPage() {
           <ChevronRight size={14} />
           <span className="text-gray-800 font-medium">{game?.game_name}</span>
         </div>
-        <a
-          href="https://www.trustpilot.com/review/noxystore.com"
-          target="_blank" rel="noopener noreferrer"
-          className="flex items-center gap-3 hover:opacity-75 transition-opacity"
-        >
+        <a href="https://www.trustpilot.com/review/noxystore.com" target="_blank" rel="noopener noreferrer"
+          className="flex items-center gap-3 hover:opacity-75 transition-opacity">
           <span className="text-sm text-gray-600 font-semibold">Excellent</span>
           <div className="flex gap-0.5">
             {Array.from({ length: 5 }).map((_, i) => (
@@ -1569,20 +1487,14 @@ export function GameDetailPage() {
           <span className="text-sm text-gray-500">44,884 reviews on Trustpilot</span>
         </a>
       </div>
-
       <div className="max-w-[1280px] mx-auto px-6 pb-16">
         <div className="flex gap-6 items-start">
-          {/* Left panel */}
           <div className="flex-1 min-w-0">
-            {/* Game header */}
             <div className="bg-white border border-gray-100 p-5 mb-4">
               <div className="flex items-start gap-5">
                 <img
                   src={imgError ? "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=100&h=100&fit=crop" : (game?.game_image || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=100&h=100&fit=crop")}
-                  alt={game?.game_name}
-                  className="w-24 h-24 rounded-2xl object-cover flex-shrink-0"
-                  onError={() => setImgError(true)}
-                />
+                  alt={game?.game_name} className="w-24 h-24 rounded-2xl object-cover flex-shrink-0" onError={() => setImgError(true)} />
                 <div className="flex-1">
                   <h1 className="text-2xl font-black text-gray-900 mb-1">{game?.game_name}</h1>
                   <div className="flex items-center gap-3 mb-2">
@@ -1604,8 +1516,6 @@ export function GameDetailPage() {
                   </div>
                 </div>
               </div>
-
-              {/* Gift card notice */}
               {isGiftCard && selectedRegion && (
                 <div className="mt-4 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-start gap-2">
                   <Info size={15} className="text-amber-600 flex-shrink-0 mt-0.5" />
@@ -1616,7 +1526,6 @@ export function GameDetailPage() {
               )}
             </div>
 
-            {/* Sibling gift card cross-region navigation (desktop) */}
             {siblingGames.length > 1 && (
               <div className="mb-4">
                 <div className="flex flex-wrap gap-1.5">
@@ -1627,8 +1536,7 @@ export function GameDetailPage() {
                     const label = rc ? (REGION_TO_FULLNAME[rc] || rc) : sibling.game_name;
                     return (
                       <button key={sibling.game_id} onClick={() => navigateToSibling(sibling)} title={label}
-                        className={`flex items-center gap-1.5 px-3 py-2 border-2 text-sm font-semibold transition-all ${isActive ? "border-yellow-400 bg-yellow-50 text-yellow-700" : "border-gray-200 text-gray-500 hover:border-gray-300 bg-white"}`}
-                      >
+                        className={`flex items-center gap-1.5 px-3 py-2 border-2 text-sm font-semibold transition-all ${isActive ? "border-yellow-400 bg-yellow-50 text-yellow-700" : "border-gray-200 text-gray-500 hover:border-gray-300 bg-white"}`}>
                         <span className="text-lg leading-none">{flag}</span>
                         {isActive && <span className="text-xs font-bold">{rc || label}</span>}
                       </button>
@@ -1648,7 +1556,6 @@ export function GameDetailPage() {
               </div>
             )}
 
-            {/* Direct Top-up / Login Top-up tabs */}
             {hasTopUpTabs && (
               <div className="flex gap-0 mb-4 border-b border-gray-200">
                 {(["direct", "login"] as const).map(tab => (
@@ -1660,7 +1567,6 @@ export function GameDetailPage() {
               </div>
             )}
 
-            {/* Region selector — gift cards: horizontal flag+name pills; others: plain tabs */}
             {regions.length > 1 && (
               <div className="mb-4 py-4">
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
@@ -1671,16 +1577,10 @@ export function GameDetailPage() {
                     {regions.map((r) => {
                       const isSelected = selectedRegion === r.value;
                       return (
-                        <button
-                          key={r.value}
+                        <button key={r.value}
                           onClick={() => { setSelectedRegion(r.value); setSelectedSku(null); setExtraInfoValues({}); }}
-                          className={`flex items-center gap-1.5 px-3 py-2 border-2 text-sm font-semibold transition-all ${
-                            isSelected
-                              ? "border-yellow-400 bg-yellow-50 text-yellow-700"
-                              : "border-gray-200 text-gray-500 hover:border-gray-300 bg-white"
-                          }`}
-                          title={r.label}
-                        >
+                          className={`flex items-center gap-1.5 px-3 py-2 border-2 text-sm font-semibold transition-all ${isSelected ? "border-yellow-400 bg-yellow-50 text-yellow-700" : "border-gray-200 text-gray-500 hover:border-gray-300 bg-white"}`}
+                          title={r.label}>
                           <span className="text-lg leading-none">{getFlag(r.label)}</span>
                           {isSelected && <span className="text-xs font-bold">{r.label}</span>}
                         </button>
@@ -1690,15 +1590,9 @@ export function GameDetailPage() {
                 ) : (
                   <div className="flex flex-wrap gap-2">
                     {regions.map((r) => (
-                      <button
-                        key={r.value}
+                      <button key={r.value}
                         onClick={() => { setSelectedRegion(r.value); setSelectedSku(null); setExtraInfoValues({}); }}
-                        className={`px-4 py-2 border text-sm font-semibold transition-all ${
-                          selectedRegion === r.value
-                            ? "border-yellow-400 bg-yellow-50 text-yellow-700"
-                            : "border-gray-200 text-gray-600 hover:border-gray-300 bg-white"
-                        }`}
-                      >
+                        className={`px-4 py-2 border text-sm font-semibold transition-all ${selectedRegion === r.value ? "border-yellow-400 bg-yellow-50 text-yellow-700" : "border-gray-200 text-gray-600 hover:border-gray-300 bg-white"}`}>
                         {r.label}
                       </button>
                     ))}
@@ -1707,7 +1601,6 @@ export function GameDetailPage() {
               </div>
             )}
 
-            {/* SKU grid */}
             <div className="mb-4">
               {isLoading ? (
                 <div className="grid grid-cols-3 xl:grid-cols-4 gap-3">
@@ -1720,30 +1613,15 @@ export function GameDetailPage() {
                     const savings = sku.discount_amount || 0;
                     const isSelected = selectedSku?.sku_id === sku.sku_id;
                     return (
-                      <button
-                        key={sku.sku_id}
+                      <button key={sku.sku_id}
                         onClick={() => { setSelectedSku(sku); setExtraInfoValues({}); }}
-                        className={`relative flex flex-col bg-white border-2 overflow-hidden transition-all hover:shadow-md text-left ${
-                          isSelected ? "border-yellow-400 shadow-md" : "border-gray-200 hover:border-gray-300"
-                        }`}
-                      >
+                        className={`relative flex flex-col bg-white border-2 overflow-hidden transition-all hover:shadow-md text-left ${isSelected ? "border-yellow-400 shadow-md" : "border-gray-200 hover:border-gray-300"}`}>
                         <div className="aspect-[4/3] bg-gradient-to-b from-blue-100 to-purple-100 relative">
-                          <img
-                            src={sku.image || game?.game_image || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=200&h=150&fit=crop"}
-                            alt={sku.sku_name}
-                            className="w-full h-full object-cover"
-                            onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=200&h=150&fit=crop"; }}
-                          />
-                          {isSelected && (
-                            <div className="absolute top-1.5 right-1.5 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center shadow-sm">
-                              <Check size={11} className="text-black" />
-                            </div>
-                          )}
-                          {savings > 0 && (
-                            <div className="absolute top-1.5 left-1.5 bg-orange-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">
-                              -{savings.toFixed(0)}%
-                            </div>
-                          )}
+                          <img src={sku.image || game?.game_image || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=200&h=150&fit=crop"}
+                            alt={sku.sku_name} className="w-full h-full object-cover"
+                            onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=200&h=150&fit=crop"; }} />
+                          {isSelected && <div className="absolute top-1.5 right-1.5 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center shadow-sm"><Check size={11} className="text-black" /></div>}
+                          {savings > 0 && <div className="absolute top-1.5 left-1.5 bg-orange-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">-{savings.toFixed(0)}%</div>}
                         </div>
                         <div className="p-2.5">
                           <p className="text-xs font-bold text-gray-900 leading-tight line-clamp-2 mb-1.5">{sku.sku_name}</p>
@@ -1762,7 +1640,6 @@ export function GameDetailPage() {
               )}
             </div>
 
-            {/* Product Details / Top-up instructions — only show when data exists */}
             {(isGiftCard || topUpInstructions.length > 0) && (
               <div className="bg-white p-6 border border-gray-100">
                 <h3 className="text-lg font-bold text-gray-900 mb-4">
@@ -1810,13 +1687,11 @@ export function GameDetailPage() {
               </div>
             )}
 
-            {/* User Reviews */}
             <UserReviewsSection />
             <YouMayAlsoLikeSection />
             <GameBlogSection />
           </div>
 
-          {/* Right: Order panel */}
           <div className="w-72 flex-shrink-0">
             <div style={{ position: "sticky", top: "70px", maxHeight: "calc(100vh - 90px)", overflowY: "auto" } as React.CSSProperties}>
               <div className="border border-gray-200 shadow-sm bg-white overflow-hidden">
@@ -1825,9 +1700,7 @@ export function GameDetailPage() {
                   {selectedSku ? (
                     <ExtraInfoForm />
                   ) : (
-                    <div className="bg-gray-50 p-3 text-center text-sm text-gray-400 border border-dashed border-gray-200 rounded-xl">
-                      ← Select a package
-                    </div>
+                    <div className="bg-gray-50 p-3 text-center text-sm text-gray-400 border border-dashed border-gray-200 rounded-xl">← Select a package</div>
                   )}
                 </div>
                 <div className="px-5 py-4 border-b border-gray-200">
@@ -1845,20 +1718,12 @@ export function GameDetailPage() {
                     <span className="text-sm text-gray-500">Price</span>
                     <span className="text-xl font-black text-orange-500">{selectedSku ? `$${totalPrice.toFixed(2)}` : "—"}</span>
                   </div>
-                  {totalSavings > 0 && (
-                    <p className="text-xs text-orange-500 text-right mb-2 font-semibold">Savings ${totalSavings.toFixed(2)}</p>
-                  )}
-                  <button
-                    onClick={handleDesktopTopUp}
-                    disabled={!selectedSku}
-                    className={`w-full py-3.5 font-bold text-base transition-all mt-3 ${selectedSku ? "bg-yellow-400 hover:bg-yellow-300 text-black" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}
-                  >
+                  {totalSavings > 0 && <p className="text-xs text-orange-500 text-right mb-2 font-semibold">Savings ${totalSavings.toFixed(2)}</p>}
+                  <button onClick={handleDesktopTopUp} disabled={!selectedSku}
+                    className={`w-full py-3.5 font-bold text-base transition-all mt-3 ${selectedSku ? "bg-yellow-400 hover:bg-yellow-300 text-black" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>
                     Top-up Now
                   </button>
-                  {/* How to buy? */}
-                  <div className="mt-2">
-                    <HowToBuyPanel inSidebar />
-                  </div>
+                  <div className="mt-2"><HowToBuyPanel inSidebar /></div>
                   <div className="flex items-center justify-center gap-1.5 mt-3">
                     <Shield size={13} className="text-green-500" />
                     <span className="text-xs text-gray-500">NoxyStore Security Guarantee</span>
@@ -1869,7 +1734,6 @@ export function GameDetailPage() {
           </div>
         </div>
       </div>
-
       <Footer />
       <FloatingChat />
     </div>
@@ -1878,19 +1742,13 @@ export function GameDetailPage() {
   // ─── Mobile Layout ──────────────────────────────────────────────────────────
   const MobileLayout = () => (
     <div className="lg:hidden bg-white min-h-screen">
-      {/* Mobile Header — real layout component */}
       <Header showMenu />
-
       <div className="pb-52">
-        {/* Game info */}
         <div className="px-4 py-4 border-b border-gray-100">
           <div className="flex items-center gap-3 mb-3">
             <img
               src={imgError ? "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=80&h=80&fit=crop" : (game?.game_image || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=80&h=80&fit=crop")}
-              alt={game?.game_name}
-              className="w-16 h-16 rounded-xl object-cover flex-shrink-0 shadow-sm"
-              onError={() => setImgError(true)}
-            />
+              alt={game?.game_name} className="w-16 h-16 rounded-xl object-cover flex-shrink-0 shadow-sm" onError={() => setImgError(true)} />
             <div>
               <h1 className="text-lg font-bold text-gray-900 leading-tight">{game?.game_name}</h1>
               <div className="flex items-center gap-1.5 mt-0.5">
@@ -1901,15 +1759,11 @@ export function GameDetailPage() {
               <p className="text-xs text-gray-500 mt-0.5">{game?.sold_count}</p>
             </div>
           </div>
-
-          {/* Tags */}
           <div className="flex flex-wrap gap-1.5 mb-3">
             {["7-Day After-Sales Guarantee", "Safe and Fast Top-Up", "24/7 Customer Service"].map((tag) => (
               <span key={tag} className="border border-gray-200 text-gray-600 text-[11px] px-2.5 py-1 rounded-full">{tag}</span>
             ))}
           </div>
-
-          {/* Gift card notice */}
           {isGiftCard && selectedRegion && (
             <div className="bg-amber-50 border border-amber-100 rounded-xl px-3 py-2.5 flex items-start gap-2">
               <Info size={14} className="text-amber-600 flex-shrink-0 mt-0.5" />
@@ -1927,7 +1781,6 @@ export function GameDetailPage() {
           </div>
         )}
 
-        {/* Sibling gift card cross-region navigation (mobile) */}
         {siblingGames.length > 1 && (
           <div className="px-4 pt-3 pb-1 flex gap-2 overflow-x-auto scrollbar-hide">
             {siblingGames.map(sibling => {
@@ -1937,8 +1790,7 @@ export function GameDetailPage() {
               const label = rc ? (REGION_TO_FULLNAME[rc] || rc) : sibling.game_name;
               return (
                 <button key={sibling.game_id} onClick={() => navigateToSibling(sibling)} title={label}
-                  className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 border-2 text-xs font-semibold transition-all ${isActive ? "border-yellow-400 bg-yellow-50 text-yellow-700" : "border-gray-200 bg-white text-gray-600"}`}
-                >
+                  className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 border-2 text-xs font-semibold transition-all ${isActive ? "border-yellow-400 bg-yellow-50 text-yellow-700" : "border-gray-200 bg-white text-gray-600"}`}>
                   <span className="text-base leading-none">{flag}</span>
                   <span>{rc || label}</span>
                 </button>
@@ -1947,29 +1799,23 @@ export function GameDetailPage() {
           </div>
         )}
 
-        {/* Region selector */}
         {regions.length > 1 && (
           <div className="px-4 pt-4 pb-3 border-b border-gray-100">
             {isGiftCard ? (
               <div>
-                {/* Selected region pill — tap to open search sheet */}
-                <button
-                  onClick={() => setShowRegionSheet(true)}
-                  className="flex items-center gap-2 border-2 border-yellow-400 bg-yellow-50 px-3 py-2 mb-3"
-                >
+                <button onClick={() => setShowRegionSheet(true)}
+                  className="flex items-center gap-2 border-2 border-yellow-400 bg-yellow-50 px-3 py-2 mb-3">
                   <span className="text-xl leading-none">{getFlag(regions.find(r => r.value === selectedRegion)?.label || selectedRegion)}</span>
                   <span className="text-sm font-bold text-yellow-700">{regions.find(r => r.value === selectedRegion)?.label || selectedRegion}</span>
                   <ChevronDown size={14} className="text-yellow-500 ml-1" />
                 </button>
-                {/* All regions as flag + name chips */}
                 <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
                   {regions.map((r) => {
                     const isSel = r.value === selectedRegion;
                     return (
                       <button key={r.value}
                         onClick={() => { setSelectedRegion(r.value); setSelectedSku(null); setExtraInfoValues({}); }}
-                        className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 border-2 text-xs font-semibold transition-all ${isSel ? "border-yellow-400 bg-yellow-50 text-yellow-700" : "border-gray-200 bg-white text-gray-600"}`}
-                      >
+                        className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 border-2 text-xs font-semibold transition-all ${isSel ? "border-yellow-400 bg-yellow-50 text-yellow-700" : "border-gray-200 bg-white text-gray-600"}`}>
                         <span className="text-base leading-none">{getFlag(r.label)}</span>
                         <span>{r.label}</span>
                       </button>
@@ -1986,8 +1832,7 @@ export function GameDetailPage() {
                   {regions.map((r) => (
                     <button key={r.value}
                       onClick={() => { setSelectedRegion(r.value); setSelectedSku(null); setExtraInfoValues({}); }}
-                      className={`flex-shrink-0 px-4 py-2 rounded-xl border text-sm font-semibold transition-all ${selectedRegion === r.value ? "border-yellow-400 text-yellow-600 bg-yellow-50" : "border-gray-200 text-gray-600 bg-white"}`}
-                    >
+                      className={`flex-shrink-0 px-4 py-2 rounded-xl border text-sm font-semibold transition-all ${selectedRegion === r.value ? "border-yellow-400 text-yellow-600 bg-yellow-50" : "border-gray-200 text-gray-600 bg-white"}`}>
                       {r.label}
                     </button>
                   ))}
@@ -1997,7 +1842,6 @@ export function GameDetailPage() {
           </div>
         )}
 
-        {/* Direct Top-up / Login Top-up tabs (mobile) */}
         {hasTopUpTabs && (
           <div className="flex border-b border-gray-200">
             {(["direct", "login"] as const).map(tab => (
@@ -2009,7 +1853,6 @@ export function GameDetailPage() {
           </div>
         )}
 
-        {/* SKU grid */}
         <div className="px-4 pt-3">
           {isLoading ? (
             <div className="grid grid-cols-2 gap-3">
@@ -2022,26 +1865,14 @@ export function GameDetailPage() {
                 const savings = sku.discount_amount || 0;
                 const isSelected = selectedSku?.sku_id === sku.sku_id;
                 return (
-                  <button
-                    key={sku.sku_id}
-                    onClick={() => handleMobileSkuSelect(sku)}
-                    className={`relative flex flex-col bg-white rounded-xl border-2 overflow-hidden text-left transition-all ${isSelected ? "border-yellow-400 shadow-md" : "border-gray-200"}`}
-                  >
+                  <button key={sku.sku_id} onClick={() => handleMobileSkuSelect(sku)}
+                    className={`relative flex flex-col bg-white rounded-xl border-2 overflow-hidden text-left transition-all ${isSelected ? "border-yellow-400 shadow-md" : "border-gray-200"}`}>
                     <div className="aspect-[4/3] bg-gradient-to-b from-blue-100 to-purple-100 relative">
-                      <img
-                        src={sku.image || game?.game_image || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=200&h=150&fit=crop"}
-                        alt={sku.sku_name}
-                        className="w-full h-full object-cover"
-                        onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=200&h=150&fit=crop"; }}
-                      />
-                      {isSelected && (
-                        <div className="absolute top-1.5 right-1.5 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center">
-                          <Check size={10} className="text-black" />
-                        </div>
-                      )}
-                      {savings > 0 && (
-                        <div className="absolute top-1.5 left-1.5 bg-orange-500 text-white text-[9px] font-bold px-1 py-0.5 rounded">-{savings.toFixed(0)}%</div>
-                      )}
+                      <img src={sku.image || game?.game_image || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=200&h=150&fit=crop"}
+                        alt={sku.sku_name} className="w-full h-full object-cover"
+                        onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=200&h=150&fit=crop"; }} />
+                      {isSelected && <div className="absolute top-1.5 right-1.5 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center"><Check size={10} className="text-black" /></div>}
+                      {savings > 0 && <div className="absolute top-1.5 left-1.5 bg-orange-500 text-white text-[9px] font-bold px-1 py-0.5 rounded">-{savings.toFixed(0)}%</div>}
                     </div>
                     <div className="p-2.5">
                       <p className="text-xs font-bold text-gray-900 leading-tight line-clamp-2 mb-1">{sku.sku_name}</p>
@@ -2060,7 +1891,6 @@ export function GameDetailPage() {
           )}
         </div>
 
-        {/* Related games & Blog — mobile */}
         <div className="mt-4 px-4 space-y-4 pb-4">
           <YouMayAlsoLikeSection />
           <GameBlogSection />
@@ -2068,7 +1898,6 @@ export function GameDetailPage() {
         </div>
       </div>
 
-      {/* Bottom CTA */}
       <div className="fixed bottom-0 left-0 right-0 bg-white z-50" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
         <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
           <div className="flex items-center gap-3">
@@ -2079,11 +1908,8 @@ export function GameDetailPage() {
             </div>
             <p className="text-lg font-black text-orange-500">{selectedSku ? `$${totalPrice.toFixed(2)}` : "—"}</p>
           </div>
-          <button
-            onClick={handleTopUpNow}
-            disabled={!selectedSku}
-            className={`px-8 py-3 font-bold text-base transition-all ${selectedSku ? "bg-yellow-400 text-black hover:bg-yellow-300" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}
-          >
+          <button onClick={handleTopUpNow} disabled={!selectedSku}
+            className={`px-8 py-3 font-bold text-base transition-all ${selectedSku ? "bg-yellow-400 text-black hover:bg-yellow-300" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>
             {needsVerification ? "Continue" : t("topupNow")}
           </button>
         </div>
@@ -2092,17 +1918,12 @@ export function GameDetailPage() {
       <MobileFooter />
       <FloatingChat />
 
-      {/* Region bottom sheet for gift cards */}
       {showRegionSheet && (
-        <RegionSheet
-          regions={regions}
-          selected={selectedRegion}
+        <RegionSheet regions={regions} selected={selectedRegion}
           onSelect={(v) => { setSelectedRegion(v); setSelectedSku(null); setExtraInfoValues({}); }}
-          onClose={() => setShowRegionSheet(false)}
-        />
+          onClose={() => setShowRegionSheet(false)} />
       )}
 
-      {/* Invite Modal */}
       {showInviteModal && (
         <div className="fixed inset-0 z-50 flex items-end">
           <div className="absolute inset-0 bg-black/40" onClick={() => setShowInviteModal(false)} />
@@ -2117,15 +1938,12 @@ export function GameDetailPage() {
                 <div className="flex-1 bg-gray-100 rounded-xl px-3 py-3 text-sm text-gray-500 font-mono truncate">
                   {useShorterInvite ? `noxystore.gg/s/${referralCode || "..."}` : `noxystore.gg?ref=${referralCode || "..."}`}
                 </div>
-                <button
-                  onClick={async () => {
-                    const link = useShorterInvite ? `https://noxystore.gg/s/${referralCode}` : `https://noxystore.gg?ref=${referralCode}`;
-                    await navigator.clipboard.writeText(link);
-                    setInviteCopied(true);
-                    setTimeout(() => setInviteCopied(false), 2000);
-                  }}
-                  className="bg-yellow-400 text-black font-bold px-4 py-3 rounded-xl flex items-center gap-1.5 text-sm"
-                >
+                <button onClick={async () => {
+                  const link = useShorterInvite ? `https://noxystore.gg/s/${referralCode}` : `https://noxystore.gg?ref=${referralCode}`;
+                  await navigator.clipboard.writeText(link);
+                  setInviteCopied(true);
+                  setTimeout(() => setInviteCopied(false), 2000);
+                }} className="bg-yellow-400 text-black font-bold px-4 py-3 rounded-xl flex items-center gap-1.5 text-sm">
                   {inviteCopied ? <Check size={14} /> : "Copy"}
                 </button>
               </div>
@@ -2149,4 +1967,3 @@ export function GameDetailPage() {
     </>
   );
 }
-hello ai for user add review each game must have add comment when it 6 remove section to show comment allow user can tex and upload photo and show in tab images to for tex+photo for tex only show in tex tabs and Fix YouMayAlsoLikeSection to always show real game images from games_cache (with custom_image_url fallback from game_overrides). Preload overrides for the related game IDs in a single batch query instead of individual fetches also When a user registers via a referral link (?ref=CODE or /s/CODE), automatically call the track-referral edge function to record the invite and increment the referrer's users_invited count in referral_codes table.
