@@ -411,8 +411,8 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
 
           {/* Right side — EACH item has its OWN gray background, NOT grouped together */}
           <div className="flex items-center gap-1.5">
-            {/* Search — OWN gray background */}
-            <div className="flex items-center bg-white/10 rounded-xl">
+            {/* Search */}
+            <div className="flex items-center bg-white/10 rounded-lg">
               {searchOpen ? (
                 <div className="flex items-center px-3 py-2 gap-2 w-60">
                   <Search size={18} className="text-gray-400 flex-shrink-0" />
@@ -434,17 +434,17 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
               )}
             </div>
 
-            {/* Language/Currency — OWN gray background */}
+            {/* Language/Currency */}
             <button onClick={() => setShowLangModal(true)}
-              className="flex items-center gap-1 bg-white/10 text-gray-400 hover:text-white text-sm font-medium px-3 py-2.5 rounded-xl transition-colors whitespace-nowrap">
+              className="flex items-center gap-1 bg-white/10 text-gray-400 hover:text-white text-sm font-medium px-3 py-2.5 rounded-lg transition-colors whitespace-nowrap">
               {langDisplay} / {currDisplay}
             </button>
 
-            {/* Mail/Notifications — OWN gray background */}
+            {/* Mail/Notifications */}
             {isAuthenticated && (
               <div className="relative">
                 <button onClick={() => navigate("/messages")}
-                  className="relative p-2.5 bg-white/10 rounded-xl text-gray-400 hover:text-white transition-colors">
+                  className="relative p-2.5 bg-white/10 rounded-lg text-gray-400 hover:text-white transition-colors">
                   <Mail size={22} />
                   {unreadCount > 0 && (
                     <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 rounded-full flex items-center justify-center text-white text-[10px] font-bold px-1">
@@ -470,7 +470,7 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
               >
                 <button
                   onClick={() => navigate("/account")}
-                  className="flex items-center p-1 bg-white/10 rounded-xl group"
+                  className="flex items-center p-1 rounded-lg group"
                 >
                   <div className="relative w-10 h-10 flex-shrink-0">
                     {user?.avatar ? (
@@ -509,4 +509,4 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
   );
 }
 
-fucking make mail search language background gray in square and remove background in avatar.
+
