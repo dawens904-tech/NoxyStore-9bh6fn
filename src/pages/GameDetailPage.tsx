@@ -2108,3 +2108,4 @@ export function GameDetailPage() {
     </>
   );
 }
+hello ai fix topup instruction remove old demo fetch from lootbar api and Add the YouMayAlsoLikeSection and GameBlogSection to the mobile layout in GameDetailPage (currently only shown on desktop). Place them below the SKU grid in the mobile scrollable content area also the flag like desktop in mobile and Create a 'Trending Subscriptions' section on HomePage that shows subscription-type products marked as coming_soon from Lootbar API Display as horizontal scroll cards with a 'Coming Soon' badge overlay in you may alsolike fetch real img game.
