@@ -459,4 +459,4 @@ export function LoginPage() {
     </div>
   );
 }
-
+hello ai please When an admin bans a user, also call the Supabase admin auth API via an edge function to immediately invalidate the banned user's active session so they are logged out instantly and Implement real Discord OAuth login on LoginPage: enable Discord provider with my own Auth settings, add signInWithDiscord to AuthContext using my own auth user not onspace and fetch in user page for provider='discord', and wire up the Discord button (currently shows 'coming soon').
