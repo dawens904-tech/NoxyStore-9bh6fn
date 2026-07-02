@@ -1967,3 +1967,4 @@ export function GameDetailPage() {
     </>
   );
 }
+page size lan tro gro desann ladan and name game yo pa dwe fonse.
