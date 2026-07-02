@@ -739,3 +739,4 @@ export default function AdminUsersPage() {
     </div>
   );
 }
+fix error when i send a user a gift balance auto set in user balancepage and saved to databse real money balance or point also real set,cupons real cupons set their can withdraw the money balance to their bank account via stripe.
