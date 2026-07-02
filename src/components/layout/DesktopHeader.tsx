@@ -509,4 +509,4 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
   );
 }
 
-
+Add a real-time autocomplete dropdown to the desktop search bar in DesktopHeader.tsx. When the user types, show a dropdown list of matching game names fetched from games_cache (limit 6) with game thumbnail, name, and category. Pressing Enter or clicking a result navigates to the game detail page snf Redesign the NoxyStore logo in DesktopHeader.tsx to include a small icon/emblem to the left of the text (e.g. a lightning bolt or shield SVG in yellow), keeping the NOXYSTORE.com text but adding a visual mark that makes it more brand-distinct.
