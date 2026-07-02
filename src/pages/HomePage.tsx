@@ -846,3 +846,4 @@ export function HomePage() {
     </div>
   );
 }
+fix banner fetch from admin banner also allow in link website remove old function.
