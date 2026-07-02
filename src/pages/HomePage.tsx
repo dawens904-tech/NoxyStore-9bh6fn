@@ -12,7 +12,6 @@ import { useTranslation } from "@/hooks/useTranslation";
 import type { LootbarGame } from "@/types";
 import { loadGames, loadManualGames, loadBanners, loadSections, mergeGamesWithOverrides } from "@/lib/gameCache";
 import { Wallet, Coins, Gift, Swords } from "lucide-react";
-const BANNER_IMAGES: Array<{ id: string; title: string; subtitle: string; image_url: string; image: string; link: string; fallback: string }> = [];
 import { trackEvent } from "@/lib/analytics";
 import { NewUserCouponModal } from "@/components/features/NewUserCouponModal";
 import { useAuthStore } from "@/stores/authStore";
@@ -34,11 +33,12 @@ interface HomeSection {
 }
 
 // Desktop Hero Banner
-function DesktopHeroBanner({ banners }: { banners: typeof BANNER_IMAGES }) {
+type BannerItem = { id: string; title: string; subtitle: string; image_url: string; link: string; sort_order?: number };
+function DesktopHeroBanner({ banners }: { banners: BannerItem[] }) {
   const navigate = useNavigate();
   const [current, setCurrent] = useState(0);
   const [imgErrors, setImgErrors] = useState<Record<number, boolean>>({});
-  const items = banners.length > 0 ? banners : BANNER_IMAGES;
+  const items = banners;
 
   useEffect(() => {
     if (items.length === 0) return;
@@ -71,7 +71,15 @@ function DesktopHeroBanner({ banners }: { banners: typeof BANNER_IMAGES }) {
         const src = imgErrors[(banner as any).id || idx] ? ((banner as any).fallback || banner.image_url || banner.image) : ((banner as any).image_url || (banner as any).image);
         return (
           <div key={(banner as any).id || idx} className={`absolute inset-0 transition-opacity duration-700 ${idx === current ? "opacity-100" : "opacity-0"}`}
-            onClick={() => (banner as any).link && navigate((banner as any).link)}
+            onClick={() => {
+              const link = (banner as any).link;
+              if (!link || link === "/") return;
+              if (link.startsWith("http://") || link.startsWith("https://")) {
+                window.open(link, "_blank", "noopener,noreferrer");
+              } else {
+                navigate(link);
+              }
+            }}
             style={{ cursor: (banner as any).link && (banner as any).link !== "/" ? "pointer" : "default" }}>
             <img src={src} alt={banner.title} className="w-full h-full object-cover"
               onError={() => setImgErrors((p) => ({ ...p, [(banner as any).id || idx]: true }))} />
@@ -846,4 +854,4 @@ export function HomePage() {
     </div>
   );
 }
-fix banner fetch from admin banner also allow in link website remove old function.
+
