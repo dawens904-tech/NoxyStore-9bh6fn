@@ -130,8 +130,18 @@ function MoreGamesSection() {
 
   useEffect(() => {
     if (!show) return;
-    supabase.from("games_cache").select("*").limit(6).then(({ data }) => {
-      if (data && data.length > 0) setGames(data);
+    supabase.from("games_cache").select("game_id, game_name, game_image, category, sold_count, discount").limit(12).then(async ({ data }) => {
+      if (!data || data.length === 0) return;
+      const ids = data.map((g: any) => g.game_id);
+      const { data: overrides } = await supabase
+        .from("game_overrides")
+        .select("game_id, custom_image_url")
+        .in("game_id", ids);
+      const overrideMap = new Map((overrides || []).map((o: any) => [o.game_id, o.custom_image_url]));
+      setGames(data.map((g: any) => ({
+        ...g,
+        game_image: overrideMap.get(g.game_id) || g.game_image || "",
+      })));
     });
   }, [show]);
 
@@ -1389,4 +1399,3 @@ export function AccountPage() {
     </>
   );
 }
-for mobilr More Games You Might Like fetch real games photo.
