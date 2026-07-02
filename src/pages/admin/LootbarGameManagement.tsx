@@ -762,4 +762,3 @@ export default function LootbarGameManagement() {
     </div>
   );
 }
-create a logo for my store and put it in favicon and all google must see it in the link.

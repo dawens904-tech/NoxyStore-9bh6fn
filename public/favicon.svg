@@ -1,4 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <rect width="100" height="100" rx="20" fill="#0a0a0a"/>
-  <text x="50" y="68" font-family="Arial Black, sans-serif" font-size="52" font-weight="900" text-anchor="middle" fill="#FFD200">N</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Background rounded square -->
+  <rect width="64" height="64" rx="14" fill="#0a0a0a"/>
+  <!-- Yellow badge background -->
+  <rect x="10" y="10" width="44" height="44" rx="10" fill="#FACC15"/>
+  <!-- Lightning bolt -->
+  <path d="M36 12L20 35H30L28 52L46 29H36L36 12Z" fill="#0a0a0a" stroke="#0a0a0a" stroke-width="1" stroke-linejoin="round"/>
 </svg>
