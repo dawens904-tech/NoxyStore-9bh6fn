@@ -45,27 +45,6 @@ function extractRegionCode(gameName: string): string | null {
   return m ? m[1].toUpperCase() : null;
 }
 
-// ── User reviews (deterministic per game) ───────────────────────────────────
-const REVIEW_TEMPLATES = [
-  { user: "GamerPro88", rating: 5, text: "Super fast delivery! Got my top-up within 2 minutes. Will definitely buy again." },
-  { user: "TechUser2024", rating: 5, text: "Amazing service, best price I've found online. Highly recommended!" },
-  { user: "PlayersClub", rating: 5, text: "Instant delivery, no issues. NoxyStore is my go-to for all game top-ups." },
-  { user: "MobileGamer", rating: 4, text: "Good price and fast, had a small issue but support fixed it quickly." },
-  { user: "GameFan99", rating: 5, text: "Works perfectly. Very happy with the price and delivery speed." },
-  { user: "TopPlayer", rating: 5, text: "Best top-up site. Used it many times, never had any problems." },
-];
-
-function getGameReviews(gameId: string, gameName: string) {
-  const seed = gameId.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
-  return REVIEW_TEMPLATES.map((t, i) => ({
-    ...t,
-    id: `rev-${i}`,
-    bought: `${gameName} - Pack`,
-    date: new Date(Date.now() - (seed + i * 7) * 86400000 * 3).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-    helpful: Math.floor((seed + i * 17) % 200 + 10),
-  }));
-}
-
 // ── Country flag + name map ──────────────────────────────────────────────────
 const COUNTRY_FLAG: Record<string, string> = {
   "United States": "🇺🇸", "US": "🇺🇸",
@@ -587,6 +566,8 @@ export function GameDetailPage() {
   const [reviewsVisible, setReviewsVisible] = useState(3);
   const [relatedGames, setRelatedGames] = useState<LootbarGame[]>([]);
   const [blogPosts, setBlogPosts] = useState<Array<{id: string; title: string; date: string; thumbnail: string | null; url: string}>>([]);
+  const [userReviews, setUserReviews] = useState<Array<{id: string; user: string; rating: number; text: string; date: string; helpful: number; bought?: string; image?: string | null}>>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
 
   // Detect if this is a gift card product
   const isGiftCard = useMemo(() =>
@@ -626,6 +607,7 @@ export function GameDetailPage() {
     setActiveTopUpTab("direct");
     setRelatedGames([]);
     setBlogPosts([]);
+    setUserReviews([]);
 
     supabase.from("markup_settings").select("markup_percent").eq("id", 1).single()
       .then(({ data }) => { if (data) setMarkup(Number(data.markup_percent) || 0); });
@@ -742,6 +724,30 @@ export function GameDetailPage() {
           }
         }
       }).catch(() => {});
+
+      // Fetch real reviews from Lootbar API (best-effort)
+      setReviewsLoading(true);
+      supabase.functions.invoke("lootbar-proxy", {
+        body: { action: "get_game_reviews", params: { game_id: gameId } },
+      }).then(({ data }) => {
+        setReviewsLoading(false);
+        if (!data || data.status === "error") return;
+        const reviews = Array.isArray(data.data?.items) ? data.data.items
+          : Array.isArray(data.data?.list) ? data.data.list
+          : Array.isArray(data.data) ? data.data : [];
+        if (reviews.length > 0) {
+          setUserReviews(reviews.map((r: any, i: number) => ({
+            id: String(r.id || r.review_id || i),
+            user: r.nickname || r.username || r.user_name || `User${String(r.user_id || i).slice(-4)}`,
+            rating: Number(r.score || r.rating || 5),
+            text: r.content || r.review || r.comment || "",
+            date: r.created_at || r.publish_time || r.date || "",
+            helpful: Number(r.like_num || r.helpful || 0),
+            bought: r.sku_name || r.product_name || "",
+            image: r.image || r.img || null,
+          })).filter((r: any) => r.text));
+        }
+      }).catch(() => { setReviewsLoading(false); });
 
       // Fetch blog posts for this game (best-effort)
       supabase.functions.invoke("lootbar-proxy", {
@@ -962,64 +968,96 @@ export function GameDetailPage() {
   };
 
   const UserReviewsSection = () => {
-    if (!gameId || !game) return null;
-    const allReviews = getGameReviews(gameId, game.game_name);
-    const rating = game.rating ?? 5.0;
-    const visible = allReviews.slice(0, reviewsVisible);
+    // Only show when real reviews exist
+    if (reviewsLoading) {
+      return (
+        <div className="bg-white border border-gray-100 p-6 mt-4">
+          <div className="shimmer h-5 w-32 rounded mb-4" />
+          <div className="space-y-4">
+            {Array.from({length: 2}).map((_, i) => (
+              <div key={i} className="flex gap-3">
+                <div className="shimmer w-9 h-9 rounded-full flex-shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <div className="shimmer h-3 w-28 rounded" />
+                  <div className="shimmer h-3 w-full rounded" />
+                  <div className="shimmer h-3 w-3/4 rounded" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+    if (userReviews.length === 0) return null;
+    const rating = game?.rating ?? 5.0;
+    const visible = userReviews.slice(0, reviewsVisible);
+    // Compute star distribution from real reviews
+    const totalReviews = userReviews.length;
+    const starCounts = [5,4,3,2,1].map(s => userReviews.filter(r => Math.round(r.rating) === s).length);
+    const avgRating = userReviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews;
     return (
       <div className="bg-white border border-gray-100 p-6 mt-4">
         <h3 className="text-lg font-bold text-gray-900 mb-4">User Reviews</h3>
         <div className="flex items-start gap-6 mb-5 pb-5 border-b border-gray-100">
           <div className="text-center">
-            <div className="text-5xl font-black text-gray-900 leading-none">{rating.toFixed(1)}</div>
+            <div className="text-5xl font-black text-gray-900 leading-none">{avgRating.toFixed(1)}</div>
             <div className="flex justify-center gap-0.5 my-2">
-              {Array.from({length:5}).map((_,i) => <Star key={i} size={14} fill={i<Math.round(rating)?"#FFD200":"#e5e7eb"} stroke="none" />)}
+              {Array.from({length:5}).map((_,i) => <Star key={i} size={14} fill={i<Math.round(avgRating)?"#FFD200":"#e5e7eb"} stroke="none" />)}
             </div>
-            <p className="text-xs text-gray-400">35,000+ reviews</p>
+            <p className="text-xs text-gray-400">{totalReviews.toLocaleString()} reviews</p>
           </div>
           <div className="flex-1">
-            {[5,4,3,2,1].map(stars => (
-              <div key={stars} className="flex items-center gap-2 mb-1">
-                <span className="text-xs text-gray-400 w-8 text-right">{stars} ★</span>
-                <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-yellow-400" style={{width: stars===5?"100%":"0%"}} />
+            {[5,4,3,2,1].map((stars, idx) => {
+              const pct = totalReviews > 0 ? Math.round((starCounts[idx] / totalReviews) * 100) : 0;
+              return (
+                <div key={stars} className="flex items-center gap-2 mb-1">
+                  <span className="text-xs text-gray-400 w-8 text-right">{stars} ★</span>
+                  <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-yellow-400" style={{width: `${pct}%`}} />
+                  </div>
+                  <span className="text-xs text-gray-400 w-8">{pct}%</span>
                 </div>
-                <span className="text-xs text-gray-400 w-8">{stars===5?"100%":"0%"}</span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
         <div className="flex gap-4 mb-4 border-b border-gray-100">
           <button className="text-sm font-bold text-gray-900 border-b-2 border-yellow-400 pb-2">All reviews</button>
-          <button className="text-sm font-medium text-gray-400 pb-2">Image</button>
           <div className="ml-auto text-xs font-semibold text-yellow-600 self-end pb-2">Most Helpful</div>
         </div>
         <div className="space-y-4">
           {visible.map(review => (
             <div key={review.id} className="pb-4 border-b border-gray-50 last:border-0">
               <div className="flex items-start gap-3">
-                <div className="w-9 h-9 bg-yellow-100 rounded-full flex items-center justify-center text-sm font-bold text-yellow-700 flex-shrink-0">{review.user[0]}</div>
+                <div className="w-9 h-9 bg-yellow-100 rounded-full flex items-center justify-center text-sm font-bold text-yellow-700 flex-shrink-0">{(review.user || "U")[0].toUpperCase()}</div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2 flex-wrap mb-1">
                     <span className="text-sm font-bold text-gray-900">{review.user}</span>
-                    <span className="text-xs text-gray-400">{review.date}</span>
+                    {review.bought && <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{review.bought}</span>}
+                    {review.date && <span className="text-xs text-gray-400">{(() => { try { return new Date(review.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }); } catch { return review.date; } })()}</span>}
                   </div>
-                  <div className="flex gap-0.5 mb-1">
-                    {Array.from({length:5}).map((_,i) => <Star key={i} size={11} fill={i<review.rating?"#FFD200":"#e5e7eb"} stroke="none" />)}
+                  <div className="flex gap-0.5 mb-1.5">
+                    {Array.from({length:5}).map((_,i) => <Star key={i} size={11} fill={i<Math.round(review.rating)?"#FFD200":"#e5e7eb"} stroke="none" />)}
                   </div>
                   <p className="text-sm text-gray-600 leading-relaxed">{review.text}</p>
-                  <button className="flex items-center gap-1 mt-1.5 text-xs text-gray-400">
-                    <ThumbsUp size={10} /> Helpful ({review.helpful})
-                  </button>
+                  {review.image && (
+                    <img src={review.image} alt="Review" className="mt-2 w-20 h-16 rounded-lg object-cover border border-gray-100"
+                      onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                  )}
+                  {review.helpful > 0 && (
+                    <button className="flex items-center gap-1 mt-1.5 text-xs text-gray-400">
+                      <ThumbsUp size={10} /> Helpful ({review.helpful})
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
           ))}
         </div>
-        {reviewsVisible < allReviews.length && (
-          <button onClick={() => setReviewsVisible(v => Math.min(v+3, allReviews.length))}
+        {reviewsVisible < userReviews.length && (
+          <button onClick={() => setReviewsVisible(v => Math.min(v + 3, userReviews.length))}
             className="mt-4 w-full border border-gray-200 text-sm font-semibold text-gray-600 py-2.5 hover:bg-gray-50 transition-colors">
-            View more ({allReviews.length - reviewsVisible} more)
+            View more ({userReviews.length - reviewsVisible} more)
           </button>
         )}
       </div>
@@ -2111,4 +2149,3 @@ export function GameDetailPage() {
     </>
   );
 }
-Remove the hardcoded REVIEW_TEMPLATES demo data from GameDetailPage and replace UserReviewsSection with only real API-fetched reviews from Lootbar (via get_game_reviews action in lootbar-proxy). Show section only when real reviews exist and if no have in the api fetch via my trustpilot.

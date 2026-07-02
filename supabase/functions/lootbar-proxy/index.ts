@@ -768,6 +768,34 @@ Deno.serve(async (req) => {
         break;
       }
 
+      case "get_game_reviews": {
+        if (!params?.game_id) {
+          return errorResponse("Missing required param: game_id", undefined, 400, "VALIDATION");
+        }
+        try {
+          // Try multiple possible endpoints for reviews
+          let reviewResult: LootbarResponse | null = null;
+          const endpoints = [
+            `/api/reseller/game_reviews?game_id=${params.game_id}&page_num=1&page_size=20`,
+            `/api/reseller/reviews?game_id=${params.game_id}&page_num=1&page_size=20`,
+            `/api/reseller/game_comment?game_id=${params.game_id}&page_num=1&page_size=20`,
+          ];
+          for (const ep of endpoints) {
+            try {
+              const r = await lootbarRequest("GET", ep);
+              if (r.status === "ok" && r.data) {
+                reviewResult = r;
+                break;
+              }
+            } catch { /* try next */ }
+          }
+          result = reviewResult ?? { status: "ok", data: { items: [] } };
+        } catch {
+          result = { status: "ok", data: { items: [] } };
+        }
+        break;
+      }
+
       default:
         return errorResponse(
           `Unknown action: ${action}`,
