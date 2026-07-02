@@ -181,16 +181,7 @@ function isSubscription(name: string): boolean {
 
 function TrendingSubscriptionsDesktop({ games, navigate }: { games: LootbarGame[]; navigate: ReturnType<typeof useNavigate> }) {
   const subscriptionGames = games.filter((g) => isSubscription(g.game_name));
-  // Add placeholder "Coming Soon" cards to reach at least 6 visible slots
-  const COMING_SOON_PLACEHOLDERS = [
-    { name: "HBO Max", color: "from-purple-600 to-purple-900" },
-    { name: "Crunchyroll", color: "from-orange-500 to-red-600" },
-    { name: "Apple TV+", color: "from-gray-800 to-black" },
-    { name: "Amazon Prime", color: "from-blue-600 to-cyan-700" },
-  ];
-  const extraSlots = Math.max(0, 6 - subscriptionGames.length);
-  const placeholders = COMING_SOON_PLACEHOLDERS.slice(0, extraSlots);
-  if (subscriptionGames.length === 0 && placeholders.length === 0) return null;
+  if (subscriptionGames.length === 0) return null;
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
@@ -221,20 +212,6 @@ function TrendingSubscriptionsDesktop({ games, navigate }: { games: LootbarGame[
             </div>
           </button>
         ))}
-        {placeholders.map((p, i) => (
-          <div key={`cs-${i}`} className="flex-shrink-0 w-48 flex flex-col bg-white rounded-2xl overflow-hidden">
-            <div className={`relative h-36 bg-gradient-to-br ${p.color} flex items-center justify-center`}>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-white/20 text-4xl font-black">{p.name[0]}</span>
-              </div>
-              <div className="absolute top-2 right-2 bg-yellow-400 text-black text-[9px] font-black px-2 py-0.5 rounded-full">Coming Soon</div>
-            </div>
-            <div className="p-3">
-              <p className="text-sm font-bold text-gray-400">{p.name}</p>
-              <p className="text-xs text-gray-300 mt-0.5">Available soon</p>
-            </div>
-          </div>
-        ))}
       </div>
     </div>
   );
@@ -242,15 +219,7 @@ function TrendingSubscriptionsDesktop({ games, navigate }: { games: LootbarGame[
 
 function TrendingSubscriptionsMobile({ games, navigate }: { games: LootbarGame[]; navigate: ReturnType<typeof useNavigate> }) {
   const subscriptionGames = games.filter((g) => isSubscription(g.game_name));
-  const COMING_SOON_PLACEHOLDERS = [
-    { name: "HBO Max", color: "from-purple-600 to-purple-900" },
-    { name: "Crunchyroll", color: "from-orange-500 to-red-600" },
-    { name: "Apple TV+", color: "from-gray-800 to-black" },
-    { name: "Amazon Prime", color: "from-blue-600 to-cyan-700" },
-  ];
-  const extraSlots = Math.max(0, 4 - subscriptionGames.length);
-  const placeholders = COMING_SOON_PLACEHOLDERS.slice(0, extraSlots);
-  if (subscriptionGames.length === 0 && placeholders.length === 0) return null;
+  if (subscriptionGames.length === 0) return null;
   return (
     <div className="mt-6 px-3">
       <div className="flex items-center justify-between mb-3">
@@ -280,18 +249,6 @@ function TrendingSubscriptionsMobile({ games, navigate }: { games: LootbarGame[]
               {game.min_price && <p className="text-[10px] font-black text-orange-500 mt-0.5">${game.min_price.toFixed(2)}</p>}
             </div>
           </button>
-        ))}
-        {placeholders.map((p, i) => (
-          <div key={`cs-${i}`} className="flex-shrink-0 w-32 flex flex-col bg-white rounded-xl overflow-hidden">
-            <div className={`relative h-24 bg-gradient-to-br ${p.color} flex items-center justify-center`}>
-              <span className="text-white/20 text-3xl font-black">{p.name[0]}</span>
-              <div className="absolute top-1 right-1 bg-yellow-400 text-black text-[8px] font-black px-1.5 py-0.5 rounded-full">Soon</div>
-            </div>
-            <div className="p-2">
-              <p className="text-[11px] font-bold text-gray-400">{p.name}</p>
-              <p className="text-[10px] text-gray-300">Coming soon</p>
-            </div>
-          </div>
         ))}
       </div>
     </div>
@@ -1006,5 +963,5 @@ export function HomePage() {
     </div>
   );
 }
-remove fake comming soon add only real via lootbar also add it to lib/lootbar... please no demo also remove user review demo add only real.
+
 
