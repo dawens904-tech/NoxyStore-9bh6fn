@@ -355,30 +355,30 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
     <>
       <LanguageCurrencyModal isOpen={showLangModal} onClose={() => setShowLangModal(false)} />
 
-      {/* Sticky header — INCREASED HEIGHT to 72px (from 56px) */}
-      <header className="bg-[#0a0a0a] fixed top-0 left-0 right-0 z-50 shadow-lg" style={{ height: 72 }}>
-        <div className="max-w-[1280px] mx-auto px-8 flex items-center h-full gap-10">
-          {/* Logo — LARGER */}
-          <button onClick={() => navigate("/")} className="flex-shrink-0 flex items-center gap-1">
-            <span className="font-black text-[28px] tracking-tight leading-none">
+      {/* Sticky header — height 64px like photo 1 */}
+      <header className="bg-[#0a0a0a] fixed top-0 left-0 right-0 z-50 shadow-lg" style={{ height: 64 }}>
+        <div className="max-w-[1280px] mx-auto px-4 flex items-center h-full gap-6">
+          {/* Logo — more to the left, smaller padding */}
+          <button onClick={() => navigate("/")} className="flex-shrink-0 flex items-center gap-1 mr-2">
+            <span className="font-black text-[26px] tracking-tight leading-none">
               <span className="text-yellow-400">NOXY</span>
               <span className="text-white">STORE</span>
-              <span className="text-yellow-400 text-base">.com</span>
+              <span className="text-yellow-400 text-sm">.com</span>
             </span>
           </button>
 
-          {/* Nav — LARGER TEXT, MORE PADDING, MORE GAP */}
-          <nav className="flex items-center gap-2">
+          {/* Nav — closer to logo, smaller gap */}
+          <nav className="flex items-center gap-0">
             {/* Home */}
             <button onClick={() => navigate("/")}
-              className={`px-5 py-2.5 text-[15px] font-semibold transition-colors ${isActive("/") && location.pathname === "/" ? "text-yellow-400" : "text-gray-300 hover:text-white"}`}>
+              className={`px-4 py-2 text-[15px] font-semibold transition-colors ${isActive("/") && location.pathname === "/" ? "text-yellow-400" : "text-gray-300 hover:text-white"}`}>
               {t("home")}
             </button>
 
             {/* Games with dropdown */}
             <div className="relative" onMouseEnter={handleGamesEnter} onMouseLeave={handleGamesLeave}>
-              <button className={`flex items-center gap-1.5 px-5 py-2.5 text-[15px] font-semibold transition-colors ${showGamesMenu ? "text-yellow-400" : "text-gray-300 hover:text-white"}`}>
-                {t("games")} <ChevronDown size={16} className={`transition-transform ${showGamesMenu ? "rotate-180" : ""}`} />
+              <button className={`flex items-center gap-1 px-4 py-2 text-[15px] font-semibold transition-colors ${showGamesMenu ? "text-yellow-400" : "text-gray-300 hover:text-white"}`}>
+                {t("games")} <ChevronDown size={14} className={`transition-transform ${showGamesMenu ? "rotate-180" : ""}`} />
               </button>
               {showGamesMenu && (
                 <div onMouseEnter={handleGamesEnter} onMouseLeave={handleGamesLeave}>
@@ -389,14 +389,14 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
 
             {/* Blog */}
             <button onClick={() => navigate("/about")}
-              className="px-5 py-2.5 text-[15px] font-semibold text-gray-300 hover:text-white transition-colors">
+              className="px-4 py-2 text-[15px] font-semibold text-gray-300 hover:text-white transition-colors">
               Blog
             </button>
 
             {/* Help Center with dropdown */}
             <div className="relative" onMouseEnter={handleHelpEnter} onMouseLeave={handleHelpLeave}>
-              <button className={`flex items-center gap-1.5 px-5 py-2.5 text-[15px] font-semibold transition-colors ${showHelpMenu ? "text-yellow-400" : "text-gray-300 hover:text-white"}`}>
-                {t("helpCenter")} <ChevronDown size={16} className={`transition-transform ${showHelpMenu ? "rotate-180" : ""}`} />
+              <button className={`flex items-center gap-1 px-4 py-2 text-[15px] font-semibold transition-colors ${showHelpMenu ? "text-yellow-400" : "text-gray-300 hover:text-white"}`}>
+                {t("helpCenter")} <ChevronDown size={14} className={`transition-transform ${showHelpMenu ? "rotate-180" : ""}`} />
               </button>
               {showHelpMenu && (
                 <div onMouseEnter={handleHelpEnter} onMouseLeave={handleHelpLeave}>
@@ -409,55 +409,58 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
           {/* Spacer */}
           <div className="flex-1" />
 
-          {/* Search — LARGER ICON, WIDER INPUT */}
-          <div className="flex items-center">
-            {searchOpen ? (
-              <div className="flex items-center bg-white/10 rounded-lg px-4 py-2 gap-2.5 w-64">
-                <Search size={18} className="text-gray-400 flex-shrink-0" />
-                <input autoFocus value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === "Enter") { navigate(`/categories?q=${encodeURIComponent(searchQuery)}`); setSearchOpen(false); setSearchQuery(""); }
-                    if (e.key === "Escape") { setSearchOpen(false); setSearchQuery(""); }
-                  }}
-                  placeholder={t("searchGames")}
-                  className="bg-transparent text-white placeholder-gray-400 text-sm outline-none flex-1" />
-                <button onClick={() => { setSearchOpen(false); setSearchQuery(""); }}>
-                  <X size={16} className="text-gray-400 hover:text-white" />
+          {/* Right side items — grouped together with gray blur background, closer spacing */}
+          <div className="flex items-center gap-1 bg-white/5 backdrop-blur-sm rounded-lg px-2 py-1.5">
+            {/* Search */}
+            <div className="flex items-center">
+              {searchOpen ? (
+                <div className="flex items-center bg-white/10 rounded-md px-3 py-1.5 gap-2 w-56">
+                  <Search size={16} className="text-gray-400 flex-shrink-0" />
+                  <input autoFocus value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === "Enter") { navigate(`/categories?q=${encodeURIComponent(searchQuery)}`); setSearchOpen(false); setSearchQuery(""); }
+                      if (e.key === "Escape") { setSearchOpen(false); setSearchQuery(""); }
+                    }}
+                    placeholder={t("searchGames")}
+                    className="bg-transparent text-white placeholder-gray-400 text-sm outline-none flex-1" />
+                  <button onClick={() => { setSearchOpen(false); setSearchQuery(""); }}>
+                    <X size={14} className="text-gray-400 hover:text-white" />
+                  </button>
+                </div>
+              ) : (
+                <button onClick={() => setSearchOpen(true)} className="p-2 text-gray-400 hover:text-white transition-colors">
+                  <Search size={20} />
+                </button>
+              )}
+            </div>
+
+            {/* Language/Currency */}
+            <button onClick={() => setShowLangModal(true)}
+              className="flex items-center gap-1 text-gray-400 hover:text-gray-200 text-xs font-medium px-2 py-1.5 rounded-md hover:bg-white/5 transition-colors whitespace-nowrap">
+              {langDisplay} / {currDisplay}
+            </button>
+
+            {/* Mail/Notifications icon */}
+            {isAuthenticated && (
+              <div className="relative">
+                <button onClick={() => navigate("/messages")}
+                  className="relative p-2 text-gray-400 hover:text-white transition-colors">
+                  <Mail size={20} />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 bg-red-500 rounded-full flex items-center justify-center text-white text-[9px] font-bold px-0.5">
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </span>
+                  )}
+                  {unreadCount === 0 && <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />}
                 </button>
               </div>
-            ) : (
-              <button onClick={() => setSearchOpen(true)} className="p-2.5 text-gray-400 hover:text-white transition-colors">
-                <Search size={22} />
-              </button>
             )}
           </div>
 
-          {/* Language/Currency — LARGER TEXT, MORE PADDING */}
-          <button onClick={() => setShowLangModal(true)}
-            className="flex items-center gap-1.5 bg-[#0a0a0a] hover:bg-[#111] text-gray-400 hover:text-gray-200 text-sm font-medium px-3 py-2 rounded-lg transition-colors whitespace-nowrap">
-            {langDisplay} / {currDisplay}
-          </button>
-
-          {/* Mail/Notifications icon — LARGER */}
-          {isAuthenticated && (
-            <div className="relative">
-              <button onClick={() => navigate("/messages")}
-                className="relative p-2.5 text-gray-400 hover:text-white transition-colors">
-                <Mail size={22} />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-red-500 rounded-full flex items-center justify-center text-white text-[10px] font-bold px-1">
-                    {unreadCount > 99 ? "99+" : unreadCount}
-                  </span>
-                )}
-                {unreadCount === 0 && <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full" />}
-              </button>
-            </div>
-          )}
-
-          {/* Auth — LARGER AVATAR, MORE PADDING */}
+          {/* Auth — SMALLER AVATAR like photo 1 */}
           {isAuthenticated ? (
             <div
-              className="relative"
+              className="relative ml-1"
               onMouseEnter={() => {
                 if (userMenuTimerRef.current) clearTimeout(userMenuTimerRef.current);
                 setShowUserMenu(true);
@@ -468,17 +471,17 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
             >
               <button
                 onClick={() => navigate("/account")}
-                className="flex items-center gap-2.5 group"
+                className="flex items-center gap-2 group"
               >
-                <div className="relative w-11 h-11 flex-shrink-0">
+                <div className="relative w-9 h-9 flex-shrink-0">
                   {user?.avatar ? (
-                    <img src={user.avatar} alt={user.nickname ?? "avatar"} className="w-11 h-11 rounded-full object-cover" />
+                    <img src={user.avatar} alt={user.nickname ?? "avatar"} className="w-9 h-9 rounded-full object-cover" />
                   ) : (
-                    <div className="w-11 h-11 rounded-full bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center text-white font-bold text-base">
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center text-white font-bold text-sm">
                       {user?.nickname?.[0]?.toUpperCase() ?? "U"}
                     </div>
                   )}
-                  <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-red-500 rounded-full border-2 border-[#0a0a0a]" />
+                  <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#0a0a0a]" />
                 </div>
               </button>
               {showUserMenu && (
@@ -491,17 +494,17 @@ export function DesktopHeader({ showLoginModal }: DesktopHeaderProps) {
             </div>
           ) : (
             <button onClick={() => navigate("/login")}
-              className="flex items-center gap-2.5 border border-gray-600 hover:border-yellow-400 bg-transparent hover:bg-yellow-400/10 text-gray-300 hover:text-white px-4 py-2 rounded-lg transition-all group">
-              <div className="w-7 h-7 rounded-full flex items-center justify-center">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              className="flex items-center gap-2 border border-gray-600 hover:border-yellow-400 bg-transparent hover:bg-yellow-400/10 text-gray-300 hover:text-white px-3 py-1.5 rounded-lg transition-all group ml-1">
+              <div className="w-6 h-6 rounded-full flex items-center justify-center">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
               </div>
-              <span className="text-[15px] font-semibold whitespace-nowrap">{t("loginSignup")}</span>
+              <span className="text-sm font-semibold whitespace-nowrap">{t("loginSignup")}</span>
             </button>
           )}
         </div>
       </header>
-      {/* Spacer — MATCHES NEW HEADER HEIGHT */}
-      <div style={{ height: 72 }} />
+      {/* Spacer — MATCHES HEADER HEIGHT */}
+      <div style={{ height: 64 }} />
     </>
   );
 }
