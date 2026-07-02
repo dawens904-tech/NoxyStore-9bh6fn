@@ -1672,3 +1672,149 @@ export function GameDetailPage() {
   );
 }
 
+iTunes Gift Card Region Selector Improvements (Desktop & Mobile)
+
+Please redesign the iTunes Gift Card region selector to work like LootBar while providing a better user experience.
+
+Desktop
+
+When a user opens any iTunes Gift Card page, always display all available regions in a horizontal selector.
+
+Example:
+If the user opens iTunes Gift Card UK, the region tabs should still display:
+
+🇺🇸 US | 🇹🇷 TR | 🇬🇧 UK | 🇫🇷 FR | 🇯🇵 JP
+
+Region Selector Behavior
+Display all available regions in one horizontal row.
+The currently selected region must show:
+Country flag
+Country name (e.g. 🇺🇸 United States or 🇺🇸 US)
+Active/highlighted state.
+Unselected regions should display only the country flag to save space.
+Hovering over a flag should show the full country name in a tooltip.
+Switching Regions
+
+When the user clicks another region:
+
+Instantly navigate to the corresponding iTunes Gift Card page.
+Stay in the same browser tab (no new tab).
+Keep the same horizontal region selector visible.
+Automatically highlight the newly selected region.
+
+Example:
+
+Current page:
+
+iTunes Gift Card UK
+
+User clicks:
+
+🇺🇸 US
+
+Automatically navigate to:
+
+/gift-card/itunes-gift-card-us
+
+The selector should now display:
+
+🇺🇸 United States (selected) | 🇹🇷 | 🇬🇧 | 🇫🇷 | 🇯🇵
+
+Apply this behavior to every iTunes Gift Card region, not just US.
+
+Mobile
+
+Replace the current dropdown with a modern square region selector.
+
+The selector should display:
+
+Country flag
+Country name
+Dropdown icon
+
+Example:
+
+🇺🇸 United States ▼
+
+When tapped
+
+Open a full-screen or bottom-sheet modal.
+
+The modal should contain:
+
+Header
+
+Large country flag
+Selected country name
+
+Example:
+
+🇺🇸 United States
+
+Search
+
+Below the header, add a search box.
+
+Users should be able to search by:
+
+Country name
+Country code
+
+Examples:
+
+United
+US
+Japan
+JP
+France
+FR
+Region List
+
+Display every available region as square cards similar to LootBar.
+
+Each card should include:
+
+Country flag
+Country name
+
+Example:
+
+🇺🇸 United States
+
+🇬🇧 United Kingdom
+
+🇫🇷 France
+
+🇯🇵 Japan
+
+🇹🇷 Turkey
+
+Selecting a Region
+
+When a user selects a country:
+
+Close the modal.
+Update the selector immediately.
+Navigate to the matching iTunes Gift Card page.
+Keep the user in the same browser tab.
+Preserve the same product layout while only changing the selected region.
+
+Example:
+
+User selects:
+
+🇺🇸 United States
+
+Automatically navigate to:
+
+/gift-card/itunes-gift-card-us
+
+The selector should now display:
+
+🇺🇸 United States
+
+Requirements
+Apply this region selector to all iTunes Gift Card pages.
+Navigation must be fast and seamless without opening a new tab.
+Keep the same product page layout while only changing the selected country and products.
+The selected region should always remain highlighted and synchronized with the current page URL.
