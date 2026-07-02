@@ -193,6 +193,23 @@ function AuthInitializer() {
 }
 
 // ─── Offline Banner ────────────────────────────────────────────────────────
+// ─── Scroll Progress Bar ──────────────────────────────────────────────────
+function ScrollProgressBar() {
+  const [width, setWidth] = useState(0);
+  useEffect(() => {
+    const onScroll = () => {
+      const el = document.documentElement;
+      const scrolled = el.scrollTop || document.body.scrollTop;
+      const total = el.scrollHeight - el.clientHeight;
+      setWidth(total > 0 ? Math.round((scrolled / total) * 100) : 0);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+  if (width === 0) return null;
+  return <div className="scroll-progress-bar" style={{ width: `${width}%` }} />;
+}
+
 function OfflineBanner() {
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   useEffect(() => {
@@ -219,6 +236,7 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
       <ErrorBoundary>
+        <ScrollProgressBar />
         <OfflineBanner />
         <AuthInitializer />
         <div className="min-h-screen bg-[#f5f5f5]">
