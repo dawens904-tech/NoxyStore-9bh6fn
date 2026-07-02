@@ -731,32 +731,6 @@ Deno.serve(async (req) => {
         break;
       }
 
-      case "get_game_guide": {
-        if (!params?.game_id) {
-          return errorResponse("Missing required param: game_id", undefined, 400, "VALIDATION");
-        }
-        try {
-          const guideResult = await lootbarRequest("GET", `/api/reseller/game_guide?game_id=${params.game_id}`);
-          result = guideResult;
-        } catch {
-          result = { status: "ok", data: { guide: null } };
-        }
-        break;
-      }
-
-      case "get_game_detail": {
-        if (!params?.game_id) {
-          return errorResponse("Missing required param: game_id", undefined, 400, "VALIDATION");
-        }
-        try {
-          const detailResult = await lootbarRequest("GET", `/api/reseller/game_detail?game_id=${params.game_id}`);
-          result = detailResult;
-        } catch {
-          result = { status: "ok", data: null };
-        }
-        break;
-      }
-
       default:
         return errorResponse(
           `Unknown action: ${action}`,
