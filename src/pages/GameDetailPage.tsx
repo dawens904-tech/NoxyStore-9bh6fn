@@ -2149,3 +2149,4 @@ export function GameDetailPage() {
     </>
   );
 }
+hello ai for user add review each game must have add comment when it 6 remove section to show comment allow user can tex and upload photo and show in tab images to for tex+photo for tex only show in tex tabs and Fix YouMayAlsoLikeSection to always show real game images from games_cache (with custom_image_url fallback from game_overrides). Preload overrides for the related game IDs in a single batch query instead of individual fetches also When a user registers via a referral link (?ref=CODE or /s/CODE), automatically call the track-referral edge function to record the invite and increment the referrer's users_invited count in referral_codes table.
