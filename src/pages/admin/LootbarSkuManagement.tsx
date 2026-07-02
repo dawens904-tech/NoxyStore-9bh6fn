@@ -1014,5 +1014,5 @@ export default function LootbarSkuManagement() {
     </div>
   );
 }
-hello ai please Add a custom slug input field to the LootbarGameManagement edit override modal so admins can set game slugs (e.g., topup/free-fire) directly from the game grid page, instead of having to navigate to the SKU management page and Replace all hardcoded English strings in CheckoutPage with t() translation calls, adding corresponding keys to translations.ts for all 4+ supported languages.
+
 

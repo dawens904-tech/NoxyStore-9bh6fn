@@ -43,6 +43,8 @@ interface GameOverride {
   is_hidden: boolean;
   sort_order: number;
   custom_image_url: string | null;
+  slug?: string | null;
+  custom_rating?: number | null;
 }
 
 type MergedGame = GameCache & {
@@ -64,7 +66,17 @@ export default function LootbarGameManagement() {
 
   // Override modal
   const [editGame, setEditGame] = useState<MergedGame | null>(null);
-  const [overrideForm, setOverrideForm] = useState({
+  const [overrideForm, setOverrideForm] = useState<{
+    custom_name: string;
+    custom_price: string;
+    category_override: string;
+    is_featured: boolean;
+    is_hidden: boolean;
+    sort_order: string;
+    custom_image_url: string;
+    slug: string;
+    custom_rating: string;
+  }>({
     custom_name: "",
     custom_price: "",
     category_override: "",
@@ -72,6 +84,8 @@ export default function LootbarGameManagement() {
     is_hidden: false,
     sort_order: "0",
     custom_image_url: "",
+    slug: "",
+    custom_rating: "",
   });
 
   useEffect(() => {
@@ -194,6 +208,8 @@ export default function LootbarGameManagement() {
       is_hidden: game.override?.is_hidden ?? false,
       sort_order: String(game.override?.sort_order ?? game.sort_order ?? 0),
       custom_image_url: game.override?.custom_image_url ?? "",
+      slug: (game.override as any)?.slug ?? "",
+      custom_rating: (game.override as any)?.custom_rating != null ? String((game.override as any).custom_rating) : "",
     });
   };
 
@@ -201,6 +217,12 @@ export default function LootbarGameManagement() {
     if (!editGame) return;
     const customImageUrl = overrideForm.custom_image_url || null;
     const customName = overrideForm.custom_name.trim() || null;
+    const slug = overrideForm.slug.trim().replace(/^\/+/, "").replace(/\s+/g, "-").toLowerCase() || null;
+    const customRating = overrideForm.custom_rating !== "" ? Number(overrideForm.custom_rating) : null;
+    if (customRating !== null && (customRating < 0 || customRating > 5)) {
+      toast.error("Rating must be between 0.0 and 5.0");
+      return;
+    }
     const payload: Partial<GameOverride> = {
       game_id: editGame.game_id,
       custom_name: customName,
@@ -210,6 +232,8 @@ export default function LootbarGameManagement() {
       is_hidden: overrideForm.is_hidden,
       sort_order: Number(overrideForm.sort_order),
       custom_image_url: customImageUrl,
+      slug,
+      custom_rating: customRating,
     };
 
     const { error } = await supabase
@@ -594,6 +618,34 @@ export default function LootbarGameManagement() {
                   <option value="">Use Lootbar category ({editGame?.category})</option>
                   {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
                 </select>
+              </div>
+
+              {/* Custom Slug */}
+              <div>
+                <Label className="flex items-center gap-1.5 mb-1.5"><ChevronDown size={13} className="rotate-90 text-blue-500" /> Custom URL Slug</Label>
+                <Input
+                  value={overrideForm.slug}
+                  onChange={(e) => setOverrideForm(f => ({ ...f, slug: e.target.value }))}
+                  placeholder="e.g. topup/free-fire"
+                  className="text-sm"
+                />
+                <p className="text-xs text-gray-400 mt-1">Sets a custom URL: /topup/your-slug or /top-up/your-slug. Leave empty to use default /game/ID.</p>
+              </div>
+
+              {/* Custom Rating */}
+              <div>
+                <Label className="flex items-center gap-1.5 mb-1.5"><Star size={13} className="text-yellow-400" /> Custom Rating (0.0–5.0)</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  max="5"
+                  step="0.1"
+                  value={overrideForm.custom_rating}
+                  onChange={(e) => setOverrideForm(f => ({ ...f, custom_rating: e.target.value }))}
+                  placeholder="e.g. 4.8 (leave empty for default)"
+                  className="text-sm"
+                />
+                <p className="text-xs text-gray-400 mt-1">Overrides the star rating shown on game cards and detail pages.</p>
               </div>
 
               {/* Custom Price */}

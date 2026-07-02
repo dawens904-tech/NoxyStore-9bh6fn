@@ -12,7 +12,7 @@ import { DesktopHeader } from "@/components/layout/DesktopHeader";
 import { Header } from "@/components/layout/Header";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
-import { FunctionsHttpError } from "@supabase/supabase-js";
+import { useTranslation } from "@/hooks/useTranslation";
 
 type CheckoutState = "review" | "processing" | "success" | "failed";
 
@@ -177,6 +177,7 @@ function CardEntryModal({
   onClose: () => void;
   onConfirm: (data: { cardNumber: string; cardHolder: string; expiry: string; cvv: string; address: string; city: string; zip: string }) => void;
 }) {
+  const { t } = useTranslation();
   const [cardHolder, setCardHolder] = useState("");
   const [cardNumber, setCardNumber] = useState("");
   const [expiry, setExpiry] = useState("");
@@ -212,7 +213,7 @@ function CardEntryModal({
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 sticky top-0 bg-white z-10">
           <div>
-            <h3 className="font-bold text-gray-900">Card Payment</h3>
+            <h3 className="font-bold text-gray-900">{t("cardPayment")}</h3>
             <p className="text-xs text-gray-400 mt-0.5">
               {isJcbGroup ? "JCB / Amex / Discover / Diners" : "Visa / Mastercard"}
             </p>
@@ -224,18 +225,18 @@ function CardEntryModal({
           {/* Security badge */}
           <div className="flex items-center gap-2 bg-green-50 border border-green-100 px-3 py-2 rounded-lg">
             <Lock size={13} className="text-green-600" />
-            <span className="text-xs text-green-700 font-semibold">Your card info is encrypted and never stored on our servers</span>
+            <span className="text-xs text-green-700 font-semibold">{t("secureEncrypted")}</span>
           </div>
 
           {/* Card holder */}
           <div>
-            <label className="block text-xs font-bold text-gray-700 mb-1.5">Cardholder Name *</label>
+            <label className="block text-xs font-bold text-gray-700 mb-1.5">{t("cardholderName")} *</label>
             <input type="text" value={cardHolder} onChange={e => setCardHolder(e.target.value)} placeholder="John Doe" className="w-full border border-gray-200 px-4 py-3 text-sm outline-none focus:border-yellow-400" />
           </div>
 
           {/* Card number */}
           <div>
-            <label className="block text-xs font-bold text-gray-700 mb-1.5">Card Number *</label>
+            <label className="block text-xs font-bold text-gray-700 mb-1.5">{t("cardNumber")} *</label>
             <div className="relative">
               <input type="text" value={cardNumber} onChange={e => setCardNumber(formatCard(e.target.value))} placeholder="0000 0000 0000 0000" className="w-full border border-gray-200 px-4 py-3 text-sm outline-none focus:border-yellow-400 font-mono pr-16" inputMode="numeric" maxLength={19} />
               {brand && (
@@ -247,23 +248,23 @@ function CardEntryModal({
           {/* Expiry + CVV */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-bold text-gray-700 mb-1.5">Expiry *</label>
+              <label className="block text-xs font-bold text-gray-700 mb-1.5">{t("expiry")} *</label>
               <input type="text" value={expiry} onChange={e => setExpiry(formatExpiry(e.target.value))} placeholder="MM/YY" className="w-full border border-gray-200 px-4 py-3 text-sm outline-none focus:border-yellow-400" inputMode="numeric" maxLength={5} />
             </div>
             <div>
-              <label className="block text-xs font-bold text-gray-700 mb-1.5">CVV *</label>
+              <label className="block text-xs font-bold text-gray-700 mb-1.5">{t("cvv")} *</label>
               <input type="password" value={cvv} onChange={e => setCvv(e.target.value.replace(/\D/g, "").slice(0, 4))} placeholder="•••" className="w-full border border-gray-200 px-4 py-3 text-sm outline-none focus:border-yellow-400" inputMode="numeric" maxLength={4} />
             </div>
           </div>
 
           {/* Billing address */}
           <div className="pt-1">
-            <p className="text-xs font-bold text-gray-700 mb-3">Billing Address *</p>
+            <p className="text-xs font-bold text-gray-700 mb-3">{t("billingAddress")} *</p>
             <div className="space-y-3">
-              <input type="text" value={address} onChange={e => setAddress(e.target.value)} placeholder="Street address" className="w-full border border-gray-200 px-4 py-3 text-sm outline-none focus:border-yellow-400" />
+              <input type="text" value={address} onChange={e => setAddress(e.target.value)} placeholder={t("streetAddress")} className="w-full border border-gray-200 px-4 py-3 text-sm outline-none focus:border-yellow-400" />
               <div className="grid grid-cols-2 gap-3">
-                <input type="text" value={city} onChange={e => setCity(e.target.value)} placeholder="City" className="w-full border border-gray-200 px-4 py-3 text-sm outline-none focus:border-yellow-400" />
-                <input type="text" value={zip} onChange={e => setZip(e.target.value)} placeholder="ZIP / Postal code" className="w-full border border-gray-200 px-4 py-3 text-sm outline-none focus:border-yellow-400" />
+                <input type="text" value={city} onChange={e => setCity(e.target.value)} placeholder={t("city")} className="w-full border border-gray-200 px-4 py-3 text-sm outline-none focus:border-yellow-400" />
+                <input type="text" value={zip} onChange={e => setZip(e.target.value)} placeholder={t("zipCode")} className="w-full border border-gray-200 px-4 py-3 text-sm outline-none focus:border-yellow-400" />
               </div>
             </div>
           </div>
@@ -278,9 +279,9 @@ function CardEntryModal({
               isValid ? "bg-yellow-400 hover:bg-yellow-300 text-black" : "bg-yellow-200 text-yellow-600 cursor-not-allowed"
             }`}
           >
-            Continue to Payment
+            {t("continueToPayment")}
           </button>
-          <p className="text-center text-xs text-gray-400 mt-2">You will be redirected to Stripe to complete payment securely</p>
+          <p className="text-center text-xs text-gray-400 mt-2">{t("redirectedToStripe")}</p>
         </div>
       </div>
     </div>
@@ -385,6 +386,7 @@ type PaymentMethod = {
 export function CheckoutPage() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { user, isAuthenticated, addOrder, balance, points } = useAuthStore();
 
   const state = location.state as {
@@ -487,7 +489,7 @@ export function CheckoutPage() {
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center px-4">
           <p className="text-gray-500 mb-4">Invalid checkout session</p>
-          <button onClick={() => navigate("/")} className="bg-yellow-400 text-black font-bold px-6 py-3">Go Home</button>
+          <button onClick={() => navigate("/")} className="bg-yellow-400 text-black font-bold px-6 py-3">{t("home")}</button>
         </div>
       </div>
     );
@@ -808,7 +810,7 @@ export function CheckoutPage() {
           <div className="w-20 h-20 bg-green-100 flex items-center justify-center mb-5">
             <CheckCircle size={40} className="text-green-500" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Order Created!</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">{t("orderCreated")}</h1>
           <p className="text-gray-500 mb-1">{sku.sku_name} — {game.game_name}</p>
           <div className="w-full max-w-sm bg-gray-50 p-4 mb-6 text-left space-y-2.5 mt-4">
             <div className="flex justify-between text-sm"><span className="text-gray-500">Order ID</span><span className="font-mono font-semibold text-xs">{orderId}</span></div>
@@ -818,8 +820,8 @@ export function CheckoutPage() {
             ))}
           </div>
           <div className="w-full max-w-sm space-y-3">
-            <button onClick={() => navigate(`/orders/${referenceId}`)} className="w-full bg-yellow-400 text-black font-bold py-4">Track Order</button>
-            <button onClick={() => navigate("/account")} className="w-full border border-gray-200 text-gray-700 font-semibold py-4">Order History</button>
+            <button onClick={() => navigate(`/orders/${referenceId}`)} className="w-full bg-yellow-400 text-black font-bold py-4">{t("trackOrder")}</button>
+            <button onClick={() => navigate("/account")} className="w-full border border-gray-200 text-gray-700 font-semibold py-4">{t("orderHistory")}</button>
           </div>
         </div>
       </div>
@@ -830,10 +832,10 @@ export function CheckoutPage() {
     return (
       <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 text-center">
         <div className="w-20 h-20 bg-red-100 flex items-center justify-center mb-5"><XCircle size={40} className="text-red-500" /></div>
-        <h1 className="text-2xl font-bold mb-2">Order Failed</h1>
+        <h1 className="text-2xl font-bold mb-2">{t("orderFailed")}</h1>
         <p className="text-gray-500 mb-6">Something went wrong. Please try again.</p>
-        <button onClick={() => setCheckoutState("review")} className="bg-yellow-400 text-black font-bold px-8 py-4 w-full max-w-xs">Try Again</button>
-        <button onClick={() => navigate(-1)} className="border border-gray-200 text-gray-700 font-semibold px-8 py-4 w-full max-w-xs mt-3">Go Back</button>
+        <button onClick={() => setCheckoutState("review")} className="bg-yellow-400 text-black font-bold px-8 py-4 w-full max-w-xs">{t("tryAgain")}</button>
+        <button onClick={() => navigate(-1)} className="border border-gray-200 text-gray-700 font-semibold px-8 py-4 w-full max-w-xs mt-3">{t("goBack")}</button>
       </div>
     );
   }
@@ -842,7 +844,7 @@ export function CheckoutPage() {
     return (
       <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 text-center">
         <div className="w-20 h-20 bg-blue-50 flex items-center justify-center mb-5"><Loader2 size={40} className="text-blue-500 animate-spin" /></div>
-        <h1 className="text-xl font-bold mb-2">Creating Your Order...</h1>
+        <h1 className="text-xl font-bold mb-2">{t("creatingOrder")}</h1>
         <p className="text-gray-500 text-sm">Please wait while we process your request</p>
       </div>
     );
@@ -853,7 +855,7 @@ export function CheckoutPage() {
     <div className="w-[360px] flex-shrink-0">
       <div className="sticky top-[100px] bg-white border border-gray-200">
         <div className="px-5 pt-6 pb-3 border-b border-gray-200">
-          <h3 className="text-base font-bold text-gray-900">Payment Details</h3>
+          <h3 className="text-base font-bold text-gray-900">{t("paymentDetails")}</h3>
         </div>
 
         <div className="border-b border-gray-200">
@@ -864,7 +866,7 @@ export function CheckoutPage() {
               <span className="text-sm">{userRealPoints} Points</span>
             </div>
             <span className="text-xs text-gray-400">
-              {userRealPoints < 100 ? "Unavailable" : `−$${(userRealPoints / 1000).toFixed(2)}`}
+              {userRealPoints < 100 ? t("unavailable") : `−$${(userRealPoints / 1000).toFixed(2)}`}
             </span>
           </div>
 
@@ -876,7 +878,7 @@ export function CheckoutPage() {
                 type="text"
                 value={couponCode}
                 onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                placeholder="Coupon Code"
+                placeholder={t("couponCode")}
                 className="flex-1 text-sm text-gray-700 outline-none bg-transparent min-w-0"
               />
             </div>
@@ -885,7 +887,7 @@ export function CheckoutPage() {
               disabled={isLoadingCoupon || !couponCode.trim()}
               className="h-full px-4 py-3 border-l border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-40 flex-shrink-0 bg-white"
             >
-              {isLoadingCoupon ? "..." : "Redeem"}
+              {isLoadingCoupon ? "..." : t("redeem")}
             </button>
           </div>
 
@@ -897,7 +899,7 @@ export function CheckoutPage() {
             <div className="flex items-center gap-2 text-gray-700">
               <GiftIcon />
               <span className="text-sm font-medium">
-                {couponDiscount > 0 ? `${couponCode} Applied` : "5% OFF"}
+                {couponDiscount > 0 ? `${couponCode} ${t("couponApplied")}` : "5% OFF"}
               </span>
             </div>
             <div className="flex items-center gap-1">
@@ -912,18 +914,18 @@ export function CheckoutPage() {
         {/* Price breakdown */}
         <div className="px-5 py-4 space-y-2.5 border-b border-gray-200">
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Price</span>
+            <span className="text-gray-600">{t("price")}</span>
             <span className="text-gray-900">${basePrice.toFixed(2)}</span>
           </div>
           {couponDiscount > 0 && (
             <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Coupon</span>
+              <span className="text-gray-600">{t("couponDiscount")}</span>
               <span className="text-orange-500 font-semibold">−${couponDiscount.toFixed(2)}</span>
             </div>
           )}
           <div className="flex justify-between text-sm items-center">
             <span className="text-gray-600 flex items-center gap-1">
-              Payment Fee (3.5%+$0.15)
+              {t("paymentFee")}
               <HelpCircle size={12} className="text-gray-400" />
             </span>
             <span className="text-gray-900">
@@ -931,7 +933,7 @@ export function CheckoutPage() {
             </span>
           </div>
           <div className="flex justify-between items-center pt-2 border-t border-gray-200">
-            <span className="text-sm font-bold text-gray-900">Total Amount</span>
+            <span className="text-sm font-bold text-gray-900">{t("totalAmount")}</span>
             <span className="text-xl font-black text-orange-500">USD ${totalPrice.toFixed(2)}</span>
           </div>
         </div>
@@ -943,7 +945,7 @@ export function CheckoutPage() {
             disabled={isProcessingPayment}
             className="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-bold py-4 text-base transition-colors disabled:opacity-70" style={{borderRadius:0}}
           >
-            {isProcessingPayment ? "Processing..." : "Pay Now"}
+            {isProcessingPayment ? t("processing") : t("payNow")}
           </button>
           {/* Accepted payment card strip */}
           <div className="flex items-center justify-center gap-2 mt-3 flex-wrap">
@@ -997,8 +999,8 @@ export function CheckoutPage() {
                   </div>
                   <div className="flex items-center gap-1.5 mt-0.5">
                     <span className="text-xs text-gray-500">${liveBalance || "0.00"}</span>
-                    {isInsufficient && <span className="text-xs text-orange-500 flex items-center gap-1">⚠ Insufficient balance</span>}
-                    {isInsufficient && <button onClick={(e) => { e.stopPropagation(); navigate("/balance"); }} className="text-xs text-blue-500 font-medium">Go to top-up</button>}
+                    {isInsufficient && <span className="text-xs text-orange-500 flex items-center gap-1">⚠ {t("insufficientBalance")}</span>}
+                    {isInsufficient && <button onClick={(e) => { e.stopPropagation(); navigate("/balance"); }} className="text-xs text-blue-500 font-medium">{t("goToTopup")}</button>}
                   </div>
                 </div>
               ) : (
@@ -1320,7 +1322,7 @@ export function CheckoutPage() {
               disabled={isLoadingCoupon || !couponCode.trim()}
               className="bg-yellow-400 text-black font-bold px-5 py-2.5 text-sm hover:bg-yellow-300 disabled:opacity-50"
             >
-              {isLoadingCoupon ? "..." : "Redeem"}
+              {isLoadingCoupon ? "..." : t("redeem")}
             </button>
           </div>
         </div>
