@@ -1724,57 +1724,53 @@ export function GameDetailPage() {
               )}
             </div>
 
-            {/* Instructions / Product Details */}
-            <div className="bg-white p-6 border border-gray-100">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">
-                {isGiftCard ? "Product Details" : "Top-up instructions"}
-              </h3>
-              {/* Gift card product details */}
-              {isGiftCard && (
-                <div className="mb-5 pb-5 border-b border-gray-100 space-y-3">
-                  {productDetails ? (
-                    <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">{productDetails}</p>
-                  ) : (
-                    <>
-                      <div><p className="text-xs font-bold text-gray-700">Gift Card Type</p><p className="text-sm text-gray-500">Digital Gift Card / E-code</p></div>
-                      <div><p className="text-xs font-bold text-gray-700">Delivery Method</p><p className="text-sm text-gray-500">Auto Delivery via order page</p></div>
-                      <div><p className="text-xs font-bold text-gray-700">Applicable Region</p><p className="text-sm text-gray-500">{regions.find(r=>r.value===selectedRegion)?.label || "Global"} accounts only. Non-Returnable and Non-Refundable.</p></div>
-                    </>
-                  )}
-                </div>
-              )}
-              <div className="grid grid-cols-2 gap-4 mb-5 pb-5 border-b border-gray-100">
-                {[
-                  { label: "Category", value: game?.category || "Top Up" },
-                  { label: "Delivery Method", value: isGiftCard ? "E-code delivery" : "Direct top-up via API" },
-                  { label: "Processing Time", value: isGiftCard ? "Instant" : "3–5 minutes" },
-                  { label: "Security", value: "NoxyStore Guarantee" },
-                ].map((item) => (
-                  <div key={item.label}>
-                    <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-0.5">{item.label}</p>
-                    <p className="text-sm text-gray-800 font-medium">{item.value}</p>
+            {/* Product Details / Top-up instructions — only show when data exists */}
+            {(isGiftCard || topUpInstructions.length > 0) && (
+              <div className="bg-white p-6 border border-gray-100">
+                <h3 className="text-lg font-bold text-gray-900 mb-4">
+                  {isGiftCard ? "Product Details" : "Top-up instructions"}
+                </h3>
+                {isGiftCard && (
+                  <div className="mb-5 pb-5 border-b border-gray-100 space-y-3">
+                    {productDetails ? (
+                      <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">{productDetails}</p>
+                    ) : (
+                      <>
+                        <div><p className="text-xs font-bold text-gray-700">Gift Card Type</p><p className="text-sm text-gray-500">Digital Gift Card / E-code</p></div>
+                        <div><p className="text-xs font-bold text-gray-700">Delivery Method</p><p className="text-sm text-gray-500">Auto Delivery via order page</p></div>
+                        <div><p className="text-xs font-bold text-gray-700">Applicable Region</p><p className="text-sm text-gray-500">{regions.find(r=>r.value===selectedRegion)?.label || "Global"} accounts only. Non-Returnable and Non-Refundable.</p></div>
+                      </>
+                    )}
                   </div>
-                ))}
-              </div>
-              {!isGiftCard && (
-                <div className="space-y-5">
-                  {(topUpInstructions.length > 0 ? topUpInstructions : [
-                    { step: 1, title: "Select your package", description: "Choose the top-up amount that suits you from the list above." },
-                    { step: 2, title: "Fill in your player information", description: "Enter your Player ID or UID accurately. Double-check before proceeding." },
-                    { step: 3, title: "Complete your payment", description: "Choose a payment method and complete the transaction securely." },
-                    { step: 4, title: "Receive your items", description: "Top-up is processed automatically. Items arrive within 3–5 minutes." },
-                  ]).map((inst) => (
-                    <div key={inst.step} className="flex gap-4">
-                      <div className="flex-shrink-0 w-7 h-7 bg-yellow-400 rounded-lg flex items-center justify-center font-black text-sm text-black">{inst.step}</div>
-                      <div className="flex-1">
-                        <p className="font-bold text-gray-900 text-sm mb-1">{inst.title}</p>
-                        {inst.description && <p className="text-sm text-gray-600 leading-relaxed">{inst.description}</p>}
-                      </div>
+                )}
+                <div className="grid grid-cols-2 gap-4 mb-5 pb-5 border-b border-gray-100">
+                  {[
+                    { label: "Category", value: game?.category || "Top Up" },
+                    { label: "Delivery Method", value: isGiftCard ? "E-code delivery" : "Direct top-up via API" },
+                    { label: "Processing Time", value: isGiftCard ? "Instant" : "3–5 minutes" },
+                    { label: "Security", value: "NoxyStore Guarantee" },
+                  ].map((item) => (
+                    <div key={item.label}>
+                      <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-0.5">{item.label}</p>
+                      <p className="text-sm text-gray-800 font-medium">{item.value}</p>
                     </div>
                   ))}
                 </div>
-              )}
-            </div>
+                {!isGiftCard && topUpInstructions.length > 0 && (
+                  <div className="space-y-5">
+                    {topUpInstructions.map((inst) => (
+                      <div key={inst.step} className="flex gap-4">
+                        <div className="flex-shrink-0 w-7 h-7 bg-yellow-400 rounded-lg flex items-center justify-center font-black text-sm text-black">{inst.step}</div>
+                        <div className="flex-1">
+                          <p className="font-bold text-gray-900 text-sm mb-1">{inst.title}</p>
+                          {inst.description && <p className="text-sm text-gray-600 leading-relaxed">{inst.description}</p>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* User Reviews */}
             <UserReviewsSection />
@@ -2025,6 +2021,13 @@ export function GameDetailPage() {
             </div>
           )}
         </div>
+
+        {/* Related games & Blog — mobile */}
+        <div className="mt-4 px-4 space-y-4 pb-4">
+          <YouMayAlsoLikeSection />
+          <GameBlogSection />
+          <UserReviewsSection />
+        </div>
       </div>
 
       {/* Bottom CTA */}
@@ -2108,4 +2111,3 @@ export function GameDetailPage() {
     </>
   );
 }
-hello ai fix topup instruction remove old demo fetch from lootbar api and Add the YouMayAlsoLikeSection and GameBlogSection to the mobile layout in GameDetailPage (currently only shown on desktop). Place them below the SKU grid in the mobile scrollable content area also the flag like desktop in mobile and Create a 'Trending Subscriptions' section on HomePage that shows subscription-type products marked as coming_soon from Lootbar API Display as horizontal scroll cards with a 'Coming Soon' badge overlay in you may alsolike fetch real img game.

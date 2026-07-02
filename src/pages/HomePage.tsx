@@ -165,6 +165,139 @@ function MobileGameCard({ game }: { game: LootbarGame }) {
   );
 }
 
+// ─── Trending Subscriptions helpers ─────────────────────────────────────────
+const SUBSCRIPTION_KEYWORDS = [
+  "netflix", "spotify", "youtube premium", "youtube music", "amazon prime",
+  "hbo", "disney", "apple tv", "crunchyroll", "paramount", "hulu",
+  "deezer", "tidal", "apple music", "icloud", "microsoft 365", "office 365",
+  "adobe", "vpn", "nordvpn", "expressvpn", "duolingo", "grammarly",
+  "canva", "twitch", "chatgpt", "openai",
+];
+
+function isSubscription(name: string): boolean {
+  const n = name.toLowerCase();
+  return SUBSCRIPTION_KEYWORDS.some((k) => n.includes(k));
+}
+
+function TrendingSubscriptionsDesktop({ games, navigate }: { games: LootbarGame[]; navigate: ReturnType<typeof useNavigate> }) {
+  const subscriptionGames = games.filter((g) => isSubscription(g.game_name));
+  // Add placeholder "Coming Soon" cards to reach at least 6 visible slots
+  const COMING_SOON_PLACEHOLDERS = [
+    { name: "HBO Max", color: "from-purple-600 to-purple-900" },
+    { name: "Crunchyroll", color: "from-orange-500 to-red-600" },
+    { name: "Apple TV+", color: "from-gray-800 to-black" },
+    { name: "Amazon Prime", color: "from-blue-600 to-cyan-700" },
+  ];
+  const extraSlots = Math.max(0, 6 - subscriptionGames.length);
+  const placeholders = COMING_SOON_PLACEHOLDERS.slice(0, extraSlots);
+  if (subscriptionGames.length === 0 && placeholders.length === 0) return null;
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h2 className="text-xl font-black text-gray-900">Trending Subscriptions</h2>
+          <p className="text-sm text-gray-500 mt-0.5">Netflix, Spotify, YouTube &amp; more</p>
+        </div>
+      </div>
+      <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2">
+        {subscriptionGames.map((game) => (
+          <button key={game.game_id} onClick={() => navigate(`/game/${game.game_id}`)}
+            className="flex-shrink-0 w-48 flex flex-col bg-white rounded-2xl overflow-hidden text-left hover:shadow-lg hover:-translate-y-0.5 transition-all group">
+            <div className="relative h-36 bg-gray-100 overflow-hidden">
+              <img src={game.game_image || `https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=200&h=150&fit=crop`}
+                alt={game.game_name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                onError={(e) => { (e.target as HTMLImageElement).src = `https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=200&h=150&fit=crop`; }} />
+              {(game.discount ?? 0) > 0 && (
+                <div className="absolute top-2 left-2 bg-orange-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">-{game.discount}%</div>
+              )}
+            </div>
+            <div className="p-3">
+              <p className="text-sm font-bold text-gray-900 line-clamp-1">{game.game_name}</p>
+              <div className="flex items-center gap-1 mt-0.5">
+                <Star size={10} fill="#FFD200" stroke="none" />
+                <span className="text-xs font-semibold text-gray-600">{(game.rating ?? 5).toFixed(1)}</span>
+                {game.min_price && <span className="text-xs font-black text-orange-500 ml-auto">${game.min_price.toFixed(2)}</span>}
+              </div>
+            </div>
+          </button>
+        ))}
+        {placeholders.map((p, i) => (
+          <div key={`cs-${i}`} className="flex-shrink-0 w-48 flex flex-col bg-white rounded-2xl overflow-hidden">
+            <div className={`relative h-36 bg-gradient-to-br ${p.color} flex items-center justify-center`}>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-white/20 text-4xl font-black">{p.name[0]}</span>
+              </div>
+              <div className="absolute top-2 right-2 bg-yellow-400 text-black text-[9px] font-black px-2 py-0.5 rounded-full">Coming Soon</div>
+            </div>
+            <div className="p-3">
+              <p className="text-sm font-bold text-gray-400">{p.name}</p>
+              <p className="text-xs text-gray-300 mt-0.5">Available soon</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function TrendingSubscriptionsMobile({ games, navigate }: { games: LootbarGame[]; navigate: ReturnType<typeof useNavigate> }) {
+  const subscriptionGames = games.filter((g) => isSubscription(g.game_name));
+  const COMING_SOON_PLACEHOLDERS = [
+    { name: "HBO Max", color: "from-purple-600 to-purple-900" },
+    { name: "Crunchyroll", color: "from-orange-500 to-red-600" },
+    { name: "Apple TV+", color: "from-gray-800 to-black" },
+    { name: "Amazon Prime", color: "from-blue-600 to-cyan-700" },
+  ];
+  const extraSlots = Math.max(0, 4 - subscriptionGames.length);
+  const placeholders = COMING_SOON_PLACEHOLDERS.slice(0, extraSlots);
+  if (subscriptionGames.length === 0 && placeholders.length === 0) return null;
+  return (
+    <div className="mt-6 px-3">
+      <div className="flex items-center justify-between mb-3">
+        <div>
+          <h2 className="text-lg font-black text-gray-900">Trending Subscriptions</h2>
+          <p className="text-xs text-gray-500 mt-0.5">Netflix, Spotify &amp; more</p>
+        </div>
+      </div>
+      <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
+        {subscriptionGames.map((game) => (
+          <button key={game.game_id} onClick={() => navigate(`/game/${game.game_id}`)}
+            className="flex-shrink-0 w-32 flex flex-col bg-white rounded-xl overflow-hidden text-left">
+            <div className="relative h-24 bg-gray-100 overflow-hidden">
+              <img src={game.game_image || `https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=200&h=150&fit=crop`}
+                alt={game.game_name} className="w-full h-full object-cover"
+                onError={(e) => { (e.target as HTMLImageElement).src = `https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=200&h=150&fit=crop`; }} />
+              {(game.discount ?? 0) > 0 && (
+                <div className="absolute top-1 right-1 bg-orange-500 text-white text-[8px] font-bold px-1 py-0.5 rounded">-{game.discount}%</div>
+              )}
+            </div>
+            <div className="p-2">
+              <p className="text-[11px] font-bold text-gray-900 line-clamp-1">{game.game_name}</p>
+              <div className="flex items-center gap-1 mt-0.5">
+                <Star size={9} fill="#FFD200" stroke="none" />
+                <span className="text-[10px] font-semibold text-gray-600">{(game.rating ?? 5).toFixed(1)}</span>
+              </div>
+              {game.min_price && <p className="text-[10px] font-black text-orange-500 mt-0.5">${game.min_price.toFixed(2)}</p>}
+            </div>
+          </button>
+        ))}
+        {placeholders.map((p, i) => (
+          <div key={`cs-${i}`} className="flex-shrink-0 w-32 flex flex-col bg-white rounded-xl overflow-hidden">
+            <div className={`relative h-24 bg-gradient-to-br ${p.color} flex items-center justify-center`}>
+              <span className="text-white/20 text-3xl font-black">{p.name[0]}</span>
+              <div className="absolute top-1 right-1 bg-yellow-400 text-black text-[8px] font-black px-1.5 py-0.5 rounded-full">Soon</div>
+            </div>
+            <div className="p-2">
+              <p className="text-[11px] font-bold text-gray-400">{p.name}</p>
+              <p className="text-[10px] text-gray-300">Coming soon</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function HomePage() {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -562,6 +695,9 @@ export function HomePage() {
             </div>
           )}
 
+          {/* Trending Subscriptions — desktop */}
+          <TrendingSubscriptionsDesktop games={allGames} navigate={navigate} />
+
           {sections.map((sec) => {
             const secGames = getSectionGames(sec);
             if (secGames.length === 0) return null;
@@ -859,6 +995,9 @@ export function HomePage() {
             ) : null}
           </div>
         )}
+
+        {/* TRENDING SUBSCRIPTIONS — mobile */}
+        <TrendingSubscriptionsMobile games={allGames} navigate={navigate} />
 
         <MobileFooter />
         <FloatingChat />
